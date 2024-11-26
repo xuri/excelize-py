@@ -28,6 +28,7 @@ class CustomInstallCommand(install):
         os.makedirs(self.install_lib, exist_ok=True)
         for shared_library in [
             "libexcelize.amd64.linux.so",
+            "libexcelize.arm64.linux.so",
             "libexcelize.amd64.darwin.dylib",
             "libexcelize.arm64.darwin.dylib",
             "libexcelize.amd64.windows.dll",
@@ -37,7 +38,7 @@ class CustomInstallCommand(install):
 
 setup(
     name="excelize",
-    version="0.0.1",
+    version="0.0.2",
     license="BSD 3-Clause",
     license_files=("LICENSE"),
     description="A Python build of the Go Excelize library for reading and writing Microsoft Excel™ (XLAM / XLSM / XLSX / XLTM / XLTX) spreadsheets",

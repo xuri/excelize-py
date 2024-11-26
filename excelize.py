@@ -34,42 +34,36 @@ import platform
 
 
 def load_lib():
-    name = "libexcelize"
-
-    # Check architecture (only 64-bit supported)
+    system = platform.system().lower()
     arch = platform.architecture()[0]
-    if "64" not in arch:
-        print(f"Unsupported architecture {arch}")
-        exit(1)
-
-    # Get machine type for architecture suffix
-    machine_type = platform.machine().lower()
-    arch_suffix = ""
-    if "arm" in machine_type:
-        arch_suffix = ".arm64"
-    elif "x86_64" in machine_type or "amd64" in machine_type:
-        arch_suffix = ".amd64"
-    if not arch_suffix:
-        print(f"Unsupported architecture {arch_suffix}")
-        exit(1)
-
-    name += arch_suffix
-
-    # Map OS to their respective suffix
-    os_mapping = {
-        "Windows": ".windows.dll",
-        "Darwin": ".darwin.dylib",
-        "Linux": ".linux.so",
+    machine = platform.machine().lower()
+    ext_map = {"linux": ".so", "darwin": ".dylib", "windows": ".dll"}
+    arch_map = {
+        "linux": {
+            "64bit": {
+                "x86_64": "amd64",
+                "aarch64": "arm64",
+            },
+        },
+        "darwin": {
+            "64bit": {
+                "x86_64": "amd64",
+                "arm64": "arm64",
+            },
+        },
+        "windows": {
+            "64bit": {
+                "x86_64": "amd64",
+            },
+        },
     }
+    if system in ext_map and arch in arch_map.get(system, {}):
+        arch_name = arch_map[system][arch].get(machine)
+        if arch_name:
+            return f"libexcelize.{arch_name}.{system}{ext_map[system]}"
 
-    os = platform.system()
-    if os not in os_mapping:
-        print(f"Unsupported OS {os}")
-        exit()
-
-    name += os_mapping[os]
-
-    return name
+    print("This platform or architecture is not supported.")
+    exit(1)
 
 
 lib = CDLL(os.path.join(os.path.dirname(__file__), load_lib()))
