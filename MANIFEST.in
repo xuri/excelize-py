@@ -1,0 +1,3 @@
+include *.dll
+include *.dylib
+include *.so

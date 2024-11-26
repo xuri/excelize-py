@@ -1,0 +1,12 @@
+__pycache__
+.coverage
+.DS_Store
+*.dll
+*.dylib
+*.so
+*.xlsx
+*.xml
+dist/
+excelize.egg-info/
+libexcelize.*.h
+Makefile
