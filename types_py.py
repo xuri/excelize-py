@@ -16,11 +16,11 @@ from typing import Optional
 
 class CultureName(IntEnum):
     CultureNameUnknown = 0
-	CultureNameEnUS = 1
-	CultureNameJaJP = 2
-	CultureNameKoKR = 3
-	CultureNameZhCN = 4
-	CultureNameZhTW = 5
+    CultureNameEnUS = 1
+    CultureNameJaJP = 2
+    CultureNameKoKR = 3
+    CultureNameZhCN = 4
+    CultureNameZhTW = 5
 
 
 @dataclass

@@ -136,6 +136,8 @@ func cToGoBaseType(cVal reflect.Value, kind reflect.Kind) (reflect.Value, error)
 	return fn(cVal, kind)
 }
 
+// cToGoArray convert C language array to Go array base on the given Go	structure
+// types.
 func cToGoArray(cArray reflect.Value, cArrayLen int) reflect.Value {
 	switch cArray.Elem().Type().String() {
 	case "*main._Ctype_char":
@@ -447,6 +449,42 @@ func DeleteComment(idx int, sheet, cell *C.char) *C.char {
 	return C.CString(errNil)
 }
 
+//export DeletePicture
+func DeletePicture(idx int, sheet, cell *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).DeletePicture(C.GoString(sheet), C.GoString(cell)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+//export DeleteSheet
+func DeleteSheet(idx int, sheet *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).DeleteSheet(C.GoString(sheet)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+//export DeleteSlicer
+func DeleteSlicer(idx int, name *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).DeleteSlicer(C.GoString(name)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
 // NewFile provides a function to create new file by default template.
 //
 //export NewFile
@@ -491,10 +529,22 @@ func OpenFile(filename *C.char, opts *C.struct_Options) C.struct_OptionsResult {
 // Save provides a function to override the spreadsheet with origin path.
 //
 //export Save
-func Save(idx int) *C.char {
+func Save(idx int, opts *C.struct_Options) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
 		return C.CString(errFilePtr)
+	}
+	if opts != nil {
+		var options excelize.Options
+		goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.Options{}))
+		if err != nil {
+			return C.CString(err.Error())
+		}
+		options = goVal.Elem().Interface().(excelize.Options)
+		if err := f.(*excelize.File).Save(options); err != nil {
+			return C.CString(err.Error())
+		}
+		return C.CString(errNil)
 	}
 	if err := f.(*excelize.File).Save(); err != nil {
 		return C.CString(err.Error())

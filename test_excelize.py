@@ -21,6 +21,7 @@ from ctypes import (
     POINTER,
 )
 
+
 class TestExcelize(unittest.TestCase):
 
     @patch("platform.architecture")
@@ -104,19 +105,22 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(err)
         self.assertEqual(style, s)
         self.assertIsNone(f.set_cell_style("Sheet1", "A1", "B2", style_id))
-        self.assertEqual(f.set_cell_style("SheetN", "A1", "B2", style_id).__str__(), "sheet SheetN does not exist")
+        self.assertEqual(
+            f.set_cell_style("SheetN", "A1", "B2", style_id).__str__(),
+            "sheet SheetN does not exist",
+        )
 
         style, err = f.get_style(2)
         self.assertEqual("invalid style ID 2", err.__str__())
         self.assertIsNone(style)
         self.assertIsNone(f.save_as("TestStyle.xlsx"))
         self.assertIsNone(
-            f.save_as("TestStyleWithPassword.xlsx", excelize.Options(password="password"))
+            f.save_as("TestStyle.xlsx", excelize.Options(password="password"))
         )
         self.assertIsNone(f.close())
 
         f, err = excelize.open_file(
-            "TestStyleWithPassword.xlsx", excelize.Options(password="password")
+            "TestStyle.xlsx", excelize.Options(password="password")
         )
         self.assertIsNone(err)
         with open("chart.png", "rb") as file:
@@ -131,7 +135,10 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.set_cell_value("Sheet1", "A6", True))
         self.assertIsNone(f.set_cell_value("Sheet1", "A7", datetime.datetime.now()))
         self.assertIsNone(f.set_cell_value("Sheet1", "A8", datetime.date(2024, 10, 15)))
-        self.assertEqual(f.set_cell_value("SheetN", "A9", None).__str__(), "sheet SheetN does not exist")
+        self.assertEqual(
+            f.set_cell_value("SheetN", "A9", None).__str__(),
+            "sheet SheetN does not exist",
+        )
 
         idx, err = f.new_sheet("Sheet2")
         self.assertEqual(idx, 1)
@@ -140,18 +147,37 @@ class TestExcelize(unittest.TestCase):
 
         idx, err = f.new_sheet(":\\/?*[]Maximum 31 characters allowed in sheet title.")
         self.assertEqual(idx, -1)
-        self.assertEqual(err.__str__(), "the sheet name length exceeds the 31 characters limit")
+        self.assertEqual(
+            err.__str__(), "the sheet name length exceeds the 31 characters limit"
+        )
 
         idx, err = f.new_sheet("Sheet3")
         self.assertIsNone(err)
         self.assertIsNone(f.copy_sheet(1, idx))
         self.assertEqual(f.copy_sheet(1, 4).__str__(), "invalid worksheet index")
 
-        self.assertEqual(f.delete_chart("SheetN", "A1").__str__(), "sheet SheetN does not exist")
-        self.assertEqual(f.delete_comment("SheetN", "A1").__str__(), "sheet SheetN does not exist")
+        self.assertIsNone(f.delete_sheet("Sheet3"))
+        self.assertEqual(
+            f.delete_sheet("Sheet:1").__str__(),
+            "the sheet can not contain any of the characters :\\/?*[or]",
+        )
+
+        self.assertEqual(
+            f.delete_chart("SheetN", "A1").__str__(), "sheet SheetN does not exist"
+        )
+        self.assertEqual(
+            f.delete_comment("SheetN", "A1").__str__(), "sheet SheetN does not exist"
+        )
+
+        self.assertIsNone(f.delete_picture("Sheet1", "A1"))
+        self.assertEqual(
+            f.delete_comment("SheetN", "A1").__str__(), "sheet SheetN does not exist"
+        )
+
+        self.assertEqual(f.delete_slicer("x").__str__(), "slicer x does not exist")
 
         self.assertIsNone(f.save())
-        self.assertIsNone(f.save(excelize.Options(password="password")))
+        self.assertIsNone(f.save(excelize.Options(password="")))
         self.assertIsNone(f.close())
 
     def test_type_convert(self):

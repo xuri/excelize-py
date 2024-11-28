@@ -41,18 +41,21 @@ def load_lib():
         "linux": {
             "64bit": {
                 "x86_64": "amd64",
+                "amd64": "amd64",
                 "aarch64": "arm64",
             },
         },
         "darwin": {
             "64bit": {
                 "x86_64": "amd64",
+                "amd64": "amd64",
                 "arm64": "arm64",
             },
         },
         "windows": {
             "64bit": {
                 "x86_64": "amd64",
+                "amd64": "amd64",
                 "arm64": "arm64",
             },
         },
@@ -73,16 +76,44 @@ uppercase_words = ["xml"]
 
 
 def py_to_base_ctype(py_value, c_type):
+    """
+    Convert a Python value to a specified C type.
+
+    Args:
+        py_value: The Python value to be converted. If the value is a string, it will be encoded.
+        c_type: The target C type to which the Python value should be converted.
+
+    Returns:
+        The converted value in the specified C type.
+    """
     return (
         c_type(py_value.encode(ENCODE)) if str is type(py_value) else c_type(py_value)
     )
 
 
 def is_py_primitive_type(t: type) -> bool:
+    """
+    Check if the given type is a Python primitive type.
+
+    Args:
+        t (type): The type to check.
+
+    Returns:
+        bool: True if the type is a Python primitive type or an Enum subclass, False otherwise.
+    """
     return True if issubclass(t, Enum) else t in {int, float, bool, str, bytes, complex}
 
 
 def snake_to_pascal(snake_str: str) -> str:
+    """
+    Convert a snake_case string to PascalCase.
+
+    Args:
+        snake_str (str): The snake_case string to convert.
+
+    Returns:
+        str: The converted PascalCase string.
+    """
     return "".join(
         word.upper() if word.lower() in uppercase_words else word.capitalize()
         for word in snake_str.split("_")
@@ -90,6 +121,17 @@ def snake_to_pascal(snake_str: str) -> str:
 
 
 def c_value_to_py(ctypes_instance, py_instance):
+    """
+    Convert a ctypes instance to a Python instance by mapping fields from the
+    to the corresponding fields in the Python instance.
+
+    Args:
+        ctypes_instance: The ctypes instance representing the Go data structure.
+        py_instance: The Python instance to populate with data from the ctypes instance.
+
+    Returns:
+        The populated Python instance, or None if the ctypes instance is None.
+    """
     if ctypes_instance is None:
         return None
     for py_field in fields(py_instance):
@@ -200,12 +242,38 @@ def c_value_to_py(ctypes_instance, py_instance):
 
 
 def get_c_field_type(struct, field_name):
+    """
+    Retrieve the type of a specified field from a C structure.
+
+    Args:
+        struct (ctypes.Structure): The C structure containing the fields.
+        field_name (str): The name of the field whose type is to be retrieved.
+
+    Returns:
+        type: The type of the specified field if found, otherwise None.
+    """
     for field in struct._fields_:
         if field[0] == field_name:
             return field[1]
 
 
 def py_value_to_c(py_instance, ctypes_instance):
+    """
+    Converts a Python instance to a corresponding C instance using ctypes.
+
+    This function recursively converts fields of a Python instance to their
+    corresponding C types and assigns them to the provided ctypes instance.
+    It handles primitive types, structs, pointers, and arrays.
+
+    Args:
+        py_instance (object): The Python instance to be converted.
+        ctypes_instance (ctypes.Structure): The ctypes instance to which the
+            converted values will be assigned.
+
+    Returns:
+        ctypes.Structure: The ctypes instance with the converted values from
+            the Python instance.
+    """
     if py_instance is None:
         return None
     for py_field in fields(py_instance):
@@ -321,6 +389,18 @@ def py_value_to_c(py_instance, ctypes_instance):
 
 
 def py_value_to_c_interface(py_value):
+    """
+    Converts a Python value to a C interface representation.
+
+    Args:
+        py_value: The Python value to be converted.
+
+    Returns:
+        An Interface object representing the Python value in a C-compatible format.
+
+    Raises:
+        TypeError: If the type of py_value is not supported.
+    """
     type_mappings = {
         int: lambda: Interface(type=1, integer=py_value),
         str: lambda: Interface(type=2, string=py_value),
@@ -342,6 +422,16 @@ class File:
         self.file_index = file_index
 
     def save(self, *opts: Options) -> Exception | None:
+        """
+        Override the spreadsheet with origin path.
+
+        Args:
+            *opts (Options): Optional parameters for saving the file.
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
         err, lib.Save.restype = None, c_char_p
         if len(opts) > 0:
             options = py_value_to_c(opts[0], types_go._Options())
@@ -351,6 +441,17 @@ class File:
         return None if err == "" else Exception(err)
 
     def save_as(self, filename: str, *opts: Options) -> Exception | None:
+        """
+        Create or update to a spreadsheet at the provided path.
+
+        Args:
+            filename (str): The name of the file to save.
+            *opts (Options): Optional parameters for saving the file.
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
         err, lib.SaveAs.restype = None, c_char_p
         if len(opts) > 0:
             options = py_value_to_c(opts[0], types_go._Options())
@@ -364,32 +465,155 @@ class File:
         return None if err == "" else Exception(err)
 
     def close(self) -> Exception | None:
+        """
+        Closes and cleanup the open temporary file for the spreadsheet.
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
         err, lib.Close.restype = None, c_char_p
         err = lib.Close(self.file_index).decode(ENCODE)
         return None if err == "" else Exception(err)
 
     def copy_sheet(self, src: int, to: int) -> Exception | None:
+        """
+        Duplicate a worksheet by gave source and target worksheet index. Note
+        that currently doesn't support duplicate workbooks that contain tables,
+        charts or pictures.
+
+        Args:
+            src (int): Source sheet index
+            to (int): Target sheet index
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
         err, lib.CopySheet.restype = None, c_char_p
         err = lib.CopySheet(self.file_index, src, to).decode(ENCODE)
         return None if err == "" else Exception(err)
 
     def delete_chart(self, sheet: str, cell: str) -> Exception | None:
+        """
+        Delete chart in spreadsheet by given worksheet name and cell reference.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
         err, lib.DeleteChart.restype = None, c_char_p
-        err = lib.DeleteChart(self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)).decode(ENCODE)
+        err = lib.DeleteChart(
+            self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
+        ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
     def delete_comment(self, sheet: str, cell: str) -> Exception | None:
+        """
+        Delete comment in a worksheet by given worksheet name and cell reference.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
         err, lib.DeleteComment.restype = None, c_char_p
-        err = lib.DeleteComment(self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)).decode(ENCODE)
+        err = lib.DeleteComment(
+            self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def delete_picture(self, sheet: str, cell: str) -> Exception | None:
+        """
+        Delete all pictures in a cell by given worksheet name and cell reference.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        err, lib.DeletePicture.restype = None, c_char_p
+        err = lib.DeletePicture(
+            self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def delete_sheet(self, sheet: str) -> Exception | None:
+        """
+        Delete worksheet in a workbook by given worksheet name. Use this method
+        with caution, which will affect changes in references such as formulas,
+        charts, and so on. If there is any referenced value of the deleted
+        worksheet, it will cause a file error when you open it. This function
+        will be invalid when only one worksheet is left.
+
+        Args:
+            sheet (str): The worksheet name
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        err, lib.DeleteSheet.restype = None, c_char_p
+        err = lib.DeleteSheet(self.file_index, sheet.encode(ENCODE)).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def delete_slicer(self, name: str) -> Exception | None:
+        """
+        Delete a slicer by a given slicer name.
+
+        Args:
+            name (str): The slicer name
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        err, lib.DeleteSlicer.restype = None, c_char_p
+        err = lib.DeleteSlicer(self.file_index, name.encode(ENCODE)).decode(ENCODE)
         return None if err == "" else Exception(err)
 
     def new_sheet(self, sheet: str) -> Tuple[int, Exception | None]:
+        """
+        Create a new sheet by given a worksheet name and returns the index of
+        the sheets in the workbook after it appended. Note that when creating a
+        new workbook, the default worksheet named `Sheet1` will be created.
+
+        Args:
+            sheet (str): The worksheet name
+
+        Returns:
+            Tuple[int, Exception | None]: A tuple containing the index of the
+            new sheet and an Exception if an error occurred, otherwise None.
+        """
         lib.NewSheet.restype = types_go.NewSheetResult
         res = lib.NewSheet(self.file_index, sheet.encode(ENCODE))
         err = res.err.decode(ENCODE)
         return res.idx, None if err == "" else Exception(err)
 
     def new_style(self, style: Style) -> Tuple[int, Exception | None]:
+        """
+        Create the style for cells by a given style options, and returns style
+        index. The same style index can not be used across different workbook.
+        This function is concurrency safe. Note that the 'Font.Color' field uses
+        an RGB color represented in 'RRGGBB' hexadecimal notation.
+
+        Args:
+            style (Style): The style options
+
+        Returns:
+            Tuple[int, Exception | None]: A tuple containing the style index
+            and an exception if any error occurs.
+        """
         lib.NewStyle.restype = types_go.NewStyleResult
         options = py_value_to_c(style, types_go._Style())
         res = lib.NewStyle(self.file_index, byref(options))
@@ -397,6 +621,17 @@ class File:
         return res.style, None if err == "" else Exception(err)
 
     def get_style(self, style_id: int) -> Tuple[Style | None, Exception | None]:
+        """
+        Get style definition by given style index.
+
+        Args:
+            style_id (int): The style ID
+
+        Returns:
+            Tuple[Style | None, Exception | None]: A tuple containing the Style
+            object if found, otherwise None, and an Exception object if an error
+            occurred, otherwise None.
+        """
         lib.GetStyle.restype = types_go.GetStyleResult
         res = lib.GetStyle(self.file_index, c_int(style_id))
         err = res.err.decode(ENCODE)
@@ -405,25 +640,43 @@ class File:
         return None, Exception(err)
 
     def set_active_sheet(self, index: int) -> Exception | None:
+        """
+        Set the default active sheet of the workbook by a given index. Note that
+        the active index is different from the ID returned by function
+        get_sheet_map. It should be greater than or equal to 0 and less than the
+        total worksheet numbers.
+
+        Parameters:
+        index (int): The sheet index
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
         err, lib.SetActiveSheet.restype = None, c_char_p
         err = lib.SetActiveSheet(self.file_index, index).decode(ENCODE)
-        return None if err == "" else Exception(err)
-
-    def set_cell_value(
-        self, sheet: str, cell: str, value: None | int | str | bool | datetime | date
-    ) -> Exception | None:
-        lib.SetCellValue.restype = c_char_p
-        err = lib.SetCellValue(
-            self.file_index,
-            sheet.encode(ENCODE),
-            cell.encode(ENCODE),
-            byref(py_value_to_c_interface(value)),
-        ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
     def set_cell_style(
         self, sheet: str, top_left_cell: str, bottom_right_cell: str, style_id: int
     ) -> Exception | None:
+        """
+        Add style attribute for cells by given worksheet name, range reference
+        and style ID. Note that diagonalDown and diagonalUp type border should
+        be use same color in the same range. SetCellStyle will overwrite the
+        existing styles for the cell, it won't append or merge style with
+        existing styles.
+
+        Args:
+            sheet (str): The worksheet name
+            top_left_cell (str): The top-left cell reference
+            bottom_right_cell (str): The right-bottom cell reference
+            style_id (int): The style ID
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
         lib.SetCellStyle.restype = c_char_p
         err = lib.SetCellStyle(
             self.file_index,
@@ -434,9 +687,55 @@ class File:
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
+    def set_cell_value(
+        self, sheet: str, cell: str, value: None | int | str | bool | datetime | date
+    ) -> Exception | None:
+        """
+        Set the value of a cell. The specified coordinates should not be in the
+        first row of the table, a complex number can be set with string text.
+
+        Note that default date format is m/d/yy h:mm of time.Time type value.
+        You can set numbers format by the SetCellStyle function. If you need to
+        set the specialized date in Excel like January 0, 1900 or February 29,
+        1900, these times can not representation in Go language time.Time data
+        type. Please set the cell value as number 0 or 60, then create and bind
+        the date-time number format style for the cell.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+            value (None | int | str | bool | datetime | date): The cell value to be write
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.SetCellValue.restype = c_char_p
+        err = lib.SetCellValue(
+            self.file_index,
+            sheet.encode(ENCODE),
+            cell.encode(ENCODE),
+            byref(py_value_to_c_interface(value)),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
     def set_sheet_background_from_bytes(
         self, sheet: str, extension: str, picture: bytes
     ) -> Exception | None:
+        """
+        Set background picture by given worksheet name, extension name and image
+        data. Supported image types: BMP, EMF, EMZ, GIF, JPEG, JPG, PNG, SVG,
+        TIF, TIFF, WMF, and WMZ.
+
+        Args:
+            sheet (str): The worksheet name
+            extension (str): The cell reference
+            picture (bytes): The contents buffer of the file
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
         lib.SetSheetBackgroundFromBytes.restype = c_char_p
         err = lib.SetSheetBackgroundFromBytes(
             self.file_index,
@@ -449,7 +748,8 @@ class File:
 
 
 def new_file() -> File:
-    """Create new file by default template.
+    """
+    Create new file by default template.
 
     Returns:
         File: A populated spreadsheet file struct.
@@ -458,8 +758,17 @@ def new_file() -> File:
 
 
 def open_file(filename: str, *opts: Options) -> Tuple[File | None, Exception | None]:
-    """OpenFile take the name of a spreadsheet file and returns a populated
+    """
+    OpenFile take the name of a spreadsheet file and returns a populated
     spreadsheet file struct for it.
+
+    Args:
+        filename (str): The path to the Excel file to open.
+        *opts (Options): Optional parameters for opening the file.
+
+    Returns:
+        Tuple[File | None, Exception | None]: A tuple containing a File object
+        if successful, or None and an Exception if an error occurred.
     """
     lib.OpenFile.restype, options = types_go.OptionsResult, None
     if len(opts) > 0:
