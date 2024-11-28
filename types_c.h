@@ -6,7 +6,7 @@
 // / XLTX files. Supports reading and writing spreadsheet documents generated
 // by Microsoft Excel™ 2007 and later. Supports complex components by high
 // compatibility, and provided streaming API for generating or reading data from
-// a worksheet with huge amounts of data. This library needs Python version 3.7
+// a worksheet with huge amounts of data. This library needs Python version 3.9
 // or later.
 
 #include <stdbool.h>

@@ -6,7 +6,7 @@
 // / XLTX files. Supports reading and writing spreadsheet documents generated
 // by Microsoft Excel™ 2007 and later. Supports complex components by high
 // compatibility, and provided streaming API for generating or reading data from
-// a worksheet with huge amounts of data. This library needs Python version 3.7
+// a worksheet with huge amounts of data. This library needs Python version 3.9
 // or later.
 
 package main
@@ -406,6 +406,42 @@ func Close(idx int) *C.char {
 	}
 	defer files.Delete(idx)
 	if err := f.(*excelize.File).Close(); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+//export CopySheet
+func CopySheet(idx, from, to int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).CopySheet(from, to); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+//export DeleteChart
+func DeleteChart(idx int, sheet, cell *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).DeleteChart(C.GoString(sheet), C.GoString(cell)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+//export DeleteComment
+func DeleteComment(idx int, sheet, cell *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).DeleteComment(C.GoString(sheet), C.GoString(cell)); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(errNil)
