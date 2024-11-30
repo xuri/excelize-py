@@ -413,6 +413,10 @@ func Close(idx int) *C.char {
 	return C.CString(errNil)
 }
 
+// CopySheet provides a function to duplicate a worksheet by gave source and
+// target worksheet index. Note that currently doesn't support duplicate
+// workbooks that contain tables, charts or pictures.
+//
 //export CopySheet
 func CopySheet(idx, from, to int) *C.char {
 	f, ok := files.Load(idx)
@@ -425,6 +429,9 @@ func CopySheet(idx, from, to int) *C.char {
 	return C.CString(errNil)
 }
 
+// DeleteChart provides a function to delete chart in spreadsheet by given
+// worksheet name and cell reference.
+//
 //export DeleteChart
 func DeleteChart(idx int, sheet, cell *C.char) *C.char {
 	f, ok := files.Load(idx)
@@ -437,6 +444,9 @@ func DeleteChart(idx int, sheet, cell *C.char) *C.char {
 	return C.CString(errNil)
 }
 
+// DeleteComment provides the method to delete comment in a sheet by given
+// worksheet name.
+//
 //export DeleteComment
 func DeleteComment(idx int, sheet, cell *C.char) *C.char {
 	f, ok := files.Load(idx)
@@ -449,6 +459,10 @@ func DeleteComment(idx int, sheet, cell *C.char) *C.char {
 	return C.CString(errNil)
 }
 
+// DeletePicture provides a function to delete charts in spreadsheet by given
+// worksheet name and cell reference. Note that the image file won't be
+// deleted from the document currently.
+//
 //export DeletePicture
 func DeletePicture(idx int, sheet, cell *C.char) *C.char {
 	f, ok := files.Load(idx)
@@ -461,6 +475,12 @@ func DeletePicture(idx int, sheet, cell *C.char) *C.char {
 	return C.CString(errNil)
 }
 
+// DeleteSheet provides a function to delete worksheet in a workbook by given
+// worksheet name. Use this method with caution, which will affect changes in
+// references such as formulas, charts, and so on. If there is any referenced
+// value of the deleted worksheet, it will cause a file error when you open
+// it. This function will be invalid when only one worksheet is left.
+//
 //export DeleteSheet
 func DeleteSheet(idx int, sheet *C.char) *C.char {
 	f, ok := files.Load(idx)
@@ -473,6 +493,8 @@ func DeleteSheet(idx int, sheet *C.char) *C.char {
 	return C.CString(errNil)
 }
 
+// DeleteSlicer provides the method to delete a slicer by a given slicer name.
+//
 //export DeleteSlicer
 func DeleteSlicer(idx int, name *C.char) *C.char {
 	f, ok := files.Load(idx)
@@ -483,6 +505,120 @@ func DeleteSlicer(idx int, name *C.char) *C.char {
 		return C.CString(err.Error())
 	}
 	return C.CString(errNil)
+}
+
+// DuplicateRow inserts a copy of specified row (by its Excel row number)
+// below. Use this method with caution, which will affect changes in
+// references such as formulas, charts, and so on. If there is any referenced
+// value of the worksheet, it will cause a file error when you open it. The
+// excelize only partially updates these references currently.
+//
+//export DuplicateRow
+func DuplicateRow(idx int, sheet *C.char, row int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).DuplicateRow(C.GoString(sheet), row); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// DuplicateRowTo inserts a copy of specified row by it Excel number to
+// specified row position moving down exists rows after target position. Use
+// this method with caution, which will affect changes in references such as
+// formulas, charts, and so on. If there is any referenced value of the
+// worksheet, it will cause a file error when you open it. The excelize only
+// partially updates these references currently.
+//
+//export DuplicateRowTo
+func DuplicateRowTo(idx int, sheet *C.char, row, row2 int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).DuplicateRowTo(C.GoString(sheet), row, row2); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// GetCellValue provides a function to get formatted value from cell by given
+// worksheet name and cell reference in spreadsheet. The return value is
+// converted to the `string` data type. If the cell format can be applied to
+// the value of a cell, the applied value will be returned, otherwise the
+// original value will be returned. All cells' values will be the same in a
+// merged range.
+//
+//export GetCellValue
+func GetCellValue(idx int, sheet, cell *C.char, opts *C.struct_Options) C.struct_GetCellValueResult {
+	var options excelize.Options
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetCellValueResult{val: C.CString(""), err: C.CString(errFilePtr)}
+	}
+	if opts != nil {
+		goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.Options{}))
+		if err != nil {
+			return C.struct_GetCellValueResult{val: C.CString(""), err: C.CString(err.Error())}
+		}
+		options = goVal.Elem().Interface().(excelize.Options)
+	}
+	val, err := f.(*excelize.File).GetCellValue(C.GoString(sheet), C.GoString(cell), options)
+	if err != nil {
+		return C.struct_GetCellValueResult{val: C.CString(val), err: C.CString(err.Error())}
+	}
+	return C.struct_GetCellValueResult{val: C.CString(val), err: C.CString(errNil)}
+}
+
+// GetRows return all the rows in a sheet by given worksheet name, returned as
+// a two-dimensional array, where the value of the cell is converted to the
+// string type. If the cell format can be applied to the value of the cell,
+// the applied value will be used, otherwise the original value will be used.
+// GetRows fetched the rows with value or formula cells, the continually blank
+// cells in the tail of each row will be skipped, so the length of each row
+// may be inconsistent.
+//
+//export GetRows
+func GetRows(idx int, sheet *C.char, opts *C.struct_Options) C.struct_GetRowsResult {
+	type Row struct {
+		Cell []string
+	}
+	type GetRowsResult struct {
+		Row []Row
+	}
+	var (
+		options excelize.Options
+		result  GetRowsResult
+	)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetRowsResult{err: C.CString(errFilePtr)}
+	}
+	if opts != nil {
+		goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.Options{}))
+		if err != nil {
+			return C.struct_GetRowsResult{err: C.CString(err.Error())}
+		}
+		options = goVal.Elem().Interface().(excelize.Options)
+	}
+	rows, err := f.(*excelize.File).GetRows(C.GoString(sheet), options)
+	if err != nil {
+		return C.struct_GetRowsResult{err: C.CString(err.Error())}
+	}
+	for _, row := range rows {
+		var r Row
+		r.Cell = append(r.Cell, row...)
+		result.Row = append(result.Row, r)
+	}
+	cVal, err := goValueToC(reflect.ValueOf(result), reflect.ValueOf(&C.struct_GetRowsResult{}))
+	if err != nil {
+		return C.struct_GetRowsResult{err: C.CString(err.Error())}
+	}
+	ret := cVal.Elem().Interface().(C.struct_GetRowsResult)
+	ret.err = C.CString(errNil)
+	return ret
 }
 
 // NewFile provides a function to create new file by default template.
@@ -579,6 +715,11 @@ func SaveAs(idx int, name *C.char, opts *C.struct_Options) *C.char {
 	return C.CString(errNil)
 }
 
+// NewSheet provides the function to create a new sheet by given a worksheet
+// name and returns the index of the sheets in the workbook after it appended.
+// Note that when creating a new workbook, the default worksheet named
+// `Sheet1` will be created.
+//
 //export NewSheet
 func NewSheet(idx int, sheet *C.char) C.struct_NewSheetResult {
 	f, ok := files.Load(idx)
@@ -592,6 +733,9 @@ func NewSheet(idx int, sheet *C.char) C.struct_NewSheetResult {
 	return C.struct_NewSheetResult{idx: C.int(idx), err: C.CString(errNil)}
 }
 
+// NewStyle provides a function to create the style for cells by given options.
+// Note that the color field uses RGB color code.
+//
 //export NewStyle
 func NewStyle(idx int, style *C.struct_Style) C.struct_NewStyleResult {
 	var s excelize.Style
@@ -611,6 +755,11 @@ func NewStyle(idx int, style *C.struct_Style) C.struct_NewStyleResult {
 	return C.struct_NewStyleResult{style: C.int(styleID), err: C.CString(errNil)}
 }
 
+// SetActiveSheet provides a function to set the default active sheet of the
+// workbook by a given index. Note that the active index is different from the
+// ID returned by function GetSheetMap(). It should be greater than or equal
+// to 0 and less than the total worksheet numbers.
+//
 //export SetActiveSheet
 func SetActiveSheet(idx, index int) *C.char {
 	f, ok := files.Load(idx)
@@ -621,6 +770,15 @@ func SetActiveSheet(idx, index int) *C.char {
 	return C.CString(errNil)
 }
 
+// SetCellHyperLink provides a function to set cell hyperlink by given
+// worksheet name and link URL address. LinkType defines three types of
+// hyperlink "External" for website or "Location" for moving to one of cell in
+// this workbook or "None" for remove hyperlink. Maximum limit hyperlinks in a
+// worksheet is 65530. This function is only used to set the hyperlink of the
+// cell and doesn't affect the value of the cell. If you need to set the value
+// of the cell, please use the other functions such as `SetCellStyle` or
+// `SetSheetRow`.
+//
 //export SetCellStyle
 func SetCellStyle(idx int, sheet, topLeftCell, bottomRightCell *C.char, styleID int) *C.char {
 	f, ok := files.Load(idx)
@@ -633,6 +791,15 @@ func SetCellStyle(idx int, sheet, topLeftCell, bottomRightCell *C.char, styleID 
 	return C.CString(errNil)
 }
 
+// SetCellValue provides a function to set the value of a cell. The specified
+// coordinates should not be in the first row of the table, a complex number
+// can be set with string text.
+//
+// You can set numbers format by the SetCellStyle function. If you need to set
+// the specialized date in Excel like January 0, 1900 or February 29, 1900.
+// Please set the cell value as number 0 or 60, then create and bind the
+// date-time number format style for the cell.
+//
 //export SetCellValue
 func SetCellValue(idx int, sheet, cell *C.char, value *C.struct_Interface) *C.char {
 	f, ok := files.Load(idx)
@@ -645,6 +812,8 @@ func SetCellValue(idx int, sheet, cell *C.char, value *C.struct_Interface) *C.ch
 	return C.CString(errNil)
 }
 
+// GetStyle provides a function to get style definition by given style index.
+//
 //export GetStyle
 func GetStyle(idx, styleID int) C.struct_GetStyleResult {
 	f, ok := files.Load(idx)
@@ -662,6 +831,10 @@ func GetStyle(idx, styleID int) C.struct_GetStyleResult {
 	return C.struct_GetStyleResult{style: cVal.Elem().Interface().(C.struct_Style), err: C.CString(errNil)}
 }
 
+// SetSheetBackgroundFromBytes provides a function to set background picture by
+// given worksheet name, extension name and image data. Supported image types:
+// BMP, EMF, EMZ, GIF, JPEG, JPG, PNG, SVG, TIF, TIFF, WMF, and WMZ.
+//
 //export SetSheetBackgroundFromBytes
 func SetSheetBackgroundFromBytes(idx int, sheet, extension *C.char, picture *C.uchar, pictureLen C.int) *C.char {
 	f, ok := files.Load(idx)

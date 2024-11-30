@@ -105,3 +105,13 @@ class Style:
     decimal_places: Optional[int] = None
     custom_num_fmt: Optional[str] = None
     neg_red: bool = False
+
+
+@dataclass
+class Row:
+    cell: Optional[list[str]] = None
+
+
+@dataclass
+class GetRowsResult:
+    row: Optional[list[Row]] = None

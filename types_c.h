@@ -96,6 +96,22 @@ struct OptionsResult {
     char* err;
 };
 
+struct GetCellValueResult {
+    char* val;
+    char* err;
+};
+
+struct Row {
+	int CellLen;
+	char** Cell;
+};
+
+struct GetRowsResult {
+    int RowLen;
+    struct Row *Row;
+    char* err;
+};
+
 struct NewSheetResult {
     int idx;
     char* err;

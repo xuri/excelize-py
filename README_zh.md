@@ -3,7 +3,7 @@
 <p align="center"><img width="500" src="https://github.com/xuri/excelize-py/raw/main/excelize-py.svg" alt="excelize-py logo"></p>
 
 <p align="center">
-    <a href="https://pypi.org/project/excelize"><img src="https://img.shields.io/pypi/v/excelize.svg" alt="Pipy version"></a>
+    <a href="https://pypi.org/project/excelize"><img src="https://img.shields.io/pypi/v/excelize?color=%23007ec6" alt="Pipy version"></a>
     <a href="https://github.com/xuri/excelize-py/actions/workflows/build.yml"><img src="https://github.com/xuri/excelize-py/actions/workflows/build.yml/badge.svg" alt="Build Status"></a>
     <a href="https://codecov.io/gh/xuri/excelize-py"><img src="https://codecov.io/gh/xuri/excelize-py/branch/main/graph/badge.svg" alt="Code Coverage"></a>
     <a href="https://opensource.org/licenses/BSD-3-Clause"><img src="https://img.shields.io/badge/license-bsd-orange.svg" alt="Licenses"></a>
@@ -17,6 +17,7 @@ excelize-py 是 Go 语言 [Excelize](https://github.com/xuri/excelize) 基础库
 操作系统 | CPU 架构
 ---|---
 Windows | amd64
+Windows | arm64
 Darwin | amd64
 Darwin | arm64
 Linux | amd64
@@ -42,7 +43,6 @@ f = excelize.new_file()
 index, err = f.new_sheet("Sheet2")
 if err is not None:
     print(err)
-    exit()
 # 设置单元格的值
 f.set_cell_value("Sheet2", "A2", "Hello world.")
 f.set_cell_value("Sheet1", "B2", 100)
@@ -50,13 +50,41 @@ f.set_cell_value("Sheet1", "B2", 100)
 f.set_active_sheet(index)
 # 根据指定路径保存文件
 err = f.save_as("Book1.xlsx")
-if err is not None: {
+if err is not None:
     print(err)
-}
 err = f.close()
-if err is not None: {
+if err is not None:
     print(err)
-}
+```
+
+### 读取 Excel 文档
+
+下面是读取 Excel 文档的例子：
+
+```python
+import excelize
+
+f, err = excelize.open_file("Book1.xlsx")
+if err is not None:
+    print(err)
+    exit()
+# 获取工作表中指定单元格的值
+cell, err = f.get_cell_value("Sheet1", "B2")
+if err is not None:
+    print(err)
+print(cell)
+# 获取 Sheet1 上所有单元格
+rows, err = f.get_rows("Sheet1")
+if err is not None:
+    print(err)
+for row in rows:
+    for cell in row:
+        print(f"{cell}\t", end="")
+    print()
+# 关闭工作簿
+err = f.close()
+if err is not None:
+    print(err)
 ```
 
 ## 社区合作

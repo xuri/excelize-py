@@ -3,7 +3,7 @@
 <p align="center"><img width="500" src="https://github.com/xuri/excelize-py/raw/main/excelize-py.svg" alt="excelize-py logo"></p>
 
 <p align="center">
-    <a href="https://pypi.org/project/excelize"><img src="https://img.shields.io/pypi/v/excelize.svg" alt="Pipy version"></a>
+    <a href="https://pypi.org/project/excelize"><img src="https://img.shields.io/pypi/v/excelize?color=%23007ec6" alt="Pipy version"></a>
     <a href="https://github.com/xuri/excelize-py/actions/workflows/build.yml"><img src="https://github.com/xuri/excelize-py/actions/workflows/build.yml/badge.svg" alt="Build Status"></a>
     <a href="https://codecov.io/gh/xuri/excelize-py"><img src="https://codecov.io/gh/xuri/excelize-py/branch/main/graph/badge.svg" alt="Code Coverage"></a>
     <a href="https://opensource.org/licenses/BSD-3-Clause"><img src="https://img.shields.io/badge/license-bsd-orange.svg" alt="Licenses"></a>
@@ -43,7 +43,6 @@ f = excelize.new_file()
 index, err = f.new_sheet("Sheet2")
 if err is not None:
     print(err)
-    exit()
 # Set value of a cell.
 f.set_cell_value("Sheet2", "A2", "Hello world.")
 f.set_cell_value("Sheet1", "B2", 100)
@@ -51,13 +50,41 @@ f.set_cell_value("Sheet1", "B2", 100)
 f.set_active_sheet(index)
 # Save spreadsheet by the given path.
 err = f.save_as("Book1.xlsx")
-if err is not None: {
+if err is not None:
     print(err)
-}
 err = f.close()
-if err is not None: {
+if err is not None:
     print(err)
-}
+```
+
+### Reading spreadsheet
+
+The following constitutes the bare to read a spreadsheet document.
+
+```python
+import excelize
+
+f, err = excelize.open_file("Book1.xlsx")
+if err is not None:
+    print(err)
+    exit()
+# Get value from cell by given worksheet name and cell reference.
+cell, err = f.get_cell_value("Sheet1", "B2")
+if err is not None:
+    print(err)
+print(cell)
+# Get all the rows in the Sheet1.
+rows, err = f.get_rows("Sheet1")
+if err is not None:
+    print(err)
+for row in rows:
+    for cell in row:
+        print(f"{cell}\t", end="")
+    print()
+# Close the spreadsheet.
+err = f.close()
+if err is not None:
+    print(err)
 ```
 
 ## Contributing

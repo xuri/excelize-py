@@ -116,28 +116,50 @@ class _Style(Structure):
     ]
 
 
-class NewSheetResult(Structure):
+class _GetCellValueResult(Structure):
+    _fields_ = [
+        ("val", c_char_p),
+        ("err", c_char_p),
+    ]
+
+
+class _Row(Structure):
+    _fields_ = [
+        ("CellLen", c_int),
+        ("Cell", POINTER(POINTER(c_char))),
+    ]
+
+
+class _GetRowsResult(Structure):
+    _fields_ = [
+        ("RowLen", c_int),
+        ("Row", POINTER(_Row)),
+        ("err", c_char_p),
+    ]
+
+
+class _NewSheetResult(Structure):
     _fields_ = [
         ("idx", c_int),
         ("err", c_char_p),
     ]
 
 
-class NewStyleResult(Structure):
+class _NewStyleResult(Structure):
     _fields_ = [
         ("style", c_int),
         ("err", c_char_p),
     ]
 
 
-class GetStyleResult(Structure):
+class _GetStyleResult(Structure):
     _fields_ = [
         ("style", _Style),
         ("err", c_char_p),
     ]
 
 
-class OptionsResult(Structure):
+class _OptionsResult(Structure):
     _fields_ = [
         ("idx", c_int),
         ("err", c_char_p),

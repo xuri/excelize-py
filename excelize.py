@@ -71,7 +71,7 @@ def load_lib():
 
 lib = CDLL(os.path.join(os.path.dirname(__file__), load_lib()))
 ENCODE = "utf-8"
-__version__ = "0.0.1"
+__version__ = "0.0.2"
 uppercase_words = ["xml"]
 
 
@@ -452,16 +452,15 @@ class File:
             Exception | None: Returns None if no error occurred,
             otherwise returns an Exception with the message.
         """
-        err, lib.SaveAs.restype = None, c_char_p
-        if len(opts) > 0:
-            options = py_value_to_c(opts[0], types_go._Options())
-            err = lib.SaveAs(
-                self.file_index, filename.encode(ENCODE), byref(options)
-            ).decode(ENCODE)
-            return None if err == "" else err
-        err = lib.SaveAs(
-            self.file_index, filename.encode(ENCODE), POINTER(types_go._Options)()
-        ).decode(ENCODE)
+        lib.SaveAs.restype = c_char_p
+        options = (
+            byref(py_value_to_c(opts[0], types_go._Options()))
+            if opts
+            else POINTER(types_go._Options)()
+        )
+        err = lib.SaveAs(self.file_index, filename.encode(ENCODE), options).decode(
+            ENCODE
+        )
         return None if err == "" else Exception(err)
 
     def close(self) -> Exception | None:
@@ -582,6 +581,122 @@ class File:
         err = lib.DeleteSlicer(self.file_index, name.encode(ENCODE)).decode(ENCODE)
         return None if err == "" else Exception(err)
 
+    def duplicate_row(self, sheet: str, row: int) -> Exception | None:
+        """
+        Inserts a copy of specified row (by its Excel row number) below. Use
+        this method with caution, which will affect changes in references such
+        as formulas, charts, and so on. If there is any referenced value of the
+        worksheet, it will cause a file error when you open it. The excelize
+        only partially updates these references currently.
+
+        Args:
+            sheet (str): The worksheet name
+            row (int): The row number
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        err, lib.DuplicateRow.restype = None, c_char_p
+        err = lib.DuplicateRow(self.file_index, sheet.encode(ENCODE), row).decode(
+            ENCODE
+        )
+        return None if err == "" else Exception(err)
+
+    def duplicate_row_to(self, sheet: str, row: int, row2: int) -> Exception | None:
+        """
+        Inserts a copy of specified row by it Excel number to specified row
+        position moving down exists rows after target position. Use this method
+        with caution, which will affect changes in references such as formulas,
+        charts, and so on. If there is any referenced value of the worksheet, it
+        will cause a file error when you open it. The excelize only partially
+        updates these references currently.
+
+        Args:
+            sheet (str): The worksheet name
+            row (int): The row number
+            row2 (int): The row number
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        err, lib.DuplicateRowTo.restype = None, c_char_p
+        err = lib.DuplicateRowTo(
+            self.file_index, sheet.encode(ENCODE), row, row2
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def get_cell_value(
+        self, sheet: str, cell: str, *opts: Options
+    ) -> Tuple[str, Exception | None]:
+        """
+        Get formatted value from cell by given worksheet name and cell reference
+        in spreadsheet. The return value is converted to the 'string' data type.
+        This function is concurrency safe. If the cell format can be applied to
+        the value of a cell, the applied value will be returned, otherwise the
+        original value will be returned. All cells' values will be the same in a
+        merged range.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+            *opts (Options): Optional parameters for get cell value
+
+        Returns:
+            Tuple[str, Exception | None]: A tuple containing the cell value as a
+            string and an exception if an error occurred, otherwise None.
+        """
+        lib.GetCellValue.restype = types_go._GetCellValueResult
+        options = (
+            byref(py_value_to_c(opts[0], types_go._Options()))
+            if opts
+            else POINTER(types_go._Options)()
+        )
+        res = lib.GetCellValue(
+            self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE), options
+        )
+        err = res.err.decode(ENCODE)
+        return res.val.decode(ENCODE), None if err == "" else Exception(err)
+
+    def get_rows(
+        self, sheet: str, *opts: Options
+    ) -> Tuple[list[list[str]], Exception | None]:
+        """
+        Return all the rows in a sheet by given worksheet name, returned as a
+        two-dimensional array, where the value of the cell is converted to the
+        string type. If the cell format can be applied to the value of the cell,
+        the applied value will be used, otherwise the original value will be
+        used. GetRows fetched the rows with value or formula cells, the
+        continually blank cells in the tail of each row will be skipped, so the
+        length of each row may be inconsistent.
+
+        Args:
+            sheet (str): The worksheet name
+            *opts (Options): Optional parameters for get rows
+
+        Returns:
+            Tuple[str, Exception | None]: A tuple containing the cell value as a
+            string and an exception if an error occurred, otherwise None.
+        """
+        lib.GetRows.restype = types_go._GetRowsResult
+        rows = []
+        options = (
+            byref(py_value_to_c(opts[0], types_go._Options()))
+            if opts
+            else POINTER(types_go._Options)()
+        )
+        res = lib.GetRows(self.file_index, sheet.encode(ENCODE), options)
+        err = res.err.decode(ENCODE)
+        result = c_value_to_py(res, GetRowsResult()).row
+
+        if result:
+            for row in result:
+                if row.cell:
+                    rows.append([cell for cell in row.cell])
+
+        return rows, None if err == "" else Exception(err)
+
     def new_sheet(self, sheet: str) -> Tuple[int, Exception | None]:
         """
         Create a new sheet by given a worksheet name and returns the index of
@@ -595,7 +710,7 @@ class File:
             Tuple[int, Exception | None]: A tuple containing the index of the
             new sheet and an Exception if an error occurred, otherwise None.
         """
-        lib.NewSheet.restype = types_go.NewSheetResult
+        lib.NewSheet.restype = types_go._NewSheetResult
         res = lib.NewSheet(self.file_index, sheet.encode(ENCODE))
         err = res.err.decode(ENCODE)
         return res.idx, None if err == "" else Exception(err)
@@ -614,7 +729,7 @@ class File:
             Tuple[int, Exception | None]: A tuple containing the style index
             and an exception if any error occurs.
         """
-        lib.NewStyle.restype = types_go.NewStyleResult
+        lib.NewStyle.restype = types_go._NewStyleResult
         options = py_value_to_c(style, types_go._Style())
         res = lib.NewStyle(self.file_index, byref(options))
         err = res.err.decode(ENCODE)
@@ -632,7 +747,7 @@ class File:
             object if found, otherwise None, and an Exception object if an error
             occurred, otherwise None.
         """
-        lib.GetStyle.restype = types_go.GetStyleResult
+        lib.GetStyle.restype = types_go._GetStyleResult
         res = lib.GetStyle(self.file_index, c_int(style_id))
         err = res.err.decode(ENCODE)
         if err == "":
@@ -770,7 +885,7 @@ def open_file(filename: str, *opts: Options) -> Tuple[File | None, Exception | N
         Tuple[File | None, Exception | None]: A tuple containing a File object
         if successful, or None and an Exception if an error occurred.
     """
-    lib.OpenFile.restype, options = types_go.OptionsResult, None
+    lib.OpenFile.restype, options = types_go._OptionsResult, None
     if len(opts) > 0:
         options = byref(py_value_to_c(opts[0], types_go._Options()))
     res = lib.OpenFile(filename.encode(ENCODE), options)

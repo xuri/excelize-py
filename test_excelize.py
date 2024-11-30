@@ -133,12 +133,34 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.set_cell_value("Sheet1", "A4", 100))
         self.assertIsNone(f.set_cell_value("Sheet1", "A5", 123.45))
         self.assertIsNone(f.set_cell_value("Sheet1", "A6", True))
-        self.assertIsNone(f.set_cell_value("Sheet1", "A7", datetime.datetime.now()))
-        self.assertIsNone(f.set_cell_value("Sheet1", "A8", datetime.date(2024, 10, 15)))
+        self.assertIsNone(
+            f.set_cell_value("Sheet1", "A7", datetime.datetime(2016, 8, 30, 11, 51, 0))
+        )
+        self.assertIsNone(f.set_cell_value("Sheet1", "A8", datetime.date(2016, 8, 30)))
         self.assertEqual(
             f.set_cell_value("SheetN", "A9", None).__str__(),
             "sheet SheetN does not exist",
         )
+        val, err = f.get_cell_value("Sheet1", "A2")
+        self.assertEqual("", val)
+        self.assertIsNone(err)
+
+        val, err = f.get_cell_value("Sheet1", "A2")
+        self.assertEqual("", val)
+        self.assertIsNone(err)
+
+        val, err = f.get_cell_value("Sheet1", "A3")
+        self.assertEqual("Hello", val)
+        self.assertIsNone(err)
+
+        val, err = f.get_cell_value(
+            "Sheet1", "A4", excelize.Options(raw_cell_value=True)
+        )
+        self.assertEqual("100", val)
+        self.assertIsNone(err)
+
+        self.assertIsNone(f.duplicate_row("Sheet1", 9))
+        self.assertIsNone(f.duplicate_row_to("Sheet1", 10, 10))
 
         idx, err = f.new_sheet("Sheet2")
         self.assertEqual(idx, 1)
@@ -175,6 +197,33 @@ class TestExcelize(unittest.TestCase):
         )
 
         self.assertEqual(f.delete_slicer("x").__str__(), "slicer x does not exist")
+
+        rows, err = f.get_rows("Sheet1")
+        self.assertIsNone(err)
+        self.assertEqual(
+            rows,
+            [
+                ["Hello"],
+                ["100"],
+                ["123.45"],
+                ["TRUE"],
+                ["8/30/16 11:51"],
+                ["08-30-16"],
+            ],
+        )
+        rows, err = f.get_rows("Sheet1", excelize.Options(raw_cell_value=True))
+        self.assertIsNone(err)
+        self.assertEqual(
+            rows,
+            [
+                ["Hello"],
+                ["100"],
+                ["123.45"],
+                ["1"],
+                ["42612.49375"],
+                ["42612"],
+            ],
+        )
 
         self.assertIsNone(f.save())
         self.assertIsNone(f.save(excelize.Options(password="")))
