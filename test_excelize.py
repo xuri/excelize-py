@@ -229,6 +229,21 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.save(excelize.Options(password="")))
         self.assertIsNone(f.close())
 
+    def test_add_chart(self):
+        f = excelize.new_file()
+        for idx, row in enumerate(
+            [
+                [None, "Apple", "Orange", "Pear"],
+                ["Small", 2, 3, 3],
+                ["Normal", 5, 2, 4],
+                ["Large", 6, 7, 8],
+            ]
+        ):
+            cell, err = excelize.coordinates_to_cell_name(1, idx + 1, False)
+            self.assertIsNone(err)
+            self.assertIsNone(f.set_sheet_row("Sheet1", cell, row))
+        self.assertIsNone(f.save_as("TestAddChart.xlsx"))
+
     def test_type_convert(self):
         class _T2(Structure):
             _fields_ = [

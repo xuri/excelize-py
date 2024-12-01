@@ -91,6 +91,11 @@ struct Style {
 	bool NegRed;
 };
 
+struct CoordinatesToCellNameResult {
+    char* cell;
+    char* err;
+};
+
 struct OptionsResult {
 	int idx;
     char* err;

@@ -116,6 +116,13 @@ class _Style(Structure):
     ]
 
 
+class _CoordinatesToCellNameResult(Structure):
+    _fields_ = [
+        ("cell", c_char_p),
+        ("err", c_char_p),
+    ]
+
+
 class _GetCellValueResult(Structure):
     _fields_ = [
         ("val", c_char_p),

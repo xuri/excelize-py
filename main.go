@@ -398,6 +398,18 @@ func cInterfaceToGo(val C.struct_Interface) interface{} {
 	}
 }
 
+// CoordinatesToCellName converts [X, Y] coordinates to alpha-numeric cell name
+// or returns an error.
+//
+//export CoordinatesToCellName
+func CoordinatesToCellName(col, row int, abs bool) C.struct_CoordinatesToCellNameResult {
+	cell, err := excelize.CoordinatesToCellName(col, row, abs)
+	if err != nil {
+		return C.struct_CoordinatesToCellNameResult{cell: C.CString(cell), err: C.CString(err.Error())}
+	}
+	return C.struct_CoordinatesToCellNameResult{cell: C.CString(cell), err: C.CString(errNil)}
+}
+
 // Close closes and cleanup the open temporary file for the spreadsheet.
 //
 //export Close
@@ -621,6 +633,25 @@ func GetRows(idx int, sheet *C.char, opts *C.struct_Options) C.struct_GetRowsRes
 	return ret
 }
 
+// GetStyle provides a function to get style definition by given style index.
+//
+//export GetStyle
+func GetStyle(idx, styleID int) C.struct_GetStyleResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetStyleResult{err: C.CString(errFilePtr)}
+	}
+	style, err := f.(*excelize.File).GetStyle(styleID)
+	if err != nil {
+		return C.struct_GetStyleResult{err: C.CString(err.Error())}
+	}
+	cVal, err := goValueToC(reflect.ValueOf(*style), reflect.ValueOf(&C.struct_Style{}))
+	if err != nil {
+		return C.struct_GetStyleResult{err: C.CString(err.Error())}
+	}
+	return C.struct_GetStyleResult{style: cVal.Elem().Interface().(C.struct_Style), err: C.CString(errNil)}
+}
+
 // NewFile provides a function to create new file by default template.
 //
 //export NewFile
@@ -633,6 +664,46 @@ func NewFile() int {
 	idx++
 	files.Store(idx, f)
 	return idx
+}
+
+// NewSheet provides the function to create a new sheet by given a worksheet
+// name and returns the index of the sheets in the workbook after it appended.
+// Note that when creating a new workbook, the default worksheet named
+// `Sheet1` will be created.
+//
+//export NewSheet
+func NewSheet(idx int, sheet *C.char) C.struct_NewSheetResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_NewSheetResult{idx: C.int(-1), err: C.CString(errFilePtr)}
+	}
+	idx, err := f.(*excelize.File).NewSheet(C.GoString(sheet))
+	if err != nil {
+		return C.struct_NewSheetResult{idx: C.int(idx), err: C.CString(err.Error())}
+	}
+	return C.struct_NewSheetResult{idx: C.int(idx), err: C.CString(errNil)}
+}
+
+// NewStyle provides a function to create the style for cells by given options.
+// Note that the color field uses RGB color code.
+//
+//export NewStyle
+func NewStyle(idx int, style *C.struct_Style) C.struct_NewStyleResult {
+	var s excelize.Style
+	goVal, err := cValueToGo(reflect.ValueOf(*style), reflect.TypeOf(excelize.Style{}))
+	if err != nil {
+		return C.struct_NewStyleResult{style: C.int(0), err: C.CString(err.Error())}
+	}
+	s = goVal.Elem().Interface().(excelize.Style)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_NewStyleResult{style: C.int(0), err: C.CString(errFilePtr)}
+	}
+	styleID, err := f.(*excelize.File).NewStyle(&s)
+	if err != nil {
+		return C.struct_NewStyleResult{style: C.int(styleID), err: C.CString(err.Error())}
+	}
+	return C.struct_NewStyleResult{style: C.int(styleID), err: C.CString(errNil)}
 }
 
 // OpenFile take the name of a spreadsheet file and returns a populated
@@ -715,46 +786,6 @@ func SaveAs(idx int, name *C.char, opts *C.struct_Options) *C.char {
 	return C.CString(errNil)
 }
 
-// NewSheet provides the function to create a new sheet by given a worksheet
-// name and returns the index of the sheets in the workbook after it appended.
-// Note that when creating a new workbook, the default worksheet named
-// `Sheet1` will be created.
-//
-//export NewSheet
-func NewSheet(idx int, sheet *C.char) C.struct_NewSheetResult {
-	f, ok := files.Load(idx)
-	if !ok {
-		return C.struct_NewSheetResult{idx: C.int(-1), err: C.CString(errFilePtr)}
-	}
-	idx, err := f.(*excelize.File).NewSheet(C.GoString(sheet))
-	if err != nil {
-		return C.struct_NewSheetResult{idx: C.int(idx), err: C.CString(err.Error())}
-	}
-	return C.struct_NewSheetResult{idx: C.int(idx), err: C.CString(errNil)}
-}
-
-// NewStyle provides a function to create the style for cells by given options.
-// Note that the color field uses RGB color code.
-//
-//export NewStyle
-func NewStyle(idx int, style *C.struct_Style) C.struct_NewStyleResult {
-	var s excelize.Style
-	goVal, err := cValueToGo(reflect.ValueOf(*style), reflect.TypeOf(excelize.Style{}))
-	if err != nil {
-		return C.struct_NewStyleResult{style: C.int(0), err: C.CString(err.Error())}
-	}
-	s = goVal.Elem().Interface().(excelize.Style)
-	f, ok := files.Load(idx)
-	if !ok {
-		return C.struct_NewStyleResult{style: C.int(0), err: C.CString(errFilePtr)}
-	}
-	styleID, err := f.(*excelize.File).NewStyle(&s)
-	if err != nil {
-		return C.struct_NewStyleResult{style: C.int(styleID), err: C.CString(err.Error())}
-	}
-	return C.struct_NewStyleResult{style: C.int(styleID), err: C.CString(errNil)}
-}
-
 // SetActiveSheet provides a function to set the default active sheet of the
 // workbook by a given index. Note that the active index is different from the
 // ID returned by function GetSheetMap(). It should be greater than or equal
@@ -812,25 +843,6 @@ func SetCellValue(idx int, sheet, cell *C.char, value *C.struct_Interface) *C.ch
 	return C.CString(errNil)
 }
 
-// GetStyle provides a function to get style definition by given style index.
-//
-//export GetStyle
-func GetStyle(idx, styleID int) C.struct_GetStyleResult {
-	f, ok := files.Load(idx)
-	if !ok {
-		return C.struct_GetStyleResult{err: C.CString(errFilePtr)}
-	}
-	style, err := f.(*excelize.File).GetStyle(styleID)
-	if err != nil {
-		return C.struct_GetStyleResult{err: C.CString(err.Error())}
-	}
-	cVal, err := goValueToC(reflect.ValueOf(*style), reflect.ValueOf(&C.struct_Style{}))
-	if err != nil {
-		return C.struct_GetStyleResult{err: C.CString(err.Error())}
-	}
-	return C.struct_GetStyleResult{style: cVal.Elem().Interface().(C.struct_Style), err: C.CString(errNil)}
-}
-
 // SetSheetBackgroundFromBytes provides a function to set background picture by
 // given worksheet name, extension name and image data. Supported image types:
 // BMP, EMF, EMZ, GIF, JPEG, JPG, PNG, SVG, TIF, TIFF, WMF, and WMZ.
@@ -843,6 +855,26 @@ func SetSheetBackgroundFromBytes(idx int, sheet, extension *C.char, picture *C.u
 	}
 	buf := C.GoBytes(unsafe.Pointer(picture), pictureLen)
 	if err := f.(*excelize.File).SetSheetBackgroundFromBytes(C.GoString(sheet), C.GoString(extension), buf); err != nil {
+		C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetSheetRow writes an array to row by given worksheet name, starting
+// cell reference and a pointer to array type 'slice'. This function is
+// concurrency safe.
+//
+//export SetSheetRow
+func SetSheetRow(idx int, sheet, cell *C.char, row *C.struct_Interface, length int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	cells := make([]interface{}, length)
+	for i, val := range unsafe.Slice(row, length) {
+		cells[i] = cInterfaceToGo(val)
+	}
+	if err := f.(*excelize.File).SetSheetRow(C.GoString(sheet), C.GoString(cell), &cells); err != nil {
 		C.CString(err.Error())
 	}
 	return C.CString(errNil)
