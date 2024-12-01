@@ -16,17 +16,18 @@ from typing import Tuple, get_args, get_origin
 import types_go
 from types_py import *
 from ctypes import (
-    CDLL,
+    byref,
+    c_bool,
+    c_char_p,
     c_char,
     c_int,
-    c_char_p,
-    POINTER,
-    byref,
     c_ubyte,
-    string_at,
     cast,
+    CDLL,
     create_string_buffer,
+    POINTER,
     pointer,
+    string_at,
 )
 import os
 import platform
@@ -844,7 +845,7 @@ class File:
 
         Args:
             sheet (str): The worksheet name
-            extension (str): The cell reference
+            extension (str): The image extension
             picture (bytes): The contents buffer of the file
 
         Returns:
@@ -860,6 +861,64 @@ class File:
             len(picture),
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
+
+    def set_sheet_row(
+        self,
+        sheet: str,
+        cell: str,
+        values: list[None | int | str | bool | datetime | date],
+    ) -> Exception | None:
+        """
+        Writes cells to row by given worksheet name, starting cell reference and
+        cell values list.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+            values (bytes): The cell values
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.SetSheetRow.restype = c_char_p
+        vals = (types_go._Interface * len(values))()
+        for i, value in enumerate(values):
+            vals[i] = py_value_to_c_interface(value)
+        err = lib.SetSheetRow(
+            self.file_index,
+            sheet.encode(ENCODE),
+            cell.encode(ENCODE),
+            byref(vals),
+            len(vals),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+
+def coordinates_to_cell_name(
+    col: int, row: int, *abs: bool
+) -> Tuple[str, Exception | None]:
+    """
+    Converts [X, Y] coordinates to alpha-numeric cell name or returns an error.
+
+    Args:
+        col (int): The column number.
+        row (int): The row number.
+        *abs (bool): Optional boolean indicating whether to use absolute
+        references. If provided and True, the cell name will use absolute
+        references (e.g., $A$1).
+
+    Returns:
+        Tuple[str, Exception | None]: A tuple containing the cell name as a
+        string and an Exception if an error occurred, otherwise None.
+    """
+    lib.CoordinatesToCellName.restype = types_go._CoordinatesToCellNameResult
+    options = False
+    if len(abs) > 0:
+        options = abs[0]
+    res = lib.CoordinatesToCellName(col, row, c_bool(options))
+    err = res.err.decode(ENCODE)
+    return res.cell.decode(ENCODE), None if err == "" else Exception(err)
 
 
 def new_file() -> File:
