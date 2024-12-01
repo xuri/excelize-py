@@ -23,6 +23,64 @@ class CultureName(IntEnum):
     CultureNameZhTW = 5
 
 
+class ChartType(IntEnum):
+    Area = 0
+    AreaStacked = 1
+    AreaPercentStacked = 2
+    Area3D = 3
+    Area3DStacked = 4
+    Area3DPercentStacked = 5
+    Bar = 6
+    BarStacked = 7
+    BarPercentStacked = 8
+    Bar3DClustered = 9
+    Bar3DStacked = 10
+    Bar3DPercentStacked = 11
+    Bar3DConeClustered = 12
+    Bar3DConeStacked = 13
+    Bar3DConePercentStacked = 14
+    Bar3DPyramidClustered = 15
+    Bar3DPyramidStacked = 16
+    Bar3DPyramidPercentStacked = 17
+    Bar3DCylinderClustered = 18
+    Bar3DCylinderStacked = 19
+    Bar3DCylinderPercentStacked = 20
+    Col = 21
+    ColStacked = 22
+    ColPercentStacked = 23
+    Col3D = 24
+    Col3DClustered = 25
+    Col3DStacked = 26
+    Col3DPercentStacked = 27
+    Col3DCone = 28
+    Col3DConeClustered = 29
+    Col3DConeStacked = 30
+    Col3DConePercentStacked = 31
+    Col3DPyramid = 32
+    Col3DPyramidClustered = 33
+    Col3DPyramidStacked = 34
+    Col3DPyramidPercentStacked = 35
+    Col3DCylinder = 36
+    Col3DCylinderClustered = 37
+    Col3DCylinderStacked = 38
+    Col3DCylinderPercentStacked = 39
+    Doughnut = 40
+    Line = 41
+    Line3D = 42
+    Pie = 43
+    Pie3D = 44
+    PieOfPie = 45
+    BarOfPie = 46
+    Radar = 47
+    Scatter = 48
+    Surface3D = 49
+    WireframeSurface3D = 50
+    Contour = 51
+    WireframeContour = 52
+    Bubble = 53
+    Bubble3D = 54
+
+
 @dataclass
 class Interface:
     type: int = 0
@@ -115,3 +173,121 @@ class Row:
 @dataclass
 class GetRowsResult:
     row: Optional[list[Row]] = None
+
+
+@dataclass
+class GraphicOptions:
+    alt_text: str = ""
+    print_object: Optional[bool] = None
+    locked: Optional[bool] = None
+    lock_aspect_ratio: bool = False
+    auto_fit: bool = False
+    auto_fit_ignore_aspect: bool = False
+    offset_x: int = 0
+    offset_y: int = 0
+    scale_x: float = 0
+    scale_y: float = 0
+    hyperlink: str = ""
+    hyperlink_type: str = ""
+    positioning: str = ""
+
+
+@dataclass
+class RichTextRun:
+    font: Optional[Font] = None
+    text: str = ""
+
+
+@dataclass
+class ChartNumFmt:
+    custom_num_fmt: str = ""
+    source_linked: bool = False
+
+
+@dataclass
+class ChartAxis:
+    none: bool = False
+    major_grid_lines: bool = False
+    minor_grid_lines: bool = False
+    major_unit: float = 0
+    tick_label_position: int = 0
+    tick_label_skip: int = 0
+    reverse_order: bool = False
+    secondary: bool = False
+    maximum: Optional[float] = None
+    minimum: Optional[float] = None
+    alignment: Alignment = Alignment
+    font: Font = Font
+    log_base: float = 0
+    num_fmt: ChartNumFmt = ChartNumFmt
+    title: Optional[RichTextRun] = None
+
+
+@dataclass
+class ChartDimension:
+    width: int = 0
+    height: int = 0
+
+
+@dataclass
+class ChartPlotArea:
+    second_plot_values: int = 0
+    show_bubble_size: bool = False
+    show_cat_name: bool = False
+    show_leader_lines: bool = False
+    show_percent: bool = False
+    show_ser_name: bool = False
+    show_val: bool = False
+    fill: Fill = Fill
+    num_fmt: ChartNumFmt = ChartNumFmt
+
+
+@dataclass
+class ChartLegend:
+    position: str = ""
+    show_legend_key: bool = False
+
+
+@dataclass
+class ChartMarker:
+    fill: Fill = Fill
+    symbol: str = ""
+    size: int = 0
+
+
+@dataclass
+class ChartLine:
+    type: int = 0
+    smooth: bool = False
+    width: float = 0
+
+
+@dataclass
+class ChartSeries:
+    name: str = ""
+    categories: str = ""
+    values: str = ""
+    sizes: str = ""
+    fill: Fill = Fill
+    line: ChartLine = ChartLine
+    marker: ChartMarker = ChartMarker
+    data_label_position: int = 0
+
+
+@dataclass
+class Chart:
+    type: ChartType = ChartType.Area
+    series: Optional[list[ChartSeries]] = None
+    format: GraphicOptions = GraphicOptions
+    dimension: ChartDimension = ChartDimension
+    legend: ChartLegend = ChartLegend
+    title: Optional[list[RichTextRun]] = None
+    vary_colors: Optional[bool] = None
+    x_axis: ChartAxis = ChartAxis
+    y_axis: ChartAxis = ChartAxis
+    plot_area: ChartPlotArea = ChartPlotArea
+    fill: Fill = Fill
+    border: ChartLine = ChartLine
+    show_blanks_as: str = ""
+    bubble_size: int = 0
+    hole_size: int = 0

@@ -242,6 +242,57 @@ class TestExcelize(unittest.TestCase):
             cell, err = excelize.coordinates_to_cell_name(1, idx + 1, False)
             self.assertIsNone(err)
             self.assertIsNone(f.set_sheet_row("Sheet1", cell, row))
+            self.assertIsNone(
+                f.add_chart(
+                    "Sheet1",
+                    "E1",
+                    chart=excelize.Chart(
+                        type=excelize.ChartType.Col,
+                        series=[
+                            excelize.ChartSeries(
+                                name="Sheet1!$A$2",
+                                categories="Sheet1!$B$1:$D$1",
+                                values="Sheet1!$B$2:$D$2",
+                            ),
+                            excelize.ChartSeries(
+                                name="Sheet1!$A$3",
+                                categories="Sheet1!$B$1:$D$1",
+                                values="Sheet1!$B$3:$D$3",
+                            ),
+                            excelize.ChartSeries(
+                                name="Sheet1!$A$4",
+                                categories="Sheet1!$B$1:$D$1",
+                                values="Sheet1!$B$4:$D$4",
+                            ),
+                        ],
+                        title=[
+                            excelize.RichTextRun(
+                                text="Fruit 3D Clustered Column Chart",
+                            )
+                        ],
+                    ),
+                    combo=excelize.Chart(
+                        type=excelize.ChartType.Line,
+                        series=[
+                            excelize.ChartSeries(
+                                name="Sheet1!$A$2",
+                                categories="Sheet1!$B$1:$D$1",
+                                values="Sheet1!$B$2:$D$2",
+                            ),
+                            excelize.ChartSeries(
+                                name="Sheet1!$A$3",
+                                categories="Sheet1!$B$1:$D$1",
+                                values="Sheet1!$B$3:$D$3",
+                            ),
+                            excelize.ChartSeries(
+                                name="Sheet1!$A$4",
+                                categories="Sheet1!$B$1:$D$1",
+                                values="Sheet1!$B$4:$D$4",
+                            ),
+                        ],
+                    ),
+                )
+            )
         self.assertIsNone(f.save_as("TestAddChart.xlsx"))
 
     def test_type_convert(self):
