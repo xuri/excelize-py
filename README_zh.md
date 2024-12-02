@@ -142,6 +142,46 @@ if err:
     print(err)
 ```
 
+### 向 Excel 文档中插入图片
+
+```python
+import excelize
+
+f, err = excelize.open_file("Book1.xlsx")
+if err:
+    print(err)
+    exit()
+# 插入图片
+err = f.add_picture("Sheet1", "A2", "image.png", None)
+if err:
+    print(err)
+# 在工作表中插入图片，并设置图片的缩放比例
+err = f.add_picture("Sheet1", "D2", "image.jpg", excelize.GraphicOptions(
+    scale_x=0.5,
+    scale_y=0.5,
+))
+if err:
+    print(err)
+# 在工作表中插入图片，并设置图片的打印属性
+err = f.add_picture("Sheet1", "H2", "image.gif", excelize.GraphicOptions(
+    print_object=True,
+    lock_aspect_ratio=False,
+    offset_x=15,
+    offset_y=10,
+    locked=False,
+))
+if err:
+    print(err)
+# 保存工作簿
+err = f.save()
+if err:
+    print(err)
+# 关闭工作簿
+err = f.close()
+if err:
+    print(err)
+```
+
 ## 社区合作
 
 欢迎您为此项目贡献代码，提出建议或问题、修复 Bug 以及参与讨论对新功能的想法。

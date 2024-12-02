@@ -295,6 +295,24 @@ class TestExcelize(unittest.TestCase):
             )
         self.assertIsNone(f.save_as("TestAddChart.xlsx"))
 
+    def test_add_picture(self):
+        f = excelize.new_file()
+        self.assertIsNone(f.add_picture("Sheet1", "A1", "chart.png", None))
+        self.assertIsNone(
+            f.add_picture(
+                "Sheet1",
+                "A2",
+                "chart.png",
+                excelize.GraphicOptions(
+                    print_object=True,
+                    scale_x=0.1,
+                    scale_y=0.1,
+                    locked=False,
+                ),
+            )
+        )
+        self.assertIsNone(f.save_as("TestAddPicture.xlsx"))
+
     def test_type_convert(self):
         class _T2(Structure):
             _fields_ = [

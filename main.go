@@ -24,6 +24,12 @@ import (
 	"unicode"
 	"unsafe"
 
+	_ "image/gif"
+	_ "image/jpeg"
+	_ "image/png"
+
+	_ "golang.org/x/image/tiff"
+
 	"github.com/xuri/excelize/v2"
 )
 
@@ -436,6 +442,33 @@ func AddChart(idx int, sheet, cell *C.char, chart *C.struct_Chart, length int) *
 		return C.CString(errNil)
 	}
 	if err := f.(*excelize.File).AddChart(C.GoString(sheet), C.GoString(cell), charts[0]); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// Add picture in a sheet by given picture format set (such as offset, scale,
+// aspect ratio setting and print settings) and file path, supported image
+// types: BMP, EMF, EMZ, GIF, JPEG, JPG, PNG, SVG, TIF, TIFF, WMF, and WMZ.
+//
+//export AddPicture
+func AddPicture(idx int, sheet, cell, name *C.char, opts *C.struct_GraphicOptions) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if opts != nil {
+		goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.GraphicOptions{}))
+		if err != nil {
+			return C.CString(err.Error())
+		}
+		options := goVal.Elem().Interface().(excelize.GraphicOptions)
+		if err := f.(*excelize.File).AddPicture(C.GoString(sheet), C.GoString(cell), C.GoString(name), &options); err != nil {
+			return C.CString(err.Error())
+		}
+		return C.CString(errNil)
+	}
+	if err := f.(*excelize.File).AddPicture(C.GoString(sheet), C.GoString(cell), C.GoString(name), nil); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(errNil)
