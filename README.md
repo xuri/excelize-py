@@ -41,7 +41,7 @@ import excelize
 f = excelize.new_file()
 # Create a new sheet.
 index, err = f.new_sheet("Sheet2")
-if err is not None:
+if err:
     print(err)
 # Set value of a cell.
 f.set_cell_value("Sheet2", "A2", "Hello world.")
@@ -50,10 +50,10 @@ f.set_cell_value("Sheet1", "B2", 100)
 f.set_active_sheet(index)
 # Save spreadsheet by the given path.
 err = f.save_as("Book1.xlsx")
-if err is not None:
+if err:
     print(err)
 err = f.close()
-if err is not None:
+if err:
     print(err)
 ```
 
@@ -65,17 +65,17 @@ The following constitutes the bare to read a spreadsheet document.
 import excelize
 
 f, err = excelize.open_file("Book1.xlsx")
-if err is not None:
+if err:
     print(err)
     exit()
 # Get value from cell by given worksheet name and cell reference.
 cell, err = f.get_cell_value("Sheet1", "B2")
-if err is not None:
+if err:
     print(err)
 print(cell)
 # Get all the rows in the Sheet1.
 rows, err = f.get_rows("Sheet1")
-if err is not None:
+if err:
     print(err)
 for row in rows:
     for cell in row:
@@ -83,7 +83,62 @@ for row in rows:
     print()
 # Close the spreadsheet.
 err = f.close()
-if err is not None:
+if err:
+    print(err)
+```
+
+### Add chart to spreadsheet file
+
+With Excelize chart generation and management is as easy as a few lines of code. You can build charts based on data in your worksheet or generate charts without any data in your worksheet at all.
+
+<p align="center"><img width="650" src="./chart.png" alt="Excelize"></p>
+
+```python
+import excelize
+
+f = excelize.new_file()
+data = [
+    [None, "Apple", "Orange", "Pear"],
+    ["Small", 2, 3, 3],
+    ["Normal", 5, 2, 4],
+    ["Large", 6, 7, 8],
+]
+for idx, row in enumerate(data):
+    cell, err = excelize.coordinates_to_cell_name(1, idx + 1, False)
+    if err:
+        print(err)
+    err = f.set_sheet_row("Sheet1", cell, row)
+    if err:
+        print(err)
+
+chart = excelize.Chart(
+    type=excelize.ChartType.Col3DClustered,
+    series=[
+        excelize.ChartSeries(
+            name="Sheet1!$A$2",
+            categories="Sheet1!$B$1:$D$1",
+            values="Sheet1!$B$2:$D$2",
+        ),
+        excelize.ChartSeries(
+            name="Sheet1!$A$3",
+            categories="Sheet1!$B$1:$D$1",
+            values="Sheet1!$B$3:$D$3",
+        ),
+        excelize.ChartSeries(
+            name="Sheet1!$A$4",
+            categories="Sheet1!$B$1:$D$1",
+            values="Sheet1!$B$4:$D$4",
+        ),
+    ],
+    title=[excelize.RichTextRun(text="Fruit 3D Clustered Column Chart")],
+)
+f.add_chart("Sheet1", "E1", chart)
+# Save spreadsheet by the given path.
+err = f.save_as("Book1.xlsx")
+if err:
+    print(err)
+err = f.close()
+if err:
     print(err)
 ```
 

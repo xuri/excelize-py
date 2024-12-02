@@ -21,6 +21,7 @@ import (
 	"reflect"
 	"sync"
 	"time"
+	"unicode"
 	"unsafe"
 
 	"github.com/xuri/excelize/v2"
@@ -150,6 +151,14 @@ func cToGoArray(cArray reflect.Value, cArrayLen int) reflect.Value {
 		val := cArray.Interface().(*C.struct_Border)
 		arr := unsafe.Slice(val, cArrayLen)
 		return reflect.ValueOf(arr)
+	case "main._Ctype_struct_ChartSeries":
+		val := cArray.Interface().(*C.struct_ChartSeries)
+		arr := unsafe.Slice(val, cArrayLen)
+		return reflect.ValueOf(arr)
+	case "main._Ctype_struct_RichTextRun":
+		val := cArray.Interface().(*C.struct_RichTextRun)
+		arr := unsafe.Slice(val, cArrayLen)
+		return reflect.ValueOf(arr)
 	}
 	return cArray
 }
@@ -162,6 +171,9 @@ func cValueToGo(cVal reflect.Value, goType reflect.Type) (reflect.Value, error) 
 	s := result.Elem()
 	for resultFieldIdx := 0; resultFieldIdx < s.NumField(); resultFieldIdx++ {
 		field := goType.Field(resultFieldIdx)
+		if unicode.IsLower(rune(field.Name[0])) {
+			continue
+		}
 		if goBaseTypes[field.Type.Kind()] {
 			cBaseVal := cVal.FieldByName(field.Name)
 			goBaseVal, err := cToGoBaseType(cBaseVal, field.Type.Kind())
@@ -396,6 +408,37 @@ func cInterfaceToGo(val C.struct_Interface) interface{} {
 	default:
 		return nil
 	}
+}
+
+// AddChart provides the method to add chart in a sheet by given chart format
+// set (such as offset, scale, aspect ratio setting and print settings) and
+// properties set.
+//
+//export AddChart
+func AddChart(idx int, sheet, cell *C.char, chart *C.struct_Chart, length int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	charts := make([]*excelize.Chart, length)
+	for i, c := range unsafe.Slice(chart, length) {
+		goVal, err := cValueToGo(reflect.ValueOf(c), reflect.TypeOf(excelize.Chart{}))
+		if err != nil {
+			return C.CString(err.Error())
+		}
+		c := goVal.Elem().Interface().(excelize.Chart)
+		charts[i] = &c
+	}
+	if len(charts) > 1 {
+		if err := f.(*excelize.File).AddChart(C.GoString(sheet), C.GoString(cell), charts[0], charts[1:]...); err != nil {
+			return C.CString(err.Error())
+		}
+		return C.CString(errNil)
+	}
+	if err := f.(*excelize.File).AddChart(C.GoString(sheet), C.GoString(cell), charts[0]); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
 }
 
 // CoordinatesToCellName converts [X, Y] coordinates to alpha-numeric cell name

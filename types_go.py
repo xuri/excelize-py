@@ -116,6 +116,138 @@ class _Style(Structure):
     ]
 
 
+class _GraphicOptions(Structure):
+    _fields_ = [
+        ("AltText", c_char_p),
+        ("PrintObject", POINTER(c_bool)),
+        ("Locked", POINTER(c_bool)),
+        ("LockAspectRatio", c_bool),
+        ("AutoFit", c_bool),
+        ("AutoFitIgnoreAspect", c_bool),
+        ("OffsetX", c_int),
+        ("OffsetY", c_int),
+        ("ScaleX", c_double),
+        ("ScaleY", c_double),
+        ("Hyperlink", c_char_p),
+        ("HyperlinkType", c_char_p),
+        ("Positioning", c_char_p),
+    ]
+
+
+class _RichTextRun(Structure):
+    _fields_ = [
+        ("Font", POINTER(_Font)),
+        ("Text", c_char_p),
+    ]
+
+
+class _ChartNumFmt(Structure):
+    _fields_ = [
+        ("CustomNumFmt", c_char_p),
+        ("SourceLinked", c_bool),
+    ]
+
+
+class _ChartAxis(Structure):
+    _fields_ = [
+        ("None", c_bool),
+        ("MajorGridLines", c_bool),
+        ("MinorGridLines", c_bool),
+        ("MajorUnit", c_double),
+        ("TickLabelPosition", c_uint),
+        ("TickLabelSkip", c_int),
+        ("ReverseOrder", c_bool),
+        ("Secondary", c_bool),
+        ("Maximum", POINTER(c_double)),
+        ("Minimum", POINTER(c_double)),
+        ("Alignment", _Alignment),
+        ("Font", _Font),
+        ("LogBase", c_double),
+        ("NumFmt", _ChartNumFmt),
+        ("TitleLen", c_int),
+        ("Title", POINTER(_RichTextRun)),
+    ]
+
+
+class _ChartDimension(Structure):
+    _fields_ = [
+        ("Width", c_uint),
+        ("Height", c_uint),
+    ]
+
+
+class _ChartPlotArea(Structure):
+    _fields_ = [
+        ("SecondPlotValues", c_int),
+        ("ShowBubbleSize", c_bool),
+        ("ShowCatName", c_bool),
+        ("ShowLeaderLines", c_bool),
+        ("ShowPercent", c_bool),
+        ("ShowSerName", c_bool),
+        ("ShowVal", c_bool),
+        ("Fill", _Fill),
+        ("NumFmt", _ChartNumFmt),
+    ]
+
+
+class _ChartLegend(Structure):
+    _fields_ = [
+        ("Position", c_char_p),
+        ("ShowLegendKey", c_bool),
+    ]
+
+
+class _ChartMarker(Structure):
+    _fields_ = [
+        ("Fill", _Fill),
+        ("Symbol", c_char_p),
+        ("Size", c_int),
+    ]
+
+
+class _ChartLine(Structure):
+    _fields_ = [
+        ("Type", c_uint),
+        ("Smooth", c_bool),
+        ("Width", c_double),
+    ]
+
+
+class _ChartSeries(Structure):
+    _fields_ = [
+        ("Name", c_char_p),
+        ("Categories", c_char_p),
+        ("Values", c_char_p),
+        ("Sizes", c_char_p),
+        ("Fill", _Fill),
+        ("Line", _ChartLine),
+        ("Marker", _ChartMarker),
+        ("DataLabelPosition", c_uint),
+    ]
+
+
+class _Chart(Structure):
+    _fields_ = [
+        ("Type", c_uint),
+        ("SeriesLen", c_int),
+        ("Series", POINTER(_ChartSeries)),
+        ("Format", _GraphicOptions),
+        ("Dimension", _ChartDimension),
+        ("Legend", _ChartLegend),
+        ("TitleLen", c_int),
+        ("Title", POINTER(_RichTextRun)),
+        ("VaryColors", POINTER(c_bool)),
+        ("XAxis", _ChartAxis),
+        ("YAxis", _ChartAxis),
+        ("PlotArea", _ChartPlotArea),
+        ("Fill", _Fill),
+        ("Border", _ChartLine),
+        ("ShowBlanksAs", c_char_p),
+        ("BubbleSize", c_int),
+        ("HoleSize", c_int),
+    ]
+
+
 class _CoordinatesToCellNameResult(Structure):
     _fields_ = [
         ("cell", c_char_p),

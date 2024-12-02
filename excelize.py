@@ -464,6 +464,37 @@ class File:
         )
         return None if err == "" else Exception(err)
 
+    def add_chart(
+        self, sheet: str, cell: str, chart: Chart, **combo: Chart
+    ) -> Exception | None:
+        """
+        Add chart in a sheet by given chart format set (such as offset, scale,
+        aspect ratio setting and print settings) and properties set.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+            chart (Chart): Chart options
+            **combo (Chart): Optional parameters for combo chart
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.AddChart.restype = c_char_p
+        opts = [chart] + list(combo.values())
+        charts = (types_go._Chart * len(opts))()
+        for i, opt in enumerate(opts):
+            charts[i] = py_value_to_c(opt, types_go._Chart())
+        err = lib.AddChart(
+            self.file_index,
+            sheet.encode(ENCODE),
+            cell.encode(ENCODE),
+            byref(charts),
+            len(charts),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
     def close(self) -> Exception | None:
         """
         Closes and cleanup the open temporary file for the spreadsheet.
