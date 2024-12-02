@@ -495,6 +495,40 @@ class File:
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
+    def add_picture(
+        self, sheet: str, cell: str, name: str, opts: GraphicOptions | None
+    ) -> Exception | None:
+        """
+        Add picture in a sheet by given picture format set (such as offset,
+        scale, aspect ratio setting and print settings) and file path, supported
+        image types: BMP, EMF, EMZ, GIF, JPEG, JPG, PNG, SVG, TIF, TIFF, WMF,
+        and WMZ.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+            name (str): The image file path
+            *opts (GraphicOptions): The image options
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.AddPicture.restype = c_char_p
+        options = (
+            byref(py_value_to_c(opts, types_go._GraphicOptions()))
+            if opts
+            else POINTER(types_go._GraphicOptions)()
+        )
+        err = lib.AddPicture(
+            self.file_index,
+            sheet.encode(ENCODE),
+            cell.encode(ENCODE),
+            name.encode(ENCODE),
+            options,
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
     def close(self) -> Exception | None:
         """
         Closes and cleanup the open temporary file for the spreadsheet.
