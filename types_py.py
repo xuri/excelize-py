@@ -15,6 +15,11 @@ from typing import Optional
 
 
 class CultureName(IntEnum):
+    """
+    This section defines the currently supported country code types enumeration
+    for apply number format.
+    """
+
     CultureNameUnknown = 0
     CultureNameEnUS = 1
     CultureNameJaJP = 2
@@ -23,7 +28,52 @@ class CultureName(IntEnum):
     CultureNameZhTW = 5
 
 
+class CellType(IntEnum):
+    """
+    This section defines the cell value types enumeration.
+    """
+
+    CellTypeUnset = 0
+    CellTypeBool = 1
+    CellTypeDate = 2
+    CellTypeError = 3
+    CellTypeFormula = 4
+    CellTypeInlineString = 5
+    CellTypeNumber = 6
+    CellTypeSharedString = 7
+
+
+class FormControlType(IntEnum):
+    """
+    FormControlType is the type of supported form controls.
+    """
+
+    FormControlNote = 0
+    FormControlButton = 1
+    FormControlOptionButton = 2
+    FormControlSpinButton = 3
+    FormControlCheckBox = 4
+    FormControlGroupBox = 5
+    FormControlLabel = 6
+    FormControlScrollBar = 7
+
+
+class ChartLineType(IntEnum):
+    """
+    ChartLineType defines the currently supported chart line types enumeration.
+    """
+
+    ChartLineUnset = 0
+    ChartLineSolid = 1
+    ChartLineNone = 2
+    ChartLineAutomatic = 3
+
+
 class ChartType(IntEnum):
+    """
+    ChartType defines the currently supported chart types enumeration.
+    """
+
     Area = 0
     AreaStacked = 1
     AreaPercentStacked = 2
@@ -79,6 +129,45 @@ class ChartType(IntEnum):
     WireframeContour = 52
     Bubble = 53
     Bubble3D = 54
+
+
+class ChartDataLabelPositionType(IntEnum):
+    """
+    ChartDataLabelPositionType is the type of chart data labels position.
+    """
+
+    ChartDataLabelsPositionUnset = 0
+    ChartDataLabelsPositionBestFit = 1
+    ChartDataLabelsPositionBelow = 2
+    ChartDataLabelsPositionCenter = 3
+    ChartDataLabelsPositionInsideBase = 4
+    ChartDataLabelsPositionInsideEnd = 5
+    ChartDataLabelsPositionLeft = 6
+    ChartDataLabelsPositionOutsideEnd = 7
+    ChartDataLabelsPositionRight = 8
+    ChartDataLabelsPositionAbove = 9
+
+
+class ChartTickLabelPositionType(IntEnum):
+    """
+    ChartTickLabelPositionType is the type of supported chart tick label
+    """
+
+    ChartTickLabelNextToAxis = 0
+    ChartTickLabelHigh = 1
+    ChartTickLabelLow = 2
+    ChartTickLabelNone = 3
+
+
+class PictureInsertType(IntEnum):
+    """
+    PictureInsertType defines the type of the picture has been inserted into the
+    worksheet.
+    """
+
+    PictureInsertTypePlaceOverCells = 0
+    PictureInsertTypePlaceInCell = 1
+    PictureInsertTypeDISPIMG = 2
 
 
 @dataclass
@@ -210,7 +299,9 @@ class ChartAxis:
     major_grid_lines: bool = False
     minor_grid_lines: bool = False
     major_unit: float = 0
-    tick_label_position: int = 0
+    tick_label_position: ChartDataLabelPositionType = (
+        ChartDataLabelPositionType.ChartDataLabelsPositionUnset
+    )
     tick_label_skip: int = 0
     reverse_order: bool = False
     secondary: bool = False
@@ -257,7 +348,7 @@ class ChartMarker:
 
 @dataclass
 class ChartLine:
-    type: int = 0
+    type: ChartLineType = ChartLineType.ChartLineUnset
     smooth: bool = False
     width: float = 0
 
@@ -271,7 +362,9 @@ class ChartSeries:
     fill: Fill = Fill
     line: ChartLine = ChartLine
     marker: ChartMarker = ChartMarker
-    data_label_position: int = 0
+    data_label_position: ChartDataLabelPositionType = (
+        ChartDataLabelPositionType.ChartDataLabelsPositionUnset
+    )
 
 
 @dataclass

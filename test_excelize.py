@@ -295,6 +295,44 @@ class TestExcelize(unittest.TestCase):
             )
         self.assertIsNone(f.save_as("TestAddChart.xlsx"))
 
+    def test_cell_name_to_coordinates(self):
+        col, row, err = excelize.cell_name_to_coordinates("Z3")
+        self.assertEqual(col, 26)
+        self.assertEqual(row, 3)
+        self.assertIsNone(err)
+
+        col, row, err = excelize.cell_name_to_coordinates("A")
+        self.assertEqual(col, -1)
+        self.assertEqual(row, -1)
+        self.assertEqual(
+            err.__str__(),
+            'cannot convert cell "A" to coordinates: invalid cell name "A"',
+        )
+
+    def test_column_name_to_number(self):
+        col, err = excelize.column_name_to_number("Z")
+        self.assertEqual(col, 26)
+        self.assertIsNone(err)
+
+        col, err = excelize.column_name_to_number("-")
+        self.assertEqual(col, -1)
+        self.assertEqual(
+            err.__str__(),
+            'invalid column name "-"',
+        )
+
+    def test_column_number_to_name(self):
+        name, err = excelize.column_number_to_name(26)
+        self.assertEqual(name, "Z")
+        self.assertIsNone(err)
+
+        name, err = excelize.column_number_to_name(0)
+        self.assertEqual(name, "")
+        self.assertEqual(
+            err.__str__(),
+            "the column number must be greater than or equal to 1 and less than or equal to 16384",
+        )
+
     def test_add_picture(self):
         f = excelize.new_file()
         self.assertIsNone(f.add_picture("Sheet1", "A1", "chart.png", None))
