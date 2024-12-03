@@ -2,7 +2,10 @@ module github.com/xuri/excelize-py
 
 go 1.18
 
-require github.com/xuri/excelize/v2 v2.9.1-0.20241122135638-c93618856aaf
+require (
+	github.com/xuri/excelize/v2 v2.9.1-0.20241122135638-c93618856aaf
+	golang.org/x/image v0.22.0
+)
 
 require (
 	github.com/richardlehane/mscfb v1.0.4 // indirect

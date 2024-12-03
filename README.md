@@ -142,6 +142,46 @@ if err:
     print(err)
 ```
 
+### Add picture to spreadsheet file
+
+```python
+import excelize
+
+f, err = excelize.open_file("Book1.xlsx")
+if err:
+    print(err)
+    exit()
+# Insert a picture.
+err = f.add_picture("Sheet1", "A2", "image.png", None)
+if err:
+    print(err)
+# Insert a picture to worksheet with scaling.
+err = f.add_picture("Sheet1", "D2", "image.jpg", excelize.GraphicOptions(
+    scale_x=0.5,
+    scale_y=0.5,
+))
+if err:
+    print(err)
+# Insert a picture offset in the cell with printing support.
+err = f.add_picture("Sheet1", "H2", "image.gif", excelize.GraphicOptions(
+    print_object=True,
+    lock_aspect_ratio=False,
+    offset_x=15,
+    offset_y=10,
+    locked=False,
+))
+if err:
+    print(err)
+# Save the spreadsheet with the origin path.
+err = f.save()
+if err:
+    print(err)
+# Close the spreadsheet.
+err = f.close()
+if err:
+    print(err)
+```
+
 ## Contributing
 
 Contributions are welcome! Open a pull request to fix a bug, or open an issue to discuss a new feature or change.
