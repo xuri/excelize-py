@@ -960,6 +960,58 @@ class File:
         return None if err == "" else Exception(err)
 
 
+def cell_name_to_coordinates(cell: str) -> Tuple[int, int, Exception | None]:
+    """
+    Converts alphanumeric cell name to [X, Y] coordinates or returns an error.
+
+    Args:
+        cell (str): The cell reference
+
+    Returns:
+        Tuple[int, int, Exception | None]: A tuple containing the column number,
+        row number, and an Exception if an error occurred, otherwise None.
+    """
+    lib.CellNameToCoordinates.restype = types_go._CellNameToCoordinatesResult
+    res = lib.CellNameToCoordinates(cell.encode(ENCODE))
+    err = res.err.decode(ENCODE)
+    return res.col, res.row, None if err == "" else Exception(err)
+
+
+def column_name_to_number(name: str) -> Tuple[int, Exception | None]:
+    """
+    Convert Excel sheet column name (case-insensitive) to int. The function
+    returns an error if column name incorrect.
+
+    Args:
+        name (str): The column name
+
+    Returns:
+        Tuple[int, Exception | None]: A tuple containing the column number and
+        an Exception if an error occurred, otherwise None.
+    """
+    lib.ColumnNameToNumber.restype = types_go._ColumnNameToNumberResult
+    res = lib.ColumnNameToNumber(name.encode(ENCODE))
+    err = res.err.decode(ENCODE)
+    return res.col, None if err == "" else Exception(err)
+
+
+def column_number_to_name(num: int) -> Tuple[str, Exception | None]:
+    """
+    Convert the integer to Excel sheet column title.
+
+    Args:
+        num (int): The column number
+
+    Returns:
+        Tuple[str, Exception | None]: A tuple containing the column name and an
+        Exception if an error occurred, otherwise None.
+    """
+    lib.ColumnNumberToName.restype = types_go._ColumnNumberToNameResult
+    res = lib.ColumnNumberToName(c_int(num))
+    err = res.err.decode(ENCODE)
+    return res.col.decode(ENCODE), None if err == "" else Exception(err)
+
+
 def coordinates_to_cell_name(
     col: int, row: int, *abs: bool
 ) -> Tuple[str, Exception | None]:

@@ -248,6 +248,28 @@ class _Chart(Structure):
     ]
 
 
+class _CellNameToCoordinatesResult(Structure):
+    _fields_ = [
+        ("col", c_int),
+        ("row", c_int),
+        ("err", c_char_p),
+    ]
+
+
+class _ColumnNameToNumberResult(Structure):
+    _fields_ = [
+        ("col", c_int),
+        ("err", c_char_p),
+    ]
+
+
+class _ColumnNumberToNameResult(Structure):
+    _fields_ = [
+        ("col", c_char_p),
+        ("err", c_char_p),
+    ]
+
+
 class _CoordinatesToCellNameResult(Structure):
     _fields_ = [
         ("cell", c_char_p),
