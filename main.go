@@ -474,6 +474,43 @@ func AddPicture(idx int, sheet, cell, name *C.char, opts *C.struct_GraphicOption
 	return C.CString(errNil)
 }
 
+// CellNameToCoordinates converts alphanumeric cell name to [X, Y] coordinates
+// or returns an error.
+//
+//export CellNameToCoordinates
+func CellNameToCoordinates(cell *C.char) C.struct_CellNameToCoordinatesResult {
+	col, row, err := excelize.CellNameToCoordinates(C.GoString(cell))
+	if err != nil {
+		return C.struct_CellNameToCoordinatesResult{col: C.int(col), row: C.int(row), err: C.CString(err.Error())}
+	}
+	return C.struct_CellNameToCoordinatesResult{col: C.int(col), row: C.int(row), err: C.CString(errNil)}
+}
+
+// ColumnNameToNumber provides a function to convert Excel sheet column name
+// (case-insensitive) to int. The function returns an error if column name
+// incorrect.
+//
+//export ColumnNameToNumber
+func ColumnNameToNumber(name *C.char) C.struct_CellNameToCoordinatesResult {
+	col, err := excelize.ColumnNameToNumber(C.GoString(name))
+	if err != nil {
+		return C.struct_CellNameToCoordinatesResult{col: C.int(col), err: C.CString(err.Error())}
+	}
+	return C.struct_CellNameToCoordinatesResult{col: C.int(col), err: C.CString(errNil)}
+}
+
+// ColumnNumberToName provides a function to convert the integer to Excel
+// sheet column title.
+//
+//export ColumnNumberToName
+func ColumnNumberToName(num int) C.struct_ColumnNumberToNameResult {
+	col, err := excelize.ColumnNumberToName(num)
+	if err != nil {
+		return C.struct_ColumnNumberToNameResult{col: C.CString(col), err: C.CString(err.Error())}
+	}
+	return C.struct_ColumnNumberToNameResult{col: C.CString(col), err: C.CString(errNil)}
+}
+
 // CoordinatesToCellName converts [X, Y] coordinates to alpha-numeric cell name
 // or returns an error.
 //

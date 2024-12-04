@@ -252,6 +252,22 @@ struct Chart {
 	int HoleSize;
 };
 
+struct CellNameToCoordinatesResult {
+    int col;
+    int row;
+    char* err;
+};
+
+struct ColumnNameToNumberResult {
+    int col;
+    char* err;
+};
+
+struct ColumnNumberToNameResult {
+    char* col;
+    char* err;
+};
+
 struct CoordinatesToCellNameResult {
     char* cell;
     char* err;
