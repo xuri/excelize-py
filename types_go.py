@@ -46,6 +46,18 @@ class _Options(Structure):
     ]
 
 
+class _AppProperties(Structure):
+    _fields_ = [
+        ("Application", c_char_p),
+        ("ScaleCrop", c_bool),
+        ("DocSecurity", c_int),
+        ("Company", c_char_p),
+        ("LinksUpToDate", c_bool),
+        ("HyperlinksChanged", c_bool),
+        ("AppVersion", c_char_p),
+    ]
+
+
 class _Border(Structure):
     _fields_ = [
         ("Type", c_char_p),
@@ -138,6 +150,19 @@ class _RichTextRun(Structure):
     _fields_ = [
         ("Font", POINTER(_Font)),
         ("Text", c_char_p),
+    ]
+
+
+class _Comment(Structure):
+    _fields_ = [
+        ("Author", c_char_p),
+        ("AuthorID", c_int),
+        ("Cell", c_char_p),
+        ("Text", c_char_p),
+        ("Width", c_uint),
+        ("Height", c_uint),
+        ("ParagraphLen", c_int),
+        ("Paragraph", POINTER(_RichTextRun)),
     ]
 
 
@@ -248,6 +273,53 @@ class _Chart(Structure):
     ]
 
 
+class _PivotTableField(Structure):
+    _fields_ = [
+        ("Compact", c_bool),
+        ("Data", c_char_p),
+        ("Name", c_char_p),
+        ("Outline", c_bool),
+        ("ShowAll", c_bool),
+        ("InsertBlankRow", c_bool),
+        ("Subtotal", c_char_p),
+        ("DefaultSubtotal", c_bool),
+        ("NumFmt", c_int),
+    ]
+
+
+class _PivotTableOptions(Structure):
+    _fields_ = [
+        ("DataRange", c_char_p),
+        ("PivotTableRange", c_char_p),
+        ("Name", c_char_p),
+        ("RowsLen", c_int),
+        ("Rows", POINTER(_PivotTableField)),
+        ("ColumnsLen", c_int),
+        ("Columns", POINTER(_PivotTableField)),
+        ("DataLen", c_int),
+        ("Data", POINTER(_PivotTableField)),
+        ("FilterLen", c_int),
+        ("Filter", POINTER(_PivotTableField)),
+        ("RowGrandTotals", c_bool),
+        ("ColGrandTotals", c_bool),
+        ("ShowDrill", c_bool),
+        ("UseAutoFormatting", c_bool),
+        ("PageOverThenDown", c_bool),
+        ("MergeItem", c_bool),
+        ("ClassicLayout", c_bool),
+        ("CompactData", c_bool),
+        ("ShowError", c_bool),
+        ("ShowRowHeaders", c_bool),
+        ("ShowColHeaders", c_bool),
+        ("ShowRowStripes", c_bool),
+        ("ShowColStripes", c_bool),
+        ("ShowLastColumn", c_bool),
+        ("FieldPrintTitles", c_bool),
+        ("ItemPrintTitles", c_bool),
+        ("PivotTableStyleName", c_char_p),
+    ]
+
+
 class _CellNameToCoordinatesResult(Structure):
     _fields_ = [
         ("col", c_int),
@@ -273,6 +345,13 @@ class _ColumnNumberToNameResult(Structure):
 class _CoordinatesToCellNameResult(Structure):
     _fields_ = [
         ("cell", c_char_p),
+        ("err", c_char_p),
+    ]
+
+
+class _GetAppPropsResult(Structure):
+    _fields_ = [
+        ("opts", _AppProperties),
         ("err", c_char_p),
     ]
 

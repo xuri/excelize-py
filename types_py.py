@@ -193,6 +193,17 @@ class Options:
 
 
 @dataclass
+class AppProperties:
+    application: str = ""
+    scale_crop: bool = False
+    doc_security: int = 0
+    company: str = ""
+    links_up_to_date: bool = False
+    hyperlinks_changed: bool = False
+    app_version: str = ""
+
+
+@dataclass
 class Border:
     type: str = ""
     color: str = ""
@@ -285,6 +296,17 @@ class GraphicOptions:
 class RichTextRun:
     font: Optional[Font] = None
     text: str = ""
+
+
+@dataclass
+class Comment:
+    author: str = ""
+    author_id: int = 0
+    cell: str = ""
+    text: str = ""
+    width: int = 0
+    height: int = 0
+    paragraph: Optional[list[RichTextRun]] = None
 
 
 @dataclass
@@ -384,3 +406,44 @@ class Chart:
     show_blanks_as: str = ""
     bubble_size: int = 0
     hole_size: int = 0
+
+
+@dataclass
+class PivotTableField:
+    compact: bool = False
+    data: str = ""
+    name: str = ""
+    outline: bool = False
+    show_all: bool = False
+    insert_blank_row: bool = False
+    subtotal: str = ""
+    default_subtotal: bool = False
+    num_fmt: int = 0
+
+
+@dataclass
+class PivotTableOptions:
+    data_range: str = ""
+    pivot_table_range: str = ""
+    name: str = ""
+    rows: Optional[list[PivotTableField]] = None
+    columns: Optional[list[PivotTableField]] = None
+    data: Optional[list[PivotTableField]] = None
+    filter: Optional[list[PivotTableField]] = None
+    row_grand_totals: bool = False
+    col_grand_totals: bool = False
+    show_drill: bool = False
+    use_auto_formatting: bool = False
+    page_over_then_down: bool = False
+    merge_item: bool = False
+    classic_layout: bool = False
+    compact_data: bool = False
+    show_error: bool = False
+    show_row_headers: bool = False
+    show_col_headers: bool = False
+    show_row_stripes: bool = False
+    show_col_stripes: bool = False
+    show_last_column: bool = False
+    field_print_titles: bool = False
+    item_print_titles: bool = False
+    pivot_table_style_name: str = ""

@@ -14,6 +14,7 @@ import unittest
 from dataclasses import dataclass
 from unittest.mock import patch
 import datetime
+import random
 from typing import Optional
 from ctypes import (
     c_int,
@@ -59,6 +60,12 @@ class TestExcelize(unittest.TestCase):
         f, err = excelize.open_file("Book1.xlsx")
         self.assertIsNone(f)
         self.assertTrue(err.__str__().startswith("open Book1.xlsx"))
+
+    def test_app_props(self):
+        f = excelize.new_file()
+        props, err = f.get_app_props()
+        self.assertEqual(props.application, "Go Excelize")
+        self.assertIsNone(err)
 
     def test_style(self):
         f = excelize.new_file()
@@ -166,6 +173,7 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(idx, 1)
         self.assertIsNone(err)
         self.assertIsNone(f.set_active_sheet(idx))
+        self.assertEqual(f.get_active_sheet_index(), idx)
 
         idx, err = f.new_sheet(":\\/?*[]Maximum 31 characters allowed in sheet title.")
         self.assertEqual(idx, -1)
@@ -242,58 +250,184 @@ class TestExcelize(unittest.TestCase):
             cell, err = excelize.coordinates_to_cell_name(1, idx + 1, False)
             self.assertIsNone(err)
             self.assertIsNone(f.set_sheet_row("Sheet1", cell, row))
+        self.assertIsNone(
+            f.add_chart(
+                "Sheet1",
+                "E1",
+                chart=excelize.Chart(
+                    type=excelize.ChartType.Col,
+                    series=[
+                        excelize.ChartSeries(
+                            name="Sheet1!$A$2",
+                            categories="Sheet1!$B$1:$D$1",
+                            values="Sheet1!$B$2:$D$2",
+                        ),
+                        excelize.ChartSeries(
+                            name="Sheet1!$A$3",
+                            categories="Sheet1!$B$1:$D$1",
+                            values="Sheet1!$B$3:$D$3",
+                        ),
+                        excelize.ChartSeries(
+                            name="Sheet1!$A$4",
+                            categories="Sheet1!$B$1:$D$1",
+                            values="Sheet1!$B$4:$D$4",
+                        ),
+                    ],
+                    title=[
+                        excelize.RichTextRun(
+                            text="Fruit 3D Clustered Column Chart",
+                        )
+                    ],
+                ),
+                combo=excelize.Chart(
+                    type=excelize.ChartType.Line,
+                    series=[
+                        excelize.ChartSeries(
+                            name="Sheet1!$A$2",
+                            categories="Sheet1!$B$1:$D$1",
+                            values="Sheet1!$B$2:$D$2",
+                        ),
+                        excelize.ChartSeries(
+                            name="Sheet1!$A$3",
+                            categories="Sheet1!$B$1:$D$1",
+                            values="Sheet1!$B$3:$D$3",
+                        ),
+                        excelize.ChartSeries(
+                            name="Sheet1!$A$4",
+                            categories="Sheet1!$B$1:$D$1",
+                            values="Sheet1!$B$4:$D$4",
+                        ),
+                    ],
+                ),
+            )
+        )
+        self.assertIsNone(
+            f.add_chart_sheet(
+                "Sheet2",
+                chart=excelize.Chart(
+                    type=excelize.ChartType.Col,
+                    series=[
+                        excelize.ChartSeries(
+                            name="Sheet1!$A$2",
+                            categories="Sheet1!$B$1:$D$1",
+                            values="Sheet1!$B$2:$D$2",
+                        ),
+                        excelize.ChartSeries(
+                            name="Sheet1!$A$3",
+                            categories="Sheet1!$B$1:$D$1",
+                            values="Sheet1!$B$3:$D$3",
+                        ),
+                        excelize.ChartSeries(
+                            name="Sheet1!$A$4",
+                            categories="Sheet1!$B$1:$D$1",
+                            values="Sheet1!$B$4:$D$4",
+                        ),
+                    ],
+                    title=[
+                        excelize.RichTextRun(
+                            text="Fruit 3D Clustered Column Chart",
+                        )
+                    ],
+                ),
+            )
+        )
+        self.assertIsNone(f.save_as("TestAddChart.xlsx"))
+        self.assertIsNone(f.close())
+
+    def test_comment(self):
+        f = excelize.new_file()
+        self.assertIsNone(
+            f.add_comment(
+                "Sheet1",
+                excelize.Comment(
+                    cell="A5",
+                    author="Excelize",
+                    paragraph=[
+                        excelize.RichTextRun(
+                            text="Excelize: ",
+                            font=excelize.Font(bold=True),
+                        ),
+                        excelize.RichTextRun(
+                            text="This is a comment.",
+                        ),
+                    ],
+                    height=40,
+                    width=180,
+                ),
+            )
+        )
+        self.assertIsNone(f.save_as("TestComment.xlsx"))
+        self.assertIsNone(f.close())
+
+    def test_pivot_table(self):
+        f = excelize.new_file()
+        month = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+        ]
+        year = [2017, 2018, 2019]
+        types = ["Meat", "Dairy", "Beverages", "Produce"]
+        region = ["East", "West", "North", "South"]
+        self.assertIsNone(
+            f.set_sheet_row(
+                "Sheet1", "A1", ["Month", "Year", "Type", "Sales", "Region"]
+            )
+        )
+        for row in range(2, 32):
             self.assertIsNone(
-                f.add_chart(
-                    "Sheet1",
-                    "E1",
-                    chart=excelize.Chart(
-                        type=excelize.ChartType.Col,
-                        series=[
-                            excelize.ChartSeries(
-                                name="Sheet1!$A$2",
-                                categories="Sheet1!$B$1:$D$1",
-                                values="Sheet1!$B$2:$D$2",
-                            ),
-                            excelize.ChartSeries(
-                                name="Sheet1!$A$3",
-                                categories="Sheet1!$B$1:$D$1",
-                                values="Sheet1!$B$3:$D$3",
-                            ),
-                            excelize.ChartSeries(
-                                name="Sheet1!$A$4",
-                                categories="Sheet1!$B$1:$D$1",
-                                values="Sheet1!$B$4:$D$4",
-                            ),
-                        ],
-                        title=[
-                            excelize.RichTextRun(
-                                text="Fruit 3D Clustered Column Chart",
-                            )
-                        ],
-                    ),
-                    combo=excelize.Chart(
-                        type=excelize.ChartType.Line,
-                        series=[
-                            excelize.ChartSeries(
-                                name="Sheet1!$A$2",
-                                categories="Sheet1!$B$1:$D$1",
-                                values="Sheet1!$B$2:$D$2",
-                            ),
-                            excelize.ChartSeries(
-                                name="Sheet1!$A$3",
-                                categories="Sheet1!$B$1:$D$1",
-                                values="Sheet1!$B$3:$D$3",
-                            ),
-                            excelize.ChartSeries(
-                                name="Sheet1!$A$4",
-                                categories="Sheet1!$B$1:$D$1",
-                                values="Sheet1!$B$4:$D$4",
-                            ),
-                        ],
-                    ),
+                f.set_cell_value("Sheet1", f"A{row}", month[random.randrange(12)])
+            )
+            self.assertIsNone(
+                f.set_cell_value("Sheet1", f"B{row}", year[random.randrange(3)])
+            )
+            self.assertIsNone(
+                f.set_cell_value("Sheet1", f"C{row}", types[random.randrange(4)])
+            )
+            self.assertIsNone(
+                f.set_cell_value("Sheet1", f"D{row}", random.randrange(5000))
+            )
+            self.assertIsNone(
+                f.set_cell_value("Sheet1", f"E{row}", region[random.randrange(4)])
+            )
+        self.assertIsNone(
+            f.add_pivot_table(
+                excelize.PivotTableOptions(
+                    data_range="Sheet1!A1:E31",
+                    pivot_table_range="Sheet1!G2:M34",
+                    rows=[
+                        excelize.PivotTableField(data="Month", default_subtotal=True),
+                        excelize.PivotTableField(data="Year"),
+                    ],
+                    filter=[excelize.PivotTableField(data="Region")],
+                    columns=[
+                        excelize.PivotTableField(data="Type", default_subtotal=True),
+                    ],
+                    data=[
+                        excelize.PivotTableField(
+                            data="Sales", name="Summarize", subtotal="Sum"
+                        ),
+                    ],
+                    row_grand_totals=True,
+                    col_grand_totals=True,
+                    show_drill=True,
+                    show_row_headers=True,
+                    show_col_headers=True,
+                    show_last_column=True,
                 )
             )
-        self.assertIsNone(f.save_as("TestAddChart.xlsx"))
+        )
+        self.assertIsNone(f.save_as("TestAddPivotTable.xlsx"))
+        self.assertIsNone(f.close())
 
     def test_cell_name_to_coordinates(self):
         col, row, err = excelize.cell_name_to_coordinates("Z3")

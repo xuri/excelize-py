@@ -161,6 +161,10 @@ func cToGoArray(cArray reflect.Value, cArrayLen int) reflect.Value {
 		val := cArray.Interface().(*C.struct_ChartSeries)
 		arr := unsafe.Slice(val, cArrayLen)
 		return reflect.ValueOf(arr)
+	case "main._Ctype_struct_PivotTableField":
+		val := cArray.Interface().(*C.struct_PivotTableField)
+		arr := unsafe.Slice(val, cArrayLen)
+		return reflect.ValueOf(arr)
 	case "main._Ctype_struct_RichTextRun":
 		val := cArray.Interface().(*C.struct_RichTextRun)
 		arr := unsafe.Slice(val, cArrayLen)
@@ -447,6 +451,61 @@ func AddChart(idx int, sheet, cell *C.char, chart *C.struct_Chart, length int) *
 	return C.CString(errNil)
 }
 
+// AddChartSheet provides the method to create a chartsheet by given chart
+// format set (such as offset, scale, aspect ratio setting and print settings)
+// and properties set. In Excel a chartsheet is a worksheet that only contains
+// a chart.
+//
+//export AddChartSheet
+func AddChartSheet(idx int, sheet *C.char, chart *C.struct_Chart, length int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	charts := make([]*excelize.Chart, length)
+	for i, c := range unsafe.Slice(chart, length) {
+		goVal, err := cValueToGo(reflect.ValueOf(c), reflect.TypeOf(excelize.Chart{}))
+		if err != nil {
+			return C.CString(err.Error())
+		}
+		c := goVal.Elem().Interface().(excelize.Chart)
+		charts[i] = &c
+	}
+	if len(charts) > 1 {
+		if err := f.(*excelize.File).AddChartSheet(C.GoString(sheet), charts[0], charts[1:]...); err != nil {
+			return C.CString(err.Error())
+		}
+		return C.CString(errNil)
+	}
+	if err := f.(*excelize.File).AddChartSheet(C.GoString(sheet), charts[0]); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// AddComment provides the method to add comments in a sheet by giving the
+// worksheet name, cell reference, and format set (such as author and text).
+// Note that the maximum author name length is 255 and the max text length is
+// 32512.
+//
+//export AddComment
+func AddComment(idx int, sheet *C.char, opts *C.struct_Comment) *C.char {
+	var comment excelize.Comment
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.Comment{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	comment = goVal.Elem().Interface().(excelize.Comment)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).AddComment(C.GoString(sheet), comment); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
 // Add picture in a sheet by given picture format set (such as offset, scale,
 // aspect ratio setting and print settings) and file path, supported image
 // types: BMP, EMF, EMZ, GIF, JPEG, JPG, PNG, SVG, TIF, TIFF, WMF, and WMZ.
@@ -469,6 +528,27 @@ func AddPicture(idx int, sheet, cell, name *C.char, opts *C.struct_GraphicOption
 		return C.CString(errNil)
 	}
 	if err := f.(*excelize.File).AddPicture(C.GoString(sheet), C.GoString(cell), C.GoString(name), nil); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// AddPivotTable provides the method to add pivot table by given pivot table
+// options. Note that the same fields can not in Columns, Rows and Filter
+// fields at the same time.
+//
+//export AddPivotTable
+func AddPivotTable(idx int, opts *C.struct_PivotTableOptions) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.PivotTableOptions{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options := goVal.Elem().Interface().(excelize.PivotTableOptions)
+	if err := f.(*excelize.File).AddPivotTable(&options); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(errNil)
@@ -667,6 +747,37 @@ func DuplicateRowTo(idx int, sheet *C.char, row, row2 int) *C.char {
 		return C.CString(err.Error())
 	}
 	return C.CString(errNil)
+}
+
+// GetActiveSheetIndex provides a function to get active sheet index of the
+// spreadsheet. If not found the active sheet will be return integer 0.
+//
+//export GetActiveSheetIndex
+func GetActiveSheetIndex(idx int) int {
+	f, ok := files.Load(idx)
+	if !ok {
+		return 0
+	}
+	return f.(*excelize.File).GetActiveSheetIndex()
+}
+
+// GetAppProps provides a function to get document application properties.
+//
+//export GetAppProps
+func GetAppProps(idx int) C.struct_GetAppPropsResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetAppPropsResult{err: C.CString(errFilePtr)}
+	}
+	opts, err := f.(*excelize.File).GetAppProps()
+	if err != nil {
+		return C.struct_GetAppPropsResult{err: C.CString(err.Error())}
+	}
+	cVal, err := goValueToC(reflect.ValueOf(*opts), reflect.ValueOf(&C.struct_AppProperties{}))
+	if err != nil {
+		return C.struct_GetAppPropsResult{err: C.CString(err.Error())}
+	}
+	return C.struct_GetAppPropsResult{opts: cVal.Elem().Interface().(C.struct_AppProperties), err: C.CString(errNil)}
 }
 
 // GetCellValue provides a function to get formatted value from cell by given

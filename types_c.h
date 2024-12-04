@@ -13,12 +13,13 @@
 #include <stdlib.h>
 #include <time.h>
 
-struct Interface {
-	int Type;
-	int Integer;
-	char* String;
-	double Float64;
-	bool Boolean;
+struct Interface
+{
+    int Type;
+    int Integer;
+    char *String;
+    double Float64;
+    bool Boolean;
 };
 
 // Options define the options for opening and reading the spreadsheet.
@@ -55,256 +56,363 @@ struct Interface {
 //
 // CultureInfo specifies the country code for applying built-in language number
 // format code these effect by the system's local language settings.
-struct Options {
-	unsigned int MaxCalcIterations;
-	char* Password;
-	bool RawCellValue;
-	long int UnzipSizeLimit;
-	long int UnzipXMLSizeLimit;
-	char* ShortDatePattern;
-	char* LongDatePattern;
-	char* LongTimePattern;
-	unsigned char CultureInfo;
+struct Options
+{
+    unsigned int MaxCalcIterations;
+    char *Password;
+    bool RawCellValue;
+    long int UnzipSizeLimit;
+    long int UnzipXMLSizeLimit;
+    char *ShortDatePattern;
+    char *LongDatePattern;
+    char *LongTimePattern;
+    unsigned char CultureInfo;
+};
+
+// AppProperties directly maps the document application properties.
+struct AppProperties
+{
+    char *Application;
+    bool ScaleCrop;
+    int DocSecurity;
+    char *Company;
+    bool LinksUpToDate;
+    bool HyperlinksChanged;
+    char *AppVersion;
 };
 
 // Border directly maps the border settings of the cells.
-struct Border {
-    char* Type;
-	char* Color;
-	int Style;
+struct Border
+{
+    char *Type;
+    char *Color;
+    int Style;
 };
 
 // Fill directly maps the fill settings of the cells.
-struct Fill {
-	char* Type;
-	int Pattern;
-	int ColorLen;
-	char** Color;
-	int Shading;
+struct Fill
+{
+    char *Type;
+    int Pattern;
+    int ColorLen;
+    char **Color;
+    int Shading;
 };
 
 // Font directly maps the font settings of the fonts.
-struct Font {
-	bool Bold;
-	bool Italic;
-	char* Underline;
-	char* Family;
-	double Size;
-	bool Strike;
-	char* Color;
-	int ColorIndexed;
-	int* ColorTheme;
-	double ColorTint;
-	char* VertAlign;
+struct Font
+{
+    bool Bold;
+    bool Italic;
+    char *Underline;
+    char *Family;
+    double Size;
+    bool Strike;
+    char *Color;
+    int ColorIndexed;
+    int *ColorTheme;
+    double ColorTint;
+    char *VertAlign;
 };
 
 // Alignment directly maps the alignment settings of the cells.
-struct Alignment {
-	char* Horizontal;
-	int Indent;
-	bool JustifyLastLine;
-	unsigned int ReadingOrder;
-	int RelativeIndent;
-	bool ShrinkToFit;
-	int TextRotation;
-	char* Vertical;
-	bool WrapText;
+struct Alignment
+{
+    char *Horizontal;
+    int Indent;
+    bool JustifyLastLine;
+    unsigned int ReadingOrder;
+    int RelativeIndent;
+    bool ShrinkToFit;
+    int TextRotation;
+    char *Vertical;
+    bool WrapText;
 };
 
 // Protection directly maps the protection settings of the cells.
-struct Protection {
-	bool Hidden;
-	bool Locked;
+struct Protection
+{
+    bool Hidden;
+    bool Locked;
 };
 
 // Style directly maps the style settings of the cells.
-struct Style {
+struct Style
+{
     int BorderLen;
     struct Border *Border;
-	struct Fill Fill;
-	struct Font *Font;
-	struct Alignment *Alignment;
-	struct Protection *Protection;
-	int NumFmt;
-	int* DecimalPlaces;
-	char** CustomNumFmt;
-	bool NegRed;
+    struct Fill Fill;
+    struct Font *Font;
+    struct Alignment *Alignment;
+    struct Protection *Protection;
+    int NumFmt;
+    int *DecimalPlaces;
+    char **CustomNumFmt;
+    bool NegRed;
 };
 
 // GraphicOptions directly maps the format settings of the picture.
-struct GraphicOptions {
-	char* AltText;
-	bool* PrintObject;
-	bool* Locked;
-	bool LockAspectRatio;
-	bool AutoFit;
-	bool AutoFitIgnoreAspect;
-	int OffsetX;
-	int OffsetY;
-	double ScaleX;
-	double ScaleY;
-	char* Hyperlink;
-	char* HyperlinkType;
-	char* Positioning;
+struct GraphicOptions
+{
+    char *AltText;
+    bool *PrintObject;
+    bool *Locked;
+    bool LockAspectRatio;
+    bool AutoFit;
+    bool AutoFitIgnoreAspect;
+    int OffsetX;
+    int OffsetY;
+    double ScaleX;
+    double ScaleY;
+    char *Hyperlink;
+    char *HyperlinkType;
+    char *Positioning;
 };
 
 // RichTextRun directly maps the settings of the rich text run.
-struct RichTextRun {
-	struct Font *Font;
-	char* Text;
+struct RichTextRun
+{
+    struct Font *Font;
+    char *Text;
+};
+
+// Comment directly maps the comment information.
+struct Comment
+{
+    char *Author;
+    int AuthorID;
+    char *Cell;
+    char *Text;
+    unsigned int Width;
+    unsigned int Height;
+    int ParagraphLen;
+    struct RichTextRun *Paragraph;
 };
 
 // ChartNumFmt directly maps the number format settings of the chart.
-struct ChartNumFmt {
-	char* CustomNumFmt;
-	bool SourceLinked;
+struct ChartNumFmt
+{
+    char *CustomNumFmt;
+    bool SourceLinked;
 };
 
 // ChartAxis directly maps the format settings of the chart axis.
-struct ChartAxis {
-	bool None;
-	bool MajorGridLines;
-	bool MinorGridLines;
-	double MajorUnit;
-	unsigned char TickLabelPosition;
-	int TickLabelSkip;
-	bool ReverseOrder;
-	bool Secondary;
-	double* Maximum;
-	double* Minimum;
-	struct Alignment Alignment;
-	struct Font Font;
-	double LogBase;
-	struct ChartNumFmt NumFmt;
-	int TitleLen;
-	struct RichTextRun *Title;
+struct ChartAxis
+{
+    bool None;
+    bool MajorGridLines;
+    bool MinorGridLines;
+    double MajorUnit;
+    unsigned char TickLabelPosition;
+    int TickLabelSkip;
+    bool ReverseOrder;
+    bool Secondary;
+    double *Maximum;
+    double *Minimum;
+    struct Alignment Alignment;
+    struct Font Font;
+    double LogBase;
+    struct ChartNumFmt NumFmt;
+    int TitleLen;
+    struct RichTextRun *Title;
 };
 
 // ChartDimension directly maps the dimension of the chart.
-struct ChartDimension {
-	unsigned int Width;
-	unsigned int Height;
+struct ChartDimension
+{
+    unsigned int Width;
+    unsigned int Height;
 };
 
 // ChartPlotArea directly maps the format settings of the plot area.
-struct ChartPlotArea {
-	int SecondPlotValues;
-	bool ShowBubbleSize;
-	bool ShowCatName;
-	bool ShowLeaderLines;
-	bool ShowPercent;
-	bool ShowSerName;
-	bool ShowVal;
-	struct Fill Fill;
-	struct ChartNumFmt NumFmt;
+struct ChartPlotArea
+{
+    int SecondPlotValues;
+    bool ShowBubbleSize;
+    bool ShowCatName;
+    bool ShowLeaderLines;
+    bool ShowPercent;
+    bool ShowSerName;
+    bool ShowVal;
+    struct Fill Fill;
+    struct ChartNumFmt NumFmt;
 };
 
 // ChartLegend directly maps the format settings of the chart legend.
-struct ChartLegend {
-	char* Position;
-	bool ShowLegendKey;
+struct ChartLegend
+{
+    char *Position;
+    bool ShowLegendKey;
 };
 
 // ChartMarker directly maps the format settings of the chart marker.
-struct ChartMarker {
-	struct Fill Fill;
-	char* Symbol;
-	int Size;
+struct ChartMarker
+{
+    struct Fill Fill;
+    char *Symbol;
+    int Size;
 };
 
 // ChartLine directly maps the format settings of the chart line.
-struct ChartLine {
-	unsigned char Type;
-	bool Smooth;
-	double Width;
+struct ChartLine
+{
+    unsigned char Type;
+    bool Smooth;
+    double Width;
 };
 
 // ChartSeries directly maps the format settings of the chart series.
-struct ChartSeries {
-	char* Name;
-	char* Categories;
-	char* Values;
-	char* Sizes;
-	struct Fill Fill;
-	struct ChartLine Line;
-	struct ChartMarker Marker;
-	unsigned char DataLabelPosition;
+struct ChartSeries
+{
+    char *Name;
+    char *Categories;
+    char *Values;
+    char *Sizes;
+    struct Fill Fill;
+    struct ChartLine Line;
+    struct ChartMarker Marker;
+    unsigned char DataLabelPosition;
 };
 
 // Chart directly maps the format settings of the chart.
-struct Chart {
-	unsigned char Type;
-	int SeriesLen;
-	struct ChartSeries *Series;
-	struct GraphicOptions Format;
-	struct ChartDimension Dimension;
-	struct ChartLegend Legend;
-	int TitleLen;
-	struct RichTextRun *Title;
-	bool* VaryColors;
-	struct ChartAxis XAxis;
-	struct ChartAxis YAxis;
-	struct ChartPlotArea PlotArea;
-	struct Fill Fill;
-	struct ChartLine Border;
-	char* ShowBlanksAs;
-	int BubbleSize;
-	int HoleSize;
+struct Chart
+{
+    unsigned char Type;
+    int SeriesLen;
+    struct ChartSeries *Series;
+    struct GraphicOptions Format;
+    struct ChartDimension Dimension;
+    struct ChartLegend Legend;
+    int TitleLen;
+    struct RichTextRun *Title;
+    bool *VaryColors;
+    struct ChartAxis XAxis;
+    struct ChartAxis YAxis;
+    struct ChartPlotArea PlotArea;
+    struct Fill Fill;
+    struct ChartLine Border;
+    char *ShowBlanksAs;
+    int BubbleSize;
+    int HoleSize;
 };
 
-struct CellNameToCoordinatesResult {
+// PivotTableField directly maps the field settings of the pivot table.
+struct PivotTableField
+{
+    bool Compact;
+    char *Data;
+    char *Name;
+    bool Outline;
+    bool ShowAll;
+    bool InsertBlankRow;
+    char *Subtotal;
+    bool DefaultSubtotal;
+    int NumFmt;
+};
+
+// PivotTableOptions directly maps the format settings of the pivot table.
+struct PivotTableOptions
+{
+    char *DataRange;
+    char *PivotTableRange;
+    char *Name;
+    int RowsLen;
+    struct PivotTableField *Rows;
+    int ColumnsLen;
+    struct PivotTableField *Columns;
+    int DataLen;
+    struct PivotTableField *Data;
+    int FilterLen;
+    struct PivotTableField *Filter;
+    bool RowGrandTotals;
+    bool ColGrandTotals;
+    bool ShowDrill;
+    bool UseAutoFormatting;
+    bool PageOverThenDown;
+    bool MergeItem;
+    bool ClassicLayout;
+    bool CompactData;
+    bool ShowError;
+    bool ShowRowHeaders;
+    bool ShowColHeaders;
+    bool ShowRowStripes;
+    bool ShowColStripes;
+    bool ShowLastColumn;
+    bool FieldPrintTitles;
+    bool ItemPrintTitles;
+    char *PivotTableStyleName;
+};
+
+struct CellNameToCoordinatesResult
+{
     int col;
     int row;
-    char* err;
+    char *err;
 };
 
-struct ColumnNameToNumberResult {
+struct ColumnNameToNumberResult
+{
     int col;
-    char* err;
+    char *err;
 };
 
-struct ColumnNumberToNameResult {
-    char* col;
-    char* err;
+struct ColumnNumberToNameResult
+{
+    char *col;
+    char *err;
 };
 
-struct CoordinatesToCellNameResult {
-    char* cell;
-    char* err;
+struct CoordinatesToCellNameResult
+{
+    char *cell;
+    char *err;
 };
 
-struct OptionsResult {
-	int idx;
-    char* err;
+struct OptionsResult
+{
+    int idx;
+    char *err;
 };
 
-struct GetCellValueResult {
-    char* val;
-    char* err;
+struct GetAppPropsResult
+{
+    struct AppProperties opts;
+    char *err;
 };
 
-struct Row {
-	int CellLen;
-	char** Cell;
+struct GetCellValueResult
+{
+    char *val;
+    char *err;
 };
 
-struct GetRowsResult {
+struct Row
+{
+    int CellLen;
+    char **Cell;
+};
+
+struct GetRowsResult
+{
     int RowLen;
     struct Row *Row;
-    char* err;
+    char *err;
 };
 
-struct NewSheetResult {
+struct NewSheetResult
+{
     int idx;
-    char* err;
+    char *err;
 };
 
-struct NewStyleResult {
+struct NewStyleResult
+{
     int style;
-    char* err;
+    char *err;
 };
 
-struct GetStyleResult {
-	struct Style style;
-	char* err;
+struct GetStyleResult
+{
+    struct Style style;
+    char *err;
 };

@@ -73,7 +73,7 @@ def load_lib():
 lib = CDLL(os.path.join(os.path.dirname(__file__), load_lib()))
 ENCODE = "utf-8"
 __version__ = "0.0.2"
-uppercase_words = ["xml"]
+uppercase_words = ["id", "xml"]
 
 
 def py_to_base_ctype(py_value, c_type):
@@ -495,6 +495,57 @@ class File:
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
+    def add_chart_sheet(
+        self, sheet: str, chart: Chart, **combo: Chart
+    ) -> Exception | None:
+        """
+        Create a chartsheet by given chart format set (such as offset, scale,
+        aspect ratio setting and print settings) and properties set. In Excel a
+        chartsheet is a worksheet that only contains a chart.
+
+        Args:
+            sheet (str): The worksheet name
+            chart (Chart): Chart options
+            **combo (Chart): Optional parameters for combo chart
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.AddChartSheet.restype = c_char_p
+        opts = [chart] + list(combo.values())
+        charts = (types_go._Chart * len(opts))()
+        for i, opt in enumerate(opts):
+            charts[i] = py_value_to_c(opt, types_go._Chart())
+        err = lib.AddChartSheet(
+            self.file_index,
+            sheet.encode(ENCODE),
+            byref(charts),
+            len(charts),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def add_comment(self, sheet: str, opts: Comment) -> Exception | None:
+        """
+        Add comments in a sheet by giving the worksheet name, cell reference,
+        and format set (such as author and text). Note that the maximum author
+        name length is 255 and the max text length is 32512.
+
+        Args:
+            sheet (str): The worksheet name
+            opts (Comment): The comment options
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.AddComment.restype = c_char_p
+        options = py_value_to_c(opts, types_go._Comment())
+        err = lib.AddComment(
+            self.file_index, sheet.encode(ENCODE), byref(options)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
     def add_picture(
         self, sheet: str, cell: str, name: str, opts: GraphicOptions | None
     ) -> Exception | None:
@@ -526,6 +577,94 @@ class File:
             cell.encode(ENCODE),
             name.encode(ENCODE),
             options,
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def add_pivot_table(self, opts: PivotTableOptions | None) -> Exception | None:
+        """
+        Add pivot table by given pivot table options. Note that the same fields
+        can not in Columns, Rows and Filter fields at the same time.
+
+        Args:
+            opts (PivotTableOptions): The pivot table options
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example, create a pivot table on the range reference
+            Sheet1!G2:M34 with the range reference Sheet1!A1:E31 as the data
+            source, summarize by sum for sales:
+
+            .. code-block:: python
+
+            import excelize
+            import random
+
+            f = excelize.new_file()
+            month = [
+                "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
+            ]
+            year = [2017, 2018, 2019]
+            types = ["Meat", "Dairy", "Beverages", "Produce"]
+            region = ["East", "West", "North", "South"]
+            err = f.set_sheet_row("Sheet1", "A1", ["Month", "Year", "Type", "Sales", "Region"])
+            if err:
+                print(err)
+            for row in range(2, 32):
+                err = f.set_cell_value("Sheet1", f"A{row}", month[random.randrange(12)])
+                if err:
+                    print(err)
+                err = f.set_cell_value("Sheet1", f"B{row}", year[random.randrange(3)])
+                if err:
+                    print(err)
+                err = f.set_cell_value("Sheet1", f"C{row}", types[random.randrange(4)])
+                if err:
+                    print(err)
+                err = f.set_cell_value("Sheet1", f"D{row}", random.randrange(5000))
+                if err:
+                    print(err)
+                err = f.set_cell_value("Sheet1", f"E{row}", region[random.randrange(4)])
+                if err:
+                    print(err)
+
+            err = f.add_pivot_table(
+                excelize.PivotTableOptions(
+                    data_range="Sheet1!A1:E31",
+                    pivot_table_range="Sheet1!G2:M34",
+                    rows=[
+                        excelize.PivotTableField(data="Month", default_subtotal=True),
+                        excelize.PivotTableField(data="Year"),
+                    ],
+                    filter=[excelize.PivotTableField(data="Region")],
+                    columns=[
+                        excelize.PivotTableField(data="Type", default_subtotal=True),
+                    ],
+                    data=[
+                        excelize.PivotTableField(data="Sales", name="Summarize", subtotal="Sum"),
+                    ],
+                    row_grand_totals=True,
+                    col_grand_totals=True,
+                    show_drill=True,
+                    show_row_headers=True,
+                    show_col_headers=True,
+                    show_last_column=True,
+                )
+            )
+            if err:
+                print(err)
+            err = f.save_as("TestAddPivotTable.xlsx")
+            if err:
+                print(err)
+            err = f.close()
+            if err:
+                print(err)
+        """
+        lib.AddPivotTable.restype = c_char_p
+        err = lib.AddPivotTable(
+            self.file_index, byref(py_value_to_c(opts, types_go._PivotTableOptions()))
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
@@ -692,6 +831,34 @@ class File:
             self.file_index, sheet.encode(ENCODE), row, row2
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
+
+    def get_active_sheet_index(self) -> int:
+        """
+        Get active sheet index of the spreadsheet. If not found the active sheet
+        will be return integer 0.
+
+        Returns:
+            int: The active sheet index
+        """
+        lib.GetActiveSheetIndex.restype = c_int
+        res = lib.GetActiveSheetIndex(self.file_index)
+        return res
+
+    def get_app_props(self) -> Tuple[AppProperties | None, Exception | None]:
+        """
+        Get document application properties.
+
+        Returns:
+            Tuple[AppProperties | None, Exception | None]: A tuple containing the
+            app properties if found, otherwise None, and an Exception object if
+            an error occurred, otherwise None.
+        """
+        lib.GetAppProps.restype = types_go._GetAppPropsResult
+        res = lib.GetAppProps(self.file_index)
+        err = res.err.decode(ENCODE)
+        return c_value_to_py(res.opts, AppProperties()) if err == "" else None, (
+            None if err == "" else Exception(err)
+        )
 
     def get_cell_value(
         self, sheet: str, cell: str, *opts: Options
