@@ -189,6 +189,28 @@ struct Comment
     struct RichTextRun *Paragraph;
 };
 
+// FormControl directly maps the form controls information.
+struct FormControl
+{
+    char *Cell;
+    char *Macro;
+    unsigned int Width;
+    unsigned int Height;
+    bool Checked;
+    unsigned int CurrentVal;
+    unsigned int MinVal;
+    unsigned int MaxVal;
+    unsigned int IncChange;
+    unsigned int PageChange;
+    bool Horizontally;
+    char *CellLink;
+    char *Text;
+    int ParagraphLen;
+    struct RichTextRun *Paragraph;
+    unsigned char Type;
+    struct GraphicOptions Format;
+};
+
 // ChartNumFmt directly maps the number format settings of the chart.
 struct ChartNumFmt
 {
@@ -341,6 +363,44 @@ struct PivotTableOptions
     bool FieldPrintTitles;
     bool ItemPrintTitles;
     char *PivotTableStyleName;
+};
+
+// ShapeLine directly maps the line settings of the shape.
+struct ShapeLine
+{
+    char *Color;
+    double *Width;
+};
+
+// Shape directly maps the format settings of the shape.
+struct Shape
+{
+    char *Cell;
+    char *Type;
+    char *Macro;
+    unsigned int Width;
+    unsigned int Height;
+    struct GraphicOptions Format;
+    struct Fill Fill;
+    struct ShapeLine Line;
+    int ParagraphLen;
+    struct RichTextRun *Paragraph;
+};
+
+// SlicerOptions represents the settings of the slicer.
+struct SlicerOptions
+{
+    char *Name;
+    char *Cell;
+    char *TableSheet;
+    char *TableName;
+    char *Caption;
+    char *Macro;
+    unsigned int Width;
+    unsigned int Height;
+    bool *DisplayHeader;
+    bool ItemDesc;
+    struct GraphicOptions Format;
 };
 
 struct CellNameToCoordinatesResult

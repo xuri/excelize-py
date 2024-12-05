@@ -166,6 +166,28 @@ class _Comment(Structure):
     ]
 
 
+class _FormControl(Structure):
+    _fields_ = [
+        ("Cell", c_char_p),
+        ("Macro", c_char_p),
+        ("Width", c_uint),
+        ("Height", c_uint),
+        ("Checked", c_bool),
+        ("CurrentVal", c_uint),
+        ("MinVal", c_uint),
+        ("MaxVal", c_uint),
+        ("IncChange", c_uint),
+        ("PageChange", c_uint),
+        ("Horizontally", c_bool),
+        ("CellLink", c_char_p),
+        ("Text", c_char_p),
+        ("ParagraphLen", c_int),
+        ("Paragraph", POINTER(_RichTextRun)),
+        ("Type", c_uint),
+        ("Format", _GraphicOptions),
+    ]
+
+
 class _ChartNumFmt(Structure):
     _fields_ = [
         ("CustomNumFmt", c_char_p),
@@ -317,6 +339,44 @@ class _PivotTableOptions(Structure):
         ("FieldPrintTitles", c_bool),
         ("ItemPrintTitles", c_bool),
         ("PivotTableStyleName", c_char_p),
+    ]
+
+
+class _ShapeLine(Structure):
+    _fields_ = [
+        ("Color", c_char_p),
+        ("Width", POINTER(c_double)),
+    ]
+
+
+class _Shape(Structure):
+    _fields_ = [
+        ("Cell", c_char_p),
+        ("Type", c_char_p),
+        ("Macro", c_char_p),
+        ("Width", c_uint),
+        ("Height", c_uint),
+        ("Format", _GraphicOptions),
+        ("Fill", _Fill),
+        ("Line", _ShapeLine),
+        ("ParagraphLen", c_int),
+        ("Paragraph", POINTER(_RichTextRun)),
+    ]
+
+
+class _SlicerOptions(Structure):
+    _fields_ = [
+        ("Name", c_char_p),
+        ("Cell", c_char_p),
+        ("TableSheet", c_char_p),
+        ("TableName", c_char_p),
+        ("Caption", c_char_p),
+        ("Macro", c_char_p),
+        ("Width", c_uint),
+        ("Height", c_uint),
+        ("DisplayHeader", POINTER(c_bool)),
+        ("ItemDesc", c_bool),
+        ("Format", _GraphicOptions),
     ]
 
 

@@ -359,6 +359,84 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.save_as("TestComment.xlsx"))
         self.assertIsNone(f.close())
 
+    def test_add_form_control(self):
+        f = excelize.new_file()
+        self.assertIsNone(
+            f.add_form_control(
+                "Sheet1",
+                excelize.FormControl(
+                    cell="A3",
+                    macro="Button1_Click",
+                    width=140,
+                    height=60,
+                    text="Button 1\r\n",
+                    paragraph=[
+                        excelize.RichTextRun(
+                            font=excelize.Font(
+                                bold=True,
+                                italic=True,
+                                underline="single",
+                                family="Times New Roman",
+                                size=14,
+                                color="777777",
+                            ),
+                            text="C1=A1+B1",
+                        )
+                    ],
+                    type=excelize.FormControlType.FormControlButton,
+                    format=excelize.GraphicOptions(
+                        print_object=True,
+                        positioning="absolute",
+                    ),
+                ),
+            )
+        )
+        self.assertIsNone(
+            f.add_form_control(
+                "Sheet1",
+                excelize.FormControl(
+                    cell="A1",
+                    text="Option Button 1",
+                    type=excelize.FormControlType.FormControlOptionButton,
+                ),
+            )
+        )
+        self.assertIsNone(
+            f.add_form_control(
+                "Sheet1",
+                excelize.FormControl(
+                    cell="B1",
+                    type=excelize.FormControlType.FormControlSpinButton,
+                    width=15,
+                    height=40,
+                    current_val=7,
+                    min_val=5,
+                    max_val=10,
+                    inc_change=1,
+                    cell_link="A1",
+                ),
+            )
+        )
+        self.assertIsNone(
+            f.add_form_control(
+                "Sheet1",
+                excelize.FormControl(
+                    cell="B3",
+                    type=excelize.FormControlType.FormControlScrollBar,
+                    width=140,
+                    height=20,
+                    current_val=50,
+                    min_val=10,
+                    max_val=100,
+                    page_change=1,
+                    cell_link="A1",
+                    horizontally=True,
+                ),
+            )
+        )
+        self.assertIsNone(f.save_as("TestAddFormControl.xlsx"))
+        self.assertIsNone(f.close())
+
     def test_pivot_table(self):
         f = excelize.new_file()
         month = [
@@ -427,6 +505,43 @@ class TestExcelize(unittest.TestCase):
             )
         )
         self.assertIsNone(f.save_as("TestAddPivotTable.xlsx"))
+        self.assertIsNone(f.close())
+
+    def test_add_shape(self):
+        f = excelize.new_file()
+        self.assertIsNone(
+            f.add_shape(
+                "Sheet1",
+                excelize.Shape(
+                    cell="G6",
+                    type="rect",
+                    line=excelize.ShapeLine(
+                        color="4286F4",
+                        width=1.2,
+                    ),
+                    fill=excelize.Fill(
+                        color=["8EB9FF"],
+                        pattern=1,
+                    ),
+                    paragraph=[
+                        excelize.RichTextRun(
+                            text="Rectangle Shape",
+                            font=excelize.Font(
+                                bold=True,
+                                italic=True,
+                                family="Times New Roman",
+                                size=19,
+                                color="777777",
+                                underline="sng",
+                            ),
+                        )
+                    ],
+                    width=180,
+                    height=40,
+                ),
+            )
+        )
+        self.assertIsNone(f.save_as("TestAddShape.xlsx"))
         self.assertIsNone(f.close())
 
     def test_cell_name_to_coordinates(self):

@@ -310,6 +310,26 @@ class Comment:
 
 
 @dataclass
+class FormControl:
+    cell: str = ""
+    macro: str = ""
+    width: int = 0
+    height: int = 0
+    checked: bool = False
+    current_val: int = 0
+    min_val: int = 0
+    max_val: int = 0
+    inc_change: int = 0
+    page_change: int = 0
+    horizontally: bool = False
+    cell_link: str = ""
+    text: str = ""
+    paragraph: Optional[list[RichTextRun]] = None
+    type: FormControlType = FormControlType.FormControlNote
+    format: GraphicOptions = GraphicOptions
+
+
+@dataclass
 class ChartNumFmt:
     custom_num_fmt: str = ""
     source_linked: bool = False
@@ -447,3 +467,37 @@ class PivotTableOptions:
     field_print_titles: bool = False
     item_print_titles: bool = False
     pivot_table_style_name: str = ""
+
+
+@dataclass
+class ShapeLine:
+    color: str = ""
+    width: Optional[int] = None
+
+
+@dataclass
+class Shape:
+    cell: str = ""
+    type: str = ""
+    macro: str = ""
+    width: int = 0
+    height: int = 0
+    format: GraphicOptions = GraphicOptions
+    fill: Fill = Fill
+    line: ShapeLine = ShapeLine
+    paragraph: Optional[list[RichTextRun]] = None
+
+
+@dataclass
+class SlicerOptions:
+    name: str = ""
+    cell: str = ""
+    table_sheet: str = ""
+    table_name: str = ""
+    caption: str = ""
+    macro: str = ""
+    width: int = 0
+    height: int = 0
+    display_header: Optional[bool] = None
+    item_desc: bool = False
+    format: GraphicOptions = GraphicOptions
