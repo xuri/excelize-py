@@ -546,6 +546,29 @@ class File:
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
+    def add_form_control(self, sheet: str, opts: FormControl) -> Exception | None:
+        """
+        Add form control button in a worksheet by given worksheet name and form
+        control options. Supported form control type: button, check box, group
+        box, label, option button, scroll bar and spinner. If set macro for the
+        form control, the workbook extension should be XLSM or XLTM. Scroll
+        value must be between 0 and 30000.
+
+        Args:
+            sheet (str): The worksheet name
+            opts (FormControl): The form control options
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.AddFormControl.restype = c_char_p
+        options = py_value_to_c(opts, types_go._FormControl())
+        err = lib.AddFormControl(
+            self.file_index, sheet.encode(ENCODE), byref(options)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
     def add_picture(
         self, sheet: str, cell: str, name: str, opts: GraphicOptions | None
     ) -> Exception | None:
@@ -655,7 +678,7 @@ class File:
             )
             if err:
                 print(err)
-            err = f.save_as("TestAddPivotTable.xlsx")
+            err = f.save_as("Book1.xlsx")
             if err:
                 print(err)
             err = f.close()
@@ -665,6 +688,73 @@ class File:
         lib.AddPivotTable.restype = c_char_p
         err = lib.AddPivotTable(
             self.file_index, byref(py_value_to_c(opts, types_go._PivotTableOptions()))
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def add_shape(self, sheet: str, opts: Shape) -> Exception | None:
+        """
+        Add shape in a sheet by given worksheet name and shape format set (such
+        as offset, scale, aspect ratio setting and print settings).
+
+        Args:
+            sheet (str): The worksheet name
+            opts (Shape): The shape options
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example, add text box (rect shape) in Sheet1:
+
+            .. code-block:: python
+
+            import excelize
+
+            f = excelize.new_file()
+            err = f.add_shape(
+                "Sheet1",
+                excelize.Shape(
+                    cell="G6",
+                    type="rect",
+                    line=excelize.ShapeLine(
+                        color="4286F4",
+                        width=1.2,
+                    ),
+                    fill=excelize.Fill(
+                        color=["8EB9FF"],
+                        pattern=1,
+                    ),
+                    paragraph=[
+                        excelize.RichTextRun(
+                            text="Rectangle Shape",
+                            font=excelize.Font(
+                                bold=True,
+                                italic=True,
+                                family="Times New Roman",
+                                size=19,
+                                color="777777",
+                                underline="sng",
+                            ),
+                        )
+                    ],
+                    width=80,
+                    height=40,
+                ),
+            )
+            if err:
+                print(err)
+            err = f.save_as("Book1.xlsx")
+            if err:
+                print(err)
+            err = f.close()
+            if err:
+                print(err)
+        """
+        lib.AddShape.restype = c_char_p
+        options = py_value_to_c(opts, types_go._Shape())
+        err = lib.AddShape(
+            self.file_index, sheet.encode(ENCODE), byref(options)
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 

@@ -506,6 +506,30 @@ func AddComment(idx int, sheet *C.char, opts *C.struct_Comment) *C.char {
 	return C.CString(errNil)
 }
 
+// AddFormControl provides the method to add form control button in a worksheet
+// by given worksheet name and form control options. Supported form control
+// type: button, check box, group box, label, option button, scroll bar and
+// spinner. If set macro for the form control, the workbook extension should be
+// XLSM or XLTM. Scroll value must be between 0 and 30000.
+//
+//export AddFormControl
+func AddFormControl(idx int, sheet *C.char, opts *C.struct_FormControl) *C.char {
+	var options excelize.FormControl
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.FormControl{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options = goVal.Elem().Interface().(excelize.FormControl)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).AddFormControl(C.GoString(sheet), options); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
 // Add picture in a sheet by given picture format set (such as offset, scale,
 // aspect ratio setting and print settings) and file path, supported image
 // types: BMP, EMF, EMZ, GIF, JPEG, JPG, PNG, SVG, TIF, TIFF, WMF, and WMZ.
@@ -549,6 +573,28 @@ func AddPivotTable(idx int, opts *C.struct_PivotTableOptions) *C.char {
 	}
 	options := goVal.Elem().Interface().(excelize.PivotTableOptions)
 	if err := f.(*excelize.File).AddPivotTable(&options); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// AddShape provides the method to add shape in a sheet by given worksheet
+// name and shape format set (such as offset, scale, aspect ratio setting and
+// print settings).
+//
+//export AddShape
+func AddShape(idx int, sheet *C.char, opts *C.struct_Shape) *C.char {
+	var options excelize.Shape
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.Shape{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options = goVal.Elem().Interface().(excelize.Shape)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).AddShape(C.GoString(sheet), &options); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(errNil)
