@@ -544,6 +544,47 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.save_as("TestAddShape.xlsx"))
         self.assertIsNone(f.close())
 
+    def test_add_slicer(self):
+        f = excelize.new_file()
+        self.assertIsNone(
+            f.add_table(
+                "Sheet1",
+                excelize.Table(
+                    name="Table1",
+                    range="A1:D5",
+                ),
+            )
+        )
+        self.assertIsNone(
+            f.add_slicer(
+                "Sheet1",
+                excelize.SlicerOptions(
+                    name="Column1",
+                    cell="E1",
+                    table_sheet="Sheet1",
+                    table_name="Table1",
+                    caption="Column1",
+                ),
+            )
+        )
+        self.assertIsNone(f.save_as("TestAddSlicer.xlsx"))
+        self.assertIsNone(f.close())
+
+    def test_add_sparkline(self):
+        f = excelize.new_file()
+        self.assertIsNone(
+            f.add_sparkline(
+                "Sheet1",
+                excelize.SparklineOptions(
+                    location=["A2"],
+                    range=["Sheet1!B1:J1"],
+                    markers=True,
+                ),
+            )
+        )
+        self.assertIsNone(f.save_as("TestAddSparkline.xlsx"))
+        self.assertIsNone(f.close())
+
     def test_cell_name_to_coordinates(self):
         col, row, err = excelize.cell_name_to_coordinates("Z3")
         self.assertEqual(col, 26)

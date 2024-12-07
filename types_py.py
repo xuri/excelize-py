@@ -253,6 +253,12 @@ class Protection:
 
 
 @dataclass
+class AutoFilterOptions:
+    column: str = ""
+    expression: str = ""
+
+
+@dataclass
 class Style:
     border: Optional[list[Border]] = None
     fill: Fill = Fill
@@ -501,3 +507,46 @@ class SlicerOptions:
     display_header: Optional[bool] = None
     item_desc: bool = False
     format: GraphicOptions = GraphicOptions
+
+
+@dataclass
+class SparklineOptions:
+    location: Optional[list[str]] = None
+    range: Optional[list[str]] = None
+    max: int = 0
+    cust_max: int = 0
+    min: int = 0
+    cust_min: int = 0
+    type: str = ""
+    weight: int = 0
+    date_axis: bool = False
+    markers: bool = False
+    high: bool = False
+    low: bool = False
+    first: bool = False
+    last: bool = False
+    negative: bool = False
+    axis: bool = False
+    hidden: bool = False
+    reverse: bool = False
+    style: int = 0
+    series_color: str = ""
+    negative_color: str = ""
+    markers_color: str = ""
+    first_color: str = ""
+    last_color: str = ""
+    hight_color: str = ""
+    low_color: str = ""
+    empty_cells: str = ""
+
+
+@dataclass
+class Table:
+    range: str = ""
+    name: str = ""
+    style_name: str = ""
+    show_column_stripes: bool = False
+    show_first_column: bool = False
+    show_header_row: Optional[bool] = None
+    show_last_column: bool = False
+    show_row_stripes: Optional[bool] = None

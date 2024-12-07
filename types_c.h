@@ -129,6 +129,13 @@ struct Alignment
     bool WrapText;
 };
 
+// AutoFilterOptions directly maps the auto filter settings.
+struct AutoFilterOptions
+{
+    char *Column;
+    char *Expression;
+};
+
 // Protection directly maps the protection settings of the cells.
 struct Protection
 {
@@ -401,6 +408,53 @@ struct SlicerOptions
     bool *DisplayHeader;
     bool ItemDesc;
     struct GraphicOptions Format;
+};
+
+// SparklineOptions directly maps the settings of the sparkline.
+struct SparklineOptions
+{
+    int LocationLen;
+    char **Location;
+    int RangeLen;
+    char **Range;
+    int Max;
+    int CustMax;
+    int Min;
+    int CustMin;
+    char *Type;
+    double Weight;
+    bool DateAxis;
+    bool Markers;
+    bool High;
+    bool Low;
+    bool First;
+    bool Last;
+    bool Negative;
+    bool Axis;
+    bool Hidden;
+    bool Reverse;
+    int Style;
+    char *SeriesColor;
+    char *NegativeColor;
+    char *MarkersColor;
+    char *FirstColor;
+    char *LastColor;
+    char *HightColor;
+    char *LowColor;
+    char *EmptyCells;
+};
+
+// Table directly maps the format settings of the table.
+struct Table
+{
+    char *Range;
+    char *Name;
+    char *StyleName;
+    bool ShowColumnStripes;
+    bool ShowFirstColumn;
+    bool *ShowHeaderRow;
+    bool ShowLastColumn;
+    bool *ShowRowStripes;
 };
 
 struct CellNameToCoordinatesResult

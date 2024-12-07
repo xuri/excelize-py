@@ -113,6 +113,13 @@ class _Protection(Structure):
     ]
 
 
+class _AutoFilterOptions(Structure):
+    _fields_ = [
+        ("Column", c_char_p),
+        ("Expression", c_char_p),
+    ]
+
+
 class _Style(Structure):
     _fields_ = [
         ("BorderLen", c_int),
@@ -377,6 +384,53 @@ class _SlicerOptions(Structure):
         ("DisplayHeader", POINTER(c_bool)),
         ("ItemDesc", c_bool),
         ("Format", _GraphicOptions),
+    ]
+
+
+class _SparklineOptions(Structure):
+    _fields_ = [
+        ("LocationLen", c_int),
+        ("Location", POINTER(POINTER(c_char))),
+        ("RangeLen", c_int),
+        ("Range", POINTER(POINTER(c_char))),
+        ("Max", c_int),
+        ("CustMax", c_int),
+        ("Min", c_int),
+        ("CustMin", c_int),
+        ("Type", c_char_p),
+        ("Weight", c_double),
+        ("DateAxis", c_bool),
+        ("Markers", c_bool),
+        ("High", c_bool),
+        ("Low", c_bool),
+        ("First", c_bool),
+        ("Last", c_bool),
+        ("Negative", c_bool),
+        ("Axis", c_bool),
+        ("Hidden", c_bool),
+        ("Reverse", c_bool),
+        ("Style", c_int),
+        ("SeriesColor", c_char_p),
+        ("NegativeColor", c_char_p),
+        ("MarkersColor", c_char_p),
+        ("FirstColor", c_char_p),
+        ("LastColor", c_char_p),
+        ("HightColor", c_char_p),
+        ("LowColor", c_char_p),
+        ("EmptyCells", c_char_p),
+    ]
+
+
+class _Table(Structure):
+    _fields_ = [
+        ("Range", c_char_p),
+        ("Name", c_char_p),
+        ("StyleName", c_char_p),
+        ("ShowColumnStripes", c_bool),
+        ("ShowFirstColumn", c_bool),
+        ("ShowHeaderRow", POINTER(c_bool)),
+        ("ShowLastColumn", c_bool),
+        ("ShowRowStripes", POINTER(c_bool)),
     ]
 
 

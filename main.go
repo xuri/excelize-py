@@ -600,6 +600,72 @@ func AddShape(idx int, sheet *C.char, opts *C.struct_Shape) *C.char {
 	return C.CString(errNil)
 }
 
+// AddSlicer function inserts a slicer by giving the worksheet name and slicer
+// settings.
+//
+//export AddSlicer
+func AddSlicer(idx int, sheet *C.char, opts *C.struct_SlicerOptions) *C.char {
+	var options excelize.SlicerOptions
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.SlicerOptions{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options = goVal.Elem().Interface().(excelize.SlicerOptions)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).AddSlicer(C.GoString(sheet), &options); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// AddSparkline provides a function to add sparklines to the worksheet by
+// given formatting options. Sparklines are small charts that fit in a single
+// cell and are used to show trends in data. Sparklines are a feature of Excel
+// 2010 and later only. You can write them to workbook that can be read by Excel
+// 2007, but they won't be displayed.
+//
+//export AddSparkline
+func AddSparkline(idx int, sheet *C.char, opts *C.struct_SparklineOptions) *C.char {
+	var options excelize.SparklineOptions
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.SparklineOptions{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options = goVal.Elem().Interface().(excelize.SparklineOptions)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).AddSparkline(C.GoString(sheet), &options); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// AddTable provides the method to add table in a worksheet by given worksheet
+// name, range reference and format set.
+//
+//export AddTable
+func AddTable(idx int, sheet *C.char, table *C.struct_Table) *C.char {
+	var tbl excelize.Table
+	goVal, err := cValueToGo(reflect.ValueOf(*table), reflect.TypeOf(excelize.Table{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	tbl = goVal.Elem().Interface().(excelize.Table)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).AddTable(C.GoString(sheet), &tbl); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
 // CellNameToCoordinates converts alphanumeric cell name to [X, Y] coordinates
 // or returns an error.
 //

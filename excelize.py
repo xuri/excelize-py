@@ -758,6 +758,114 @@ class File:
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
+    def add_slicer(self, sheet: str, opts: SlicerOptions) -> Exception | None:
+        """
+        Inserts a slicer by giving the worksheet name and slicer settings.
+
+        Args:
+            sheet (str): The worksheet name
+            opts (SlicerOptions): The slicer options
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example, insert a slicer on the Sheet1!E1 with field Column1 for
+            the table named Table1:
+
+            .. code-block:: python
+
+            err = f.add_slicer(
+                "Sheet1",
+                excelize.SlicerOptions(
+                    name="Column1",
+                    cell="E1",
+                    table_sheet="Sheet1",
+                    table_name="Table1",
+                    caption="Column1",
+                    width=200,
+                    height=200,
+                ),
+            )
+        """
+        lib.AddSlicer.restype = c_char_p
+        options = py_value_to_c(opts, types_go._SlicerOptions())
+        err = lib.AddSlicer(
+            self.file_index, sheet.encode(ENCODE), byref(options)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def add_sparkline(self, sheet: str, opts: SparklineOptions) -> Exception | None:
+        """
+        add sparklines to the worksheet by given formatting options. Sparklines
+        are small charts that fit in a single cell and are used to show trends
+        in data. Sparklines are a feature of Excel 2010 and later only. You can
+        write them to workbook that can be read by Excel 2007, but they won't be
+        displayed.
+
+        Args:
+            sheet (str): The worksheet name
+            opts (SparklineOptions): The sparklines options
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example, add a grouped sparkline. Changes are applied to all
+            three:
+
+            .. code-block:: python
+
+            err = f.add_sparkline(
+                "Sheet1",
+                excelize.SparklineOptions(
+                    location=["A1", "A2", "A3"],
+                    range=["Sheet2!A1:J1", "Sheet2!A2:J2", "Sheet2!A3:J3"],
+                    markers=True,
+                ),
+            )
+        """
+        lib.AddSparkline.restype = c_char_p
+        options = py_value_to_c(opts, types_go._SparklineOptions())
+        err = lib.AddSparkline(
+            self.file_index, sheet.encode(ENCODE), byref(options)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def add_table(self, sheet: str, table: Table) -> Exception | None:
+        """
+        Add table in a worksheet by given worksheet name, range reference and
+        format set.
+
+        Note that the table must be at least two lines including the header. The
+        header cells must contain strings and must be unique, and must set the
+        header row data of the table before calling the AddTable function.
+        Multiple tables range reference that can't have an intersection.
+
+        Args:
+            sheet (str): The worksheet name
+            table (Table): The table options
+
+        Returns:
+            Exception | None: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example, create a table of A1:D5 on Sheet1:
+
+            .. code-block:: python
+
+            err = f.add_table("Sheet1", excelize.Table(range="A1:D5"))
+        """
+        lib.AddTable.restype = c_char_p
+        options = py_value_to_c(table, types_go._Table())
+        err = lib.AddTable(
+            self.file_index, sheet.encode(ENCODE), byref(options)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
     def close(self) -> Exception | None:
         """
         Closes and cleanup the open temporary file for the spreadsheet.
