@@ -7,8 +7,8 @@ jobs:
     strategy:
       matrix:
         go-version: [1.23.x]
-        os: [ubuntu-latest, macos-latest, windows-latest]
-        python-version: [3.13]
+        os: [ubuntu-24.04, macos-latest, windows-latest]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
         targetplatform: [x64]
 
     runs-on: ${{ matrix.os }}
@@ -56,9 +56,101 @@ jobs:
       run: go build -buildmode=c-shared -o libexcelize.arm64.darwin.dylib main.go && coverage run -m unittest
 
     - name: Codecov
-      uses: codecov/codecov-action@v4
+      uses: codecov/codecov-action@v5
       env:
         CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
       with:
         flags: unittests
         name: codecov-umbrella
+
+  build:
+    runs-on: macos-latest
+    needs: [test]
+    if: github.event_name == 'release' && github.event.action == 'published'
+
+    steps:
+
+      - name: Install Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: 1.23.x
+          cache: false
+
+      - name: Install Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Get dependencies
+        run: |
+          env GO111MODULE=on go vet ./...
+          pip install coverage
+
+      - name: Build Shared Library
+        env:
+          CGO_ENABLED: 1
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          brew tap messense/macos-cross-toolchains
+          brew install FiloSottile/musl-cross/musl-cross i686-unknown-linux-gnu mingw-w64
+          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20241203/llvm-mingw-20241203-ucrt-macos-universal.tar.xz
+          tar -xzf llvm-mingw-20241203-ucrt-macos-universal.tar.xz
+          export PATH="$(pwd)/llvm-mingw-20241203-ucrt-macos-universal/bin:$PATH"
+          CC=i686-linux-gnu-gcc GOOS=linux GOARCH=386 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.386.linux.so main.go
+          CC=x86_64-linux-musl-gcc GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.amd64.linux.so main.go
+          CC=aarch64-linux-musl-gcc GOOS=linux GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.arm64.linux.so main.go
+          CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.amd64.windows.dll main.go
+          CC=i686-w64-mingw32-gcc GOOS=windows GOARCH=386 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.386.windows.dll main.go
+          CC=aarch64-w64-mingw32-gcc GOOS=windows GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.arm64.windows.dll main.go
+          CC=gcc GOOS=darwin GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.arm64.darwin.dylib main.go
+          CC=gcc GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.amd64.darwin.dylib main.go
+          rm -f libexcelize.*.h
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: libexcelize
+          path: |
+            libexcelize.386.linux.so
+            libexcelize.amd64.linux.so
+            libexcelize.arm64.linux.so
+            libexcelize.amd64.windows.dll
+            libexcelize.386.windows.dll
+            libexcelize.arm64.windows.dll
+            libexcelize.arm64.darwin.dylib
+            libexcelize.amd64.darwin.dylib
+
+  publish:
+    runs-on: ubuntu-latest
+    needs: [build]
+    environment:
+      name: pypi
+      url: https://pypi.org/p/excelize
+    permissions:
+      id-token: write
+
+    if: github.event_name == 'release' && github.event.action == 'published'
+    steps:
+    - name: Install Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.10"
+
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Download Artifacts
+      uses: actions/download-artifact@v4
+      with:
+        merge-multiple: true
+        path: ./
+
+    - name: Build Python Package
+      run: |
+        pip install build setuptools wheel
+        python -m build
+
+    - name: Publish package distributions to PyPI
+      uses: pypa/gh-action-pypi-publish@release/v1
