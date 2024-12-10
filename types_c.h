@@ -6,7 +6,7 @@
 // / XLTX files. Supports reading and writing spreadsheet documents generated
 // by Microsoft Excel™ 2007 and later. Supports complex components by high
 // compatibility, and provided streaming API for generating or reading data from
-// a worksheet with huge amounts of data. This library needs Python version 3.10
+// a worksheet with huge amounts of data. This library needs Python version 3.9
 // or later.
 
 #include <stdbool.h>
@@ -141,6 +141,14 @@ struct FormulaOpts
 {
     char **Type;
     char **Ref;
+};
+
+// HyperlinkOpts can be passed to SetCellHyperlink to set optional hyperlink
+// attributes (e.g. display value)
+struct HyperlinkOpts
+{
+    char **Display;
+    char **Tooltip;
 };
 
 // Protection directly maps the protection settings of the cells.
@@ -330,6 +338,8 @@ struct Chart
     char *ShowBlanksAs;
     int BubbleSize;
     int HoleSize;
+    unsigned int *GapWidth;
+    int *Overlap;
 };
 
 // PivotTableField directly maps the field settings of the pivot table.
@@ -462,6 +472,19 @@ struct Table
     bool *ShowHeaderRow;
     bool ShowLastColumn;
     bool *ShowRowStripes;
+};
+
+struct GetCellFormulaResult
+{
+    char *val;
+    char *err;
+};
+
+struct GetCellHyperLinkResult
+{
+    bool link;
+    char *target;
+    char *err;
 };
 
 struct CalcCellValueResult

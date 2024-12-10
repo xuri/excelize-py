@@ -6,7 +6,7 @@
 // / XLTX files. Supports reading and writing spreadsheet documents generated
 // by Microsoft Excel™ 2007 and later. Supports complex components by high
 // compatibility, and provided streaming API for generating or reading data from
-// a worksheet with huge amounts of data. This library needs Python version 3.10
+// a worksheet with huge amounts of data. This library needs Python version 3.9
 // or later.
 
 package main
@@ -942,6 +942,40 @@ func GetAppProps(idx int) C.struct_GetAppPropsResult {
 	return C.struct_GetAppPropsResult{opts: cVal.Elem().Interface().(C.struct_AppProperties), err: C.CString(errNil)}
 }
 
+// GetCellFormula provides a function to get formula from cell by given
+// worksheet name and cell reference in spreadsheet.
+//
+//export GetCellFormula
+func GetCellFormula(idx int, sheet, cell *C.char) C.struct_GetCellFormulaResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetCellFormulaResult{val: C.CString(""), err: C.CString(errFilePtr)}
+	}
+	formula, err := f.(*excelize.File).GetCellFormula(C.GoString(sheet), C.GoString(cell))
+	if err != nil {
+		return C.struct_GetCellFormulaResult{val: C.CString(formula), err: C.CString(err.Error())}
+	}
+	return C.struct_GetCellFormulaResult{val: C.CString(formula), err: C.CString(errNil)}
+}
+
+// GetCellHyperLink gets a cell hyperlink based on the given worksheet name and
+// cell reference. If the cell has a hyperlink, it will return 'true' and
+// the link address, otherwise it will return 'false' and an empty link
+// address.
+//
+//export GetCellHyperLink
+func GetCellHyperLink(idx int, sheet, cell *C.char) C.struct_GetCellHyperLinkResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetCellHyperLinkResult{link: false, target: C.CString(""), err: C.CString(errFilePtr)}
+	}
+	link, target, err := f.(*excelize.File).GetCellHyperLink(C.GoString(sheet), C.GoString(cell))
+	if err != nil {
+		return C.struct_GetCellHyperLinkResult{link: C._Bool(link), target: C.CString(target), err: C.CString(err.Error())}
+	}
+	return C.struct_GetCellHyperLinkResult{link: C._Bool(link), target: C.CString(target), err: C.CString(errNil)}
+}
+
 // GetCellValue provides a function to get formatted value from cell by given
 // worksheet name and cell reference in spreadsheet. The return value is
 // converted to the `string` data type. If the cell format can be applied to
@@ -1214,6 +1248,39 @@ func SetCellFormula(idx int, sheet, cell, formula *C.char, opts *C.struct_Formul
 		return C.CString(errNil)
 	}
 	if err := f.(*excelize.File).SetCellFormula(C.GoString(sheet), C.GoString(cell), C.GoString(formula)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetCellHyperLink provides a function to set cell hyperlink by given
+// worksheet name and link URL address. LinkType defines three types of
+// hyperlink "External" for website or "Location" for moving to one of cell in
+// this workbook or "None" for remove hyperlink. Maximum limit hyperlinks in a
+// worksheet is 65530. This function is only used to set the hyperlink of the
+// cell and doesn't affect the value of the cell. If you need to set the value
+// of the cell, please use the other functions such as `SetCellStyle` or
+// `SetSheetRow`.
+//
+//export SetCellHyperLink
+func SetCellHyperLink(idx int, sheet, cell, link, linkType *C.char, opts *C.struct_HyperlinkOpts) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString("")
+	}
+	if opts != nil {
+		var options excelize.HyperlinkOpts
+		goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.HyperlinkOpts{}))
+		if err != nil {
+			return C.CString(err.Error())
+		}
+		options = goVal.Elem().Interface().(excelize.HyperlinkOpts)
+		if err := f.(*excelize.File).SetCellHyperLink(C.GoString(sheet), C.GoString(cell), C.GoString(link), C.GoString(linkType), options); err != nil {
+			return C.CString(err.Error())
+		}
+		return C.CString(errNil)
+	}
+	if err := f.(*excelize.File).SetCellHyperLink(C.GoString(sheet), C.GoString(cell), C.GoString(link), C.GoString(linkType)); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(errNil)

@@ -10,18 +10,15 @@
     <a href="https://www.paypal.com/paypalme/xuri"><img src="https://img.shields.io/badge/Donate-PayPal-green.svg" alt="Donate"></a>
 </p>
 
-excelize-py 是 Go 语言 [Excelize](https://github.com/xuri/excelize) 基础库的 Python 实现，可用于操作 Office Excel 文档，基于 ECMA-376，ISO/IEC 29500 国际标准。可以使用它来读取、写入由 Microsoft Excel&trade; 2007 及以上版本创建的电子表格文档。支持 XLAM / XLSM / XLSX / XLTM / XLTX 等多种文档格式，高度兼容带有样式、图片(表)、透视表、切片器等复杂组件的文档。可应用于各类报表平台、云计算、边缘计算等系统。获取更多信息请访问 [参考文档](https://xuri.me/excelize/)。
+excelize-py 是 Go 语言 [Excelize](https://github.com/xuri/excelize) 基础库的 Python 实现，可用于操作 Office Excel 文档，基于 ECMA-376，ISO/IEC 29500 国际标准。可以使用它来读取、写入由 Microsoft Excel&trade; 2007 及以上版本创建的电子表格文档。支持 XLAM / XLSM / XLSX / XLTM / XLTX 等多种文档格式，高度兼容带有样式、图片(表)、透视表、切片器等复杂组件的文档。可应用于各类报表平台、云计算、边缘计算等系统。使用本软件包要求使用的 Python 语言为 3.9 或更高版本，获取更多信息请访问 [参考文档](https://xuri.me/excelize/)。
 
 ## 运行环境兼容性
 
 操作系统 | CPU 架构
 ---|---
-Windows | amd64
-Windows | arm64
-Darwin | amd64
-Darwin | arm64
-Linux | amd64
-Linux | arm64
+Windows | amd64, arm64, i686
+Darwin | amd64, arm64
+Linux | amd64, arm64, i686
 
 ## 快速上手
 

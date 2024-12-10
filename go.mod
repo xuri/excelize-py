@@ -3,8 +3,8 @@ module github.com/xuri/excelize-py
 go 1.18
 
 require (
-	github.com/xuri/excelize/v2 v2.9.1-0.20241122135638-c93618856aaf
-	golang.org/x/image v0.22.0
+	github.com/xuri/excelize/v2 v2.9.1-0.20241208033954-3ca60f8d2382
+	golang.org/x/image v0.23.0
 )
 
 require (
