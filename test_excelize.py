@@ -59,7 +59,7 @@ class TestExcelize(unittest.TestCase):
     def test_open_file(self):
         f, err = excelize.open_file("Book1.xlsx")
         self.assertIsNone(f)
-        self.assertTrue(err.__str__().startswith("open Book1.xlsx"))
+        self.assertTrue(str(err).startswith("open Book1.xlsx"))
 
     def test_app_props(self):
         f = excelize.new_file()
@@ -113,12 +113,12 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(style, s)
         self.assertIsNone(f.set_cell_style("Sheet1", "A1", "B2", style_id))
         self.assertEqual(
-            f.set_cell_style("SheetN", "A1", "B2", style_id).__str__(),
+            str(f.set_cell_style("SheetN", "A1", "B2", style_id)),
             "sheet SheetN does not exist",
         )
 
         style, err = f.get_style(2)
-        self.assertEqual("invalid style ID 2", err.__str__())
+        self.assertEqual("invalid style ID 2", str(err))
         self.assertIsNone(style)
         self.assertIsNone(f.save_as("TestStyle.xlsx"))
         self.assertIsNone(
@@ -145,7 +145,7 @@ class TestExcelize(unittest.TestCase):
         )
         self.assertIsNone(f.set_cell_value("Sheet1", "A8", datetime.date(2016, 8, 30)))
         self.assertEqual(
-            f.set_cell_value("SheetN", "A9", None).__str__(),
+            str(f.set_cell_value("SheetN", "A9", None)),
             "sheet SheetN does not exist",
         )
         val, err = f.get_cell_value("Sheet1", "A2")
@@ -169,42 +169,46 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.duplicate_row("Sheet1", 9))
         self.assertIsNone(f.duplicate_row_to("Sheet1", 10, 10))
 
+        self.assertIsNone(f.merge_cell("Sheet1", "A1", "B2"))
+
         idx, err = f.new_sheet("Sheet2")
         self.assertEqual(idx, 1)
         self.assertIsNone(err)
         self.assertIsNone(f.set_active_sheet(idx))
         self.assertEqual(f.get_active_sheet_index(), idx)
 
+        self.assertIsNone(f.set_sheet_background("Sheet2", "chart.png"))
+
         idx, err = f.new_sheet(":\\/?*[]Maximum 31 characters allowed in sheet title.")
         self.assertEqual(idx, -1)
         self.assertEqual(
-            err.__str__(), "the sheet name length exceeds the 31 characters limit"
+            str(err), "the sheet name length exceeds the 31 characters limit"
         )
 
         idx, err = f.new_sheet("Sheet3")
         self.assertIsNone(err)
         self.assertIsNone(f.copy_sheet(1, idx))
-        self.assertEqual(f.copy_sheet(1, 4).__str__(), "invalid worksheet index")
+        self.assertEqual(str(f.copy_sheet(1, 4)), "invalid worksheet index")
 
         self.assertIsNone(f.delete_sheet("Sheet3"))
         self.assertEqual(
-            f.delete_sheet("Sheet:1").__str__(),
+            str(f.delete_sheet("Sheet:1")),
             "the sheet can not contain any of the characters :\\/?*[or]",
         )
 
         self.assertEqual(
-            f.delete_chart("SheetN", "A1").__str__(), "sheet SheetN does not exist"
+            str(f.delete_chart("SheetN", "A1")), "sheet SheetN does not exist"
         )
         self.assertEqual(
-            f.delete_comment("SheetN", "A1").__str__(), "sheet SheetN does not exist"
+            str(f.delete_comment("SheetN", "A1")), "sheet SheetN does not exist"
         )
 
         self.assertIsNone(f.delete_picture("Sheet1", "A1"))
         self.assertEqual(
-            f.delete_comment("SheetN", "A1").__str__(), "sheet SheetN does not exist"
+            str(f.delete_comment("SheetN", "A1")), "sheet SheetN does not exist"
         )
 
-        self.assertEqual(f.delete_slicer("x").__str__(), "slicer x does not exist")
+        self.assertEqual(str(f.delete_slicer("x")), "slicer x does not exist")
 
         rows, err = f.get_rows("Sheet1")
         self.assertIsNone(err)
@@ -236,6 +240,15 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.save())
         self.assertIsNone(f.save(excelize.Options(password="")))
         self.assertIsNone(f.close())
+
+        with open("TestStyle.xlsx", "rb") as file:
+            f, err = excelize.open_reader(file.read())
+            self.assertIsNone(err)
+            self.assertIsNone(f.save_as("TestOpenReader.xlsx"))
+
+        with open("chart.png", "rb") as file:
+            _, err = excelize.open_reader(file.read(), excelize.Options(password=""))
+            self.assertEqual(str(err), "zip: not a valid zip file")
 
     def test_add_chart(self):
         f = excelize.new_file()
@@ -644,7 +657,7 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(col, -1)
         self.assertEqual(row, -1)
         self.assertEqual(
-            err.__str__(),
+            str(err),
             'cannot convert cell "A" to coordinates: invalid cell name "A"',
         )
 
@@ -683,7 +696,7 @@ class TestExcelize(unittest.TestCase):
         col, err = excelize.column_name_to_number("-")
         self.assertEqual(col, -1)
         self.assertEqual(
-            err.__str__(),
+            str(err),
             'invalid column name "-"',
         )
 
@@ -695,7 +708,7 @@ class TestExcelize(unittest.TestCase):
         name, err = excelize.column_number_to_name(0)
         self.assertEqual(name, "")
         self.assertEqual(
-            err.__str__(),
+            str(err),
             "the column number must be greater than or equal to 1 and less than or equal to 16384",
         )
 

@@ -17,6 +17,7 @@ package main
 import "C"
 
 import (
+	"bytes"
 	"errors"
 	"reflect"
 	"sync"
@@ -1072,6 +1073,22 @@ func GetStyle(idx, styleID int) C.struct_GetStyleResult {
 	return C.struct_GetStyleResult{style: cVal.Elem().Interface().(C.struct_Style), err: C.CString(errNil)}
 }
 
+// MergeCell provides a function to merge cells by given range reference and
+// sheet name. Merging cells only keeps the upper-left cell value, and
+// discards the other values.
+//
+//export MergeCell
+func MergeCell(idx int, sheet, topLeftCell, bottomRightCell *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString("")
+	}
+	if err := f.(*excelize.File).MergeCell(C.GoString(sheet), C.GoString(topLeftCell), C.GoString(bottomRightCell)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
 // NewFile provides a function to create new file by default template.
 //
 //export NewFile
@@ -1140,6 +1157,34 @@ func OpenFile(filename *C.char, opts *C.struct_Options) C.struct_OptionsResult {
 		options = goVal.Elem().Interface().(excelize.Options)
 	}
 	f, err := excelize.OpenFile(C.GoString(filename), options)
+	if err != nil {
+		return C.struct_OptionsResult{idx: C.int(-1), err: C.CString(err.Error())}
+	}
+	var idx int
+	files.Range(func(_, _ interface{}) bool {
+		idx++
+		return true
+	})
+	idx++
+	files.Store(idx, f)
+	return C.struct_OptionsResult{idx: C.int(idx), err: C.CString(errNil)}
+}
+
+// OpenReader read data stream from io.Reader and return a populated spreadsheet
+// file.
+//
+//export OpenReader
+func OpenReader(b *C.uchar, bLen C.int, opts *C.struct_Options) C.struct_OptionsResult {
+	var options excelize.Options
+	if opts != nil {
+		goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.Options{}))
+		if err != nil {
+			return C.struct_OptionsResult{idx: C.int(-1), err: C.CString(err.Error())}
+		}
+		options = goVal.Elem().Interface().(excelize.Options)
+	}
+	buf := C.GoBytes(unsafe.Pointer(b), bLen)
+	f, err := excelize.OpenReader(bytes.NewReader(buf), options)
 	if err != nil {
 		return C.struct_OptionsResult{idx: C.int(-1), err: C.CString(err.Error())}
 	}
@@ -1321,6 +1366,22 @@ func SetCellValue(idx int, sheet, cell *C.char, value *C.struct_Interface) *C.ch
 	}
 	if err := f.(*excelize.File).SetCellValue(C.GoString(sheet), C.GoString(cell), cInterfaceToGo(*value)); err != nil {
 		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetSheetBackground provides a function to set background picture by given
+// worksheet name and file path. Supported image types: BMP, EMF, EMZ, GIF,
+// JPEG, JPG, PNG, SVG, TIF, TIFF, WMF, and WMZ.
+//
+//export SetSheetBackground
+func SetSheetBackground(idx int, sheet, picture *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetSheetBackground(C.GoString(sheet), C.GoString(picture)); err != nil {
+		C.CString(err.Error())
 	}
 	return C.CString(errNil)
 }

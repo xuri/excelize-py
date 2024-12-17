@@ -219,7 +219,8 @@ def c_value_to_py(ctypes_instance, py_instance):
                             for i in range(l):
                                 py_list.append(
                                     c_value_to_py(
-                                        c_array[i], get_args(py_field_args[0])[0]()
+                                        c_array[i],
+                                        get_args(py_field_args[0])[0](),
                                     ),
                                 )
                         setattr(py_instance, py_field_name, py_list)
@@ -419,7 +420,8 @@ def py_value_to_c_interface(py_value):
         bool: lambda: Interface(type=4, boolean=py_value),
         datetime: lambda: Interface(type=5, integer=int(py_value.timestamp())),
         date: lambda: Interface(
-            type=5, integer=int(datetime.combine(py_value, time.min).timestamp())
+            type=5,
+            integer=int(datetime.combine(py_value, time.min).timestamp()),
         ),
     }
     interface = type_mappings.get(type(py_value), lambda: Interface())()
@@ -699,7 +701,8 @@ class File:
         """
         lib.AddPivotTable.restype = c_char_p
         err = lib.AddPivotTable(
-            self.file_index, byref(py_value_to_c(opts, types_go._PivotTableOptions()))
+            self.file_index,
+            byref(py_value_to_c(opts, types_go._PivotTableOptions())),
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
@@ -1126,7 +1129,9 @@ class File:
         res = lib.GetActiveSheetIndex(self.file_index)
         return res
 
-    def get_app_props(self) -> Tuple[Optional[AppProperties], Optional[Exception]]:
+    def get_app_props(
+        self,
+    ) -> Tuple[Optional[AppProperties], Optional[Exception]]:
         """
         Get document application properties.
 
@@ -1138,7 +1143,7 @@ class File:
         lib.GetAppProps.restype = types_go._GetAppPropsResult
         res = lib.GetAppProps(self.file_index)
         err = res.err.decode(ENCODE)
-        return c_value_to_py(res.opts, AppProperties()) if err == "" else None, (
+        return (c_value_to_py(res.opts, AppProperties()) if err == "" else None), (
             None if err == "" else Exception(err)
         )
 
@@ -1271,6 +1276,50 @@ class File:
 
         return rows, None if err == "" else Exception(err)
 
+    def get_style(self, style_id: int) -> Tuple[Optional[Style], Optional[Exception]]:
+        """
+        Get style definition by given style index.
+
+        Args:
+            style_id (int): The style ID
+
+        Returns:
+            Tuple[Optional[Style], Optional[Exception]]: A tuple containing the
+            Style object if found, otherwise None, and an Exception object if an
+            error occurred, otherwise None.
+        """
+        lib.GetStyle.restype = types_go._GetStyleResult
+        res = lib.GetStyle(self.file_index, c_int(style_id))
+        err = res.err.decode(ENCODE)
+        if err == "":
+            return c_value_to_py(res.style, Style()), None
+        return None, Exception(err)
+
+    def merge_cell(
+        self, sheet: str, top_left_cell: str, bottom_right_cell: str
+    ) -> Optional[Exception]:
+        """
+        Merge cells by given range reference and sheet name. Merging cells only
+        keeps the upper-left cell value, and discards the other values.
+
+        Args:
+            sheet (str): The worksheet name
+            top_left_cell (str): The top-left cell reference
+            bottom_right_cell (str): The right-bottom cell reference
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.MergeCell.restype = c_char_p
+        err = lib.MergeCell(
+            self.file_index,
+            sheet.encode(ENCODE),
+            top_left_cell.encode(ENCODE),
+            bottom_right_cell.encode(ENCODE),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
     def new_sheet(self, sheet: str) -> Tuple[int, Optional[Exception]]:
         """
         Create a new sheet by given a worksheet name and returns the index of
@@ -1308,25 +1357,6 @@ class File:
         res = lib.NewStyle(self.file_index, byref(options))
         err = res.err.decode(ENCODE)
         return res.style, None if err == "" else Exception(err)
-
-    def get_style(self, style_id: int) -> Tuple[Optional[Style], Optional[Exception]]:
-        """
-        Get style definition by given style index.
-
-        Args:
-            style_id (int): The style ID
-
-        Returns:
-            Tuple[Optional[Style], Optional[Exception]]: A tuple containing the
-            Style object if found, otherwise None, and an Exception object if an
-            error occurred, otherwise None.
-        """
-        lib.GetStyle.restype = types_go._GetStyleResult
-        res = lib.GetStyle(self.file_index, c_int(style_id))
-        err = res.err.decode(ENCODE)
-        if err == "":
-            return c_value_to_py(res.style, Style()), None
-        return None, Exception(err)
 
     def set_active_sheet(self, index: int) -> Optional[Exception]:
         """
@@ -1384,7 +1414,12 @@ class File:
         return None if err == "" else Exception(err)
 
     def set_cell_hyperlink(
-        self, sheet: str, cell: str, link: str, link_type: str, *opts: HyperlinkOpts
+        self,
+        sheet: str,
+        cell: str,
+        link: str,
+        link_type: str,
+        *opts: HyperlinkOpts,
     ) -> Optional[Exception]:
         """
         Set cell hyperlink by given worksheet name and link URL address. The
@@ -1449,7 +1484,11 @@ class File:
         return None if err == "" else Exception(err)
 
     def set_cell_style(
-        self, sheet: str, top_left_cell: str, bottom_right_cell: str, style_id: int
+        self,
+        sheet: str,
+        top_left_cell: str,
+        bottom_right_cell: str,
+        style_id: int,
     ) -> Optional[Exception]:
         """
         Add style attribute for cells by given worksheet name, range reference
@@ -1479,7 +1518,10 @@ class File:
         return None if err == "" else Exception(err)
 
     def set_cell_value(
-        self, sheet: str, cell: str, value: Union[None, int, str, bool, datetime, date]
+        self,
+        sheet: str,
+        cell: str,
+        value: Union[None, int, str, bool, datetime, date],
     ) -> Optional[Exception]:
         """
         Set the value of a cell. The specified coordinates should not be in the
@@ -1508,6 +1550,28 @@ class File:
             sheet.encode(ENCODE),
             cell.encode(ENCODE),
             byref(py_value_to_c_interface(value)),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_sheet_background(self, sheet: str, picture: str) -> Optional[Exception]:
+        """
+        Set background picture by given worksheet name and file path. Supported
+        image types: BMP, EMF, EMZ, GIF, JPEG, JPG, PNG, SVG, TIF, TIFF, WMF,
+        and WMZ.
+
+        Args:
+            sheet (str): The worksheet name
+            picture (str): The image file path
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.SetSheetBackground.restype = c_char_p
+        err = lib.SetSheetBackground(
+            self.file_index,
+            sheet.encode(ENCODE),
+            picture.encode(ENCODE),
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
@@ -1679,6 +1743,30 @@ def open_file(
     if len(opts) > 0:
         options = byref(py_value_to_c(opts[0], types_go._Options()))
     res = lib.OpenFile(filename.encode(ENCODE), options)
+    err = res.err.decode(ENCODE)
+    if err == "":
+        return File(res.idx), None
+    return None, Exception(err)
+
+
+def open_reader(
+    buffer: bytes, *opts: Options
+) -> Tuple[Optional[File], Optional[Exception]]:
+    """
+    Read data stream from bytes and return a populated spreadsheet file.
+
+    Args:
+        buffer (bytes): The contents buffer of the file
+        *opts (Options): Optional parameters for opening the file.
+
+    Returns:
+        Tuple[Optional[File], Optional[Exception]]: A tuple containing a File
+        object if successful, or None and an Exception if an error occurred.
+    """
+    lib.OpenReader.restype, options = types_go._OptionsResult, None
+    if len(opts) > 0:
+        options = byref(py_value_to_c(opts[0], types_go._Options()))
+    res = lib.OpenReader(cast(buffer, POINTER(c_ubyte)), len(buffer), options)
     err = res.err.decode(ENCODE)
     if err == "":
         return File(res.idx), None
