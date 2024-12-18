@@ -1423,5 +1423,61 @@ func SetSheetRow(idx int, sheet, cell *C.char, row *C.struct_Interface, length i
 	return C.CString(errNil)
 }
 
+// SetSheetView sets sheet view options. The viewIndex may be negative and if
+// so is counted backward (-1 is the last view).
+//
+//export SetSheetView
+func SetSheetView(idx int, sheet *C.char, viewIndex int, opts *C.struct_ViewOptions) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.ViewOptions{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options := goVal.Elem().Interface().(excelize.ViewOptions)
+	if err := f.(*excelize.File).SetSheetView(C.GoString(sheet), viewIndex, &options); err != nil {
+		C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetSheetVisible provides a function to set worksheet visible by given
+// worksheet name. A workbook must contain at least one visible worksheet. If
+// the given worksheet has been activated, this setting will be invalidated.
+// The third optional veryHidden parameter only works when visible was false.
+//
+//export SetSheetVisible
+func SetSheetVisible(idx int, sheet *C.char, visible, veryHidden bool) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetSheetVisible(C.GoString(sheet), visible, veryHidden); err != nil {
+		C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetWorkbookProps provides a function to sets workbook properties.
+//
+//export SetWorkbookProps
+func SetWorkbookProps(idx int, opts *C.struct_WorkbookPropsOptions) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.WorkbookPropsOptions{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options := goVal.Elem().Interface().(excelize.WorkbookPropsOptions)
+	if err := f.(*excelize.File).SetWorkbookProps(&options); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
 func main() {
 }

@@ -17,7 +17,6 @@ import types_go
 from types_py import *
 from ctypes import (
     byref,
-    c_bool,
     c_char_p,
     c_char,
     c_int,
@@ -1635,6 +1634,72 @@ class File:
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
+    def set_sheet_view(
+        self, sheet: str, view_index: int, opts: ViewOptions
+    ) -> Optional[Exception]:
+        """
+        Sets sheet view options. The viewIndex may be negative and if so is
+        counted backward (-1 is the last view).
+
+        Args:
+            sheet (str): The worksheet name
+            view_index (int): The sheet view index
+            opts (ViewOptions): The sheet view options
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.SetSheetView.restype = c_char_p
+        options = py_value_to_c(opts, types_go._ViewOptions())
+        err = lib.SetSheetView(
+            self.file_index, sheet.encode(ENCODE), view_index, byref(options)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_sheet_visible(
+        self, sheet: str, visible: bool, *very_hidden: bool
+    ) -> Optional[Exception]:
+        """
+        Set worksheet visible by given worksheet name. A workbook must contain
+        at least one visible worksheet. If the given worksheet has been
+        activated, this setting will be invalidated. The third optional
+        very_hidden parameter only works when visible was false.
+
+        Args:
+            sheet (str): The worksheet name
+            visible (bool): The worksheet visibility
+            *very_hidden (bool): Optional boolean very hidden parameter
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.SetSheetVisible.restype = c_char_p
+        vh = False
+        if len(very_hidden) > 0:
+            vh = very_hidden[0]
+        err = lib.SetSheetVisible(
+            self.file_index, sheet.encode(ENCODE), visible, vh
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_workbook_props(self, opts: WorkbookPropsOptions) -> Optional[Exception]:
+        """
+        Sets workbook properties.
+
+        Args:
+            opts (WorkbookPropsOptions): TThe workbook property options
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.SetWorkbookProps.restype = c_char_p
+        options = py_value_to_c(opts, types_go._WorkbookPropsOptions())
+        err = lib.SetWorkbookProps(self.file_index, byref(options)).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
 
 def cell_name_to_coordinates(cell: str) -> Tuple[int, int, Optional[Exception]]:
     """
@@ -1709,7 +1774,7 @@ def coordinates_to_cell_name(
     options = False
     if len(abs) > 0:
         options = abs[0]
-    res = lib.CoordinatesToCellName(col, row, c_bool(options))
+    res = lib.CoordinatesToCellName(col, row, options)
     err = res.err.decode(ENCODE)
     return res.cell.decode(ENCODE), None if err == "" else Exception(err)
 

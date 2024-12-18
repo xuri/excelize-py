@@ -450,6 +450,47 @@ class _Table(Structure):
     ]
 
 
+class _ViewOptions(Structure):
+    _fields_ = [
+        ("DefaultGridColor", POINTER(c_bool)),
+        ("RightToLeft", POINTER(c_bool)),
+        ("ShowFormulas", POINTER(c_bool)),
+        ("ShowGridLines", POINTER(c_bool)),
+        ("ShowRowColHeaders", POINTER(c_bool)),
+        ("ShowRuler", POINTER(c_bool)),
+        ("ShowZeros", POINTER(c_bool)),
+        ("TopLeftCell", POINTER(c_char_p)),
+        ("View", POINTER(c_char_p)),
+        ("ZoomScale", POINTER(c_double)),
+    ]
+
+
+class _DefinedName(Structure):
+    _fields_ = [
+        ("Name", c_char_p),
+        ("Comment", c_char_p),
+        ("RefersTo", c_char_p),
+        ("Scope", c_char_p),
+    ]
+
+
+class _WorkbookPropsOptions(Structure):
+    _fields_ = [
+        ("Date1904", POINTER(c_bool)),
+        ("FilterPrivacy", POINTER(c_bool)),
+        ("CodeName", POINTER(c_char_p)),
+    ]
+
+
+class _WorkbookProtectionOptions(Structure):
+    _fields_ = [
+        ("AlgorithmName", c_char_p),
+        ("Password", c_char_p),
+        ("LockStructure", c_bool),
+        ("LockWindows", c_bool),
+    ]
+
+
 class _CalcCellValueResult(Structure):
     _fields_ = [
         ("val", c_char_p),

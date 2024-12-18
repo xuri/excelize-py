@@ -474,6 +474,48 @@ struct Table
     bool *ShowRowStripes;
 };
 
+// ViewOptions directly maps the settings of sheet view.
+struct ViewOptions
+{
+    bool *DefaultGridColor;
+    bool *RightToLeft;
+    bool *ShowFormulas;
+    bool *ShowGridLines;
+    bool *ShowRowColHeaders;
+    bool *ShowRuler;
+    bool *ShowZeros;
+    char **TopLeftCell;
+    char **View;
+    double *ZoomScale;
+};
+
+// DefinedName directly maps the name for a cell or cell range on a
+// worksheet.
+struct DefinedName
+{
+    char *Name;
+    char *Comment;
+    char *RefersTo;
+    char *Scope;
+};
+
+// WorkbookPropsOptions directly maps the settings of workbook proprieties.
+struct WorkbookPropsOptions
+{
+    bool *Date1904;
+    bool *FilterPrivacy;
+    char **CodeName;
+};
+
+// WorkbookProtectionOptions directly maps the settings of workbook protection.
+struct WorkbookProtectionOptions
+{
+    char *AlgorithmName;
+    char *Password;
+    bool LockStructure;
+    bool LockWindows;
+};
+
 struct GetCellFormulaResult
 {
     char *val;

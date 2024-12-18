@@ -564,3 +564,40 @@ class Table:
     show_header_row: Optional[bool] = None
     show_last_column: bool = False
     show_row_stripes: Optional[bool] = None
+
+
+@dataclass
+class ViewOptions:
+    default_grid_color: Optional[bool] = None
+    right_to_left: Optional[bool] = None
+    show_formulas: Optional[bool] = None
+    show_grid_lines: Optional[bool] = None
+    show_row_col_headers: Optional[bool] = None
+    show_ruler: Optional[bool] = None
+    show_zeros: Optional[bool] = None
+    top_left_cell: Optional[str] = None
+    view: Optional[str] = None
+    zoom_scale: Optional[float] = None
+
+
+@dataclass
+class DefinedName:
+    name: str = ""
+    comment: str = ""
+    refers_to: str = ""
+    scope: str = ""
+
+
+@dataclass
+class WorkbookPropsOptions:
+    date1904: Optional[bool] = None
+    filter_privacy: Optional[bool] = None
+    code_name: Optional[str] = None
+
+
+@dataclass
+class WorkbookProtectionOptions:
+    algorithm_name: str = ""
+    password: str = ""
+    lock_structure: Optional[bool] = None
+    lock_windows: Optional[bool] = None

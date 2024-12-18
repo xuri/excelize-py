@@ -731,6 +731,41 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.save_as("TestAddPicture.xlsx"))
         self.assertIsNone(f.close())
 
+    def test_sheet_view(self):
+        f = excelize.new_file()
+        expected = excelize.ViewOptions(
+            default_grid_color=False,
+            right_to_left=False,
+            show_formulas=False,
+            show_grid_lines=False,
+            show_row_col_headers=False,
+            show_ruler=False,
+            show_zeros=False,
+            top_left_cell="A1",
+            view="normal",
+            zoom_scale=120,
+        )
+        self.assertIsNone(f.set_sheet_view("Sheet1", 0, expected))
+        self.assertIsNone(f.save_as("TestSheetView.xlsx"))
+        self.assertIsNone(f.close())
+
+    def test_sheet_visible(self):
+        f = excelize.new_file()
+        _, err = f.new_sheet("Sheet2")
+        self.assertIsNone(err)
+        self.assertIsNone(f.set_sheet_visible("Sheet2", False, True))
+        self.assertIsNone(f.save_as("TestSheetVisible.xlsx"))
+        self.assertIsNone(f.close())
+
+    def test_workbook_props(self):
+        f = excelize.new_file()
+        expected = excelize.WorkbookPropsOptions(
+            date1904=True, filter_privacy=True, code_name="code"
+        )
+        self.assertIsNone(f.set_workbook_props(expected))
+        self.assertIsNone(f.save_as("TestWorkbookProps.xlsx"))
+        self.assertIsNone(f.close())
+
     def test_type_convert(self):
         class _T2(Structure):
             _fields_ = [
