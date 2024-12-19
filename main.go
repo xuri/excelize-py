@@ -1266,6 +1266,21 @@ func SetActiveSheet(idx, index int) *C.char {
 	return C.CString(errNil)
 }
 
+// SetCellBool provides a function to set bool type value of a cell by given
+// worksheet name, cell reference and cell value.
+//
+//export SetCellBool
+func SetCellBool(idx int, sheet, cell *C.char, value bool) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetCellBool(C.GoString(sheet), C.GoString(cell), value); err != nil {
+		C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
 // SetCellFormula provides a function to set formula on the cell is taken
 // according to the given worksheet name and cell formula settings. The result
 // of the formula cell can be calculated when the worksheet is opened by the
@@ -1474,6 +1489,50 @@ func SetWorkbookProps(idx int, opts *C.struct_WorkbookPropsOptions) *C.char {
 	}
 	options := goVal.Elem().Interface().(excelize.WorkbookPropsOptions)
 	if err := f.(*excelize.File).SetWorkbookProps(&options); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// UngroupSheets provides a function to ungroup worksheets.
+//
+//export UngroupSheets
+func UngroupSheets(idx int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).UngroupSheets(); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// UnmergeCell provides a function to unmerge a given range reference.
+//
+//export UnmergeCell
+func UnmergeCell(idx int, sheet, topLeftCell, bottomRightCell *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString("")
+	}
+	if err := f.(*excelize.File).UnmergeCell(C.GoString(sheet), C.GoString(topLeftCell), C.GoString(bottomRightCell)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// UpdateLinkedValue fix linked values within a spreadsheet are not updating in
+// Office Excel application. This function will be remove value tag when met a
+// cell have a linked value.
+//
+//export UpdateLinkedValue
+func UpdateLinkedValue(idx int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).UpdateLinkedValue(); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(errNil)

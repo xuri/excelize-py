@@ -1364,8 +1364,8 @@ class File:
         get_sheet_map. It should be greater than or equal to 0 and less than the
         total worksheet numbers.
 
-        Parameters:
-        index (int): The sheet index
+        Args:
+            index (int): The sheet index
 
         Returns:
             Optional[Exception]: Returns None if no error occurred,
@@ -1373,6 +1373,26 @@ class File:
         """
         err, lib.SetActiveSheet.restype = None, c_char_p
         err = lib.SetActiveSheet(self.file_index, index).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_cell_bool(self, sheet: str, cell: str, value: bool) -> Optional[Exception]:
+        """
+        Set bool type value of a cell by given worksheet name, cell reference and
+        cell value.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+            value (bool): The cell value
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        err, lib.SetCellBool.restype = None, c_char_p
+        err = lib.SetCellBool(
+            self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE), value
+        ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
     def set_cell_formula(
@@ -1387,11 +1407,11 @@ class File:
         automatically when the workbook has been opened, please call
         "update_linked_value" after setting the cell formula functions.
 
-        Parameters:
-        sheet (str): The worksheet name
-        cell (str): The cell reference
-        formula (str): The cell formula
-        *opts (FormulaOpts): The formula options
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+            formula (str): The cell formula
+            *opts (FormulaOpts): The formula options
 
         Returns:
             Optional[Exception]: Returns None if no error occurred,
@@ -1430,12 +1450,12 @@ class File:
         please use the other functions such as `set_cell_style` or
         `set_sheet_row`.
 
-        Parameters:
-        sheet (str): The worksheet name
-        cell (str): The cell reference
-        link (str): The hyperlink
-        link_type (str): The hyperlink type
-        *opts (HyperlinkOpts): The hyperlink options
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+            link (str): The hyperlink
+            link_type (str): The hyperlink type
+            *opts (HyperlinkOpts): The hyperlink options
 
         Returns:
             Optional[Exception]: Returns None if no error occurred,
@@ -1698,6 +1718,67 @@ class File:
         lib.SetWorkbookProps.restype = c_char_p
         options = py_value_to_c(opts, types_go._WorkbookPropsOptions())
         err = lib.SetWorkbookProps(self.file_index, byref(options)).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def ungroup_sheets(self) -> Optional[Exception]:
+        """
+        Ungroup worksheets.
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.UngroupSheets.restype = c_char_p
+        err = lib.UngroupSheets(self.file_index).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def unmerge_cell(
+        self, sheet: str, top_left_cell: str, bottom_right_cell: str
+    ) -> Optional[Exception]:
+        """
+        Unmerge a given range reference.
+
+        Args:
+            sheet (str): The worksheet name
+            top_left_cell (str): The top-left cell reference
+            bottom_right_cell (str): The right-bottom cell reference
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            Unmerge range reference D3:E9 on Sheet1:
+
+            .. code-block:: python
+
+            err = f.unmerge_cell("Sheet1", "D3", "E9")
+        """
+        lib.UnmergeCell.restype = c_char_p
+        err = lib.UnmergeCell(
+            self.file_index,
+            sheet.encode(ENCODE),
+            top_left_cell.encode(ENCODE),
+            bottom_right_cell.encode(ENCODE),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def update_linked_value(self) -> Optional[Exception]:
+        """
+        Fix linked values within a spreadsheet are not updating in Office Excel
+        application. This function will be remove value tag when met a cell have
+        a linked value.
+
+        Notice:
+            After opening generated workbook, Excel will update the linked value
+            and generate a new value and will prompt to save the file or not.
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.UpdateLinkedValue.restype = c_char_p
+        err = lib.UpdateLinkedValue(self.file_index).decode(ENCODE)
         return None if err == "" else Exception(err)
 
 

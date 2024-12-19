@@ -144,6 +144,8 @@ class TestExcelize(unittest.TestCase):
             f.set_cell_value("Sheet1", "A7", datetime.datetime(2016, 8, 30, 11, 51, 0))
         )
         self.assertIsNone(f.set_cell_value("Sheet1", "A8", datetime.date(2016, 8, 30)))
+        self.assertIsNone(f.set_cell_bool("Sheet1", "A9", True))
+        self.assertIsNone(f.set_cell_bool("Sheet1", "A10", False))
         self.assertEqual(
             str(f.set_cell_value("SheetN", "A9", None)),
             "sheet SheetN does not exist",
@@ -166,10 +168,11 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual("100", val)
         self.assertIsNone(err)
 
-        self.assertIsNone(f.duplicate_row("Sheet1", 9))
-        self.assertIsNone(f.duplicate_row_to("Sheet1", 10, 10))
+        self.assertIsNone(f.duplicate_row("Sheet1", 20))
+        self.assertIsNone(f.duplicate_row_to("Sheet1", 20, 20))
 
         self.assertIsNone(f.merge_cell("Sheet1", "A1", "B2"))
+        self.assertIsNone(f.unmerge_cell("Sheet1", "A1", "B2"))
 
         idx, err = f.new_sheet("Sheet2")
         self.assertEqual(idx, 1)
@@ -221,6 +224,8 @@ class TestExcelize(unittest.TestCase):
                 ["TRUE"],
                 ["8/30/16 11:51"],
                 ["08-30-16"],
+                ["TRUE"],
+                ["FALSE"],
             ],
         )
         rows, err = f.get_rows("Sheet1", excelize.Options(raw_cell_value=True))
@@ -234,9 +239,13 @@ class TestExcelize(unittest.TestCase):
                 ["1"],
                 ["42612.49375"],
                 ["42612"],
+                ["1"],
+                ["0"],
             ],
         )
 
+        self.assertIsNone(f.ungroup_sheets())
+        self.assertIsNone(f.update_linked_value())
         self.assertIsNone(f.save())
         self.assertIsNone(f.save(excelize.Options(password="")))
         self.assertIsNone(f.close())
