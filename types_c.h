@@ -191,6 +191,16 @@ struct GraphicOptions
     char *Positioning;
 };
 
+// Picture maps the format settings of the picture.
+struct Picture
+{
+	char *Extension;
+    int FileLen;
+	unsigned char *File;
+	struct GraphicOptions *Format;
+	unsigned char InsertType;
+};
+
 // RichTextRun directly maps the settings of the rich text run.
 struct RichTextRun
 {

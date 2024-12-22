@@ -16,6 +16,7 @@ from ctypes import (
     c_double,
     c_int,
     c_long,
+    c_ubyte,
     c_uint,
     Structure,
     POINTER,
@@ -164,6 +165,16 @@ class _GraphicOptions(Structure):
         ("Hyperlink", c_char_p),
         ("HyperlinkType", c_char_p),
         ("Positioning", c_char_p),
+    ]
+
+
+class _Picture(Structure):
+    _fields_ = [
+        ("Extension", c_char_p),
+        ("FileLen", c_int),
+        ("File", POINTER(c_ubyte)),
+        ("Format", POINTER(_GraphicOptions)),
+        ("InsertType", c_uint),
     ]
 
 

@@ -4,9 +4,8 @@ __pycache__
 *.dll
 *.dylib
 *.so
-*.xlsx
-*.xml
 dist/
+test/
 excelize.egg-info/
 libexcelize.*.h
 Makefile

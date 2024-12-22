@@ -313,7 +313,8 @@ def py_value_to_c(py_instance, ctypes_instance):
                         py_value_to_c(getattr(py_instance, py_field_name), c_type()),
                     )
         else:
-            if get_origin(py_field_args[0]) is not list:
+            arg_type = py_field_args[0]
+            if get_origin(arg_type) is not list and arg_type is not bytes:
                 # Pointer of the Go data type, for example: *excelize.Options or *string
                 value = getattr(py_instance, py_field_name)
                 c_type = get_c_field_type(ctypes_instance, c_field_name)._type_
@@ -335,7 +336,15 @@ def py_value_to_c(py_instance, ctypes_instance):
             else:
                 # The Go data type array, for example:
                 # []*excelize.Options, []excelize.Options, []string, []*string
-                py_field_type = get_args(py_field_args[0])[0]
+                if arg_type is bytes:  # []byte
+                    c_type = get_c_field_type(ctypes_instance, c_field_name)._type_
+                    value = getattr(py_instance, py_field_name)
+                    ctypes_instance.__setattr__(
+                        c_field_name, cast(value, POINTER(c_ubyte))
+                    )
+                    ctypes_instance.__setattr__(c_field_name + "Len", c_int(len(value)))
+                    continue
+                py_field_type = get_args(arg_type)[0]
                 if type(None) not in get_args(py_field_type):
                     # The Go data type array, for example: []excelize.Options or []string
                     c_type = get_c_field_type(ctypes_instance, c_field_name)._type_
@@ -616,6 +625,36 @@ class File:
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
+    def add_picture_from_bytes(
+        self, sheet: str, cell: str, picture: Picture
+    ) -> Optional[Exception]:
+        """
+        Add picture in a sheet by given picture format set (such as offset,
+        scale, aspect ratio setting and print settings), file base name,
+        extension name and file bytes, supported image types: EMF, EMZ, GIF,
+        JPEG, JPG, PNG, SVG, TIF, TIFF, WMF, and WMZ. Note that this function
+        only supports adding pictures placed over the cells currently, and
+        doesn't support adding pictures placed in cells or creating the Kingsoft
+        WPS Office embedded image cells
+
+        Args:
+            sheet (str): The worksheet name
+            extension (str): The image extension
+            picture (Picture): The picture options
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.AddPictureFromBytes.restype = c_char_p
+        err = lib.AddPictureFromBytes(
+            self.file_index,
+            sheet.encode(ENCODE),
+            cell.encode(ENCODE),
+            byref(py_value_to_c(picture, types_go._Picture())),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
     def add_pivot_table(self, opts: Optional[PivotTableOptions]) -> Optional[Exception]:
         """
         Add pivot table by given pivot table options. Note that the same fields
@@ -877,6 +916,26 @@ class File:
         options = py_value_to_c(table, types_go._Table())
         err = lib.AddTable(
             self.file_index, sheet.encode(ENCODE), byref(options)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def add_vba_project(self, file: bytes) -> Optional[Exception]:
+        """
+        Add vbaProject.bin file which contains functions and/or macros. The file
+        extension should be XLSM or XLTM.
+
+        Args:
+            file (bytes): The contents buffer of the file
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.AddVBAProject.restype = c_char_p
+        err = lib.AddVBAProject(
+            self.file_index,
+            cast(file, POINTER(c_ubyte)),
+            len(file),
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
@@ -1570,6 +1629,64 @@ class File:
             cell.encode(ENCODE),
             byref(py_value_to_c_interface(value)),
         ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_col_outline_level(
+        self, sheet: str, col: str, level: int
+    ) -> Optional[Exception]:
+        """
+        Set outline level of a single column by given worksheet name and column
+        name.
+
+        Args:
+            sheet (str): The worksheet name
+            col (str): The column name
+            level (int): The out level, acceptable value from 1 to 7
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example, set outline level of column D in Sheet1 to 2:
+
+            .. code-block:: python
+
+            err = f.set_col_outline_level("Sheet1", "D", 2)
+        """
+        lib.SetColOutlineLevel.restype = c_char_p
+        err = lib.SetColOutlineLevel(
+            self.file_index, sheet.encode(ENCODE), col.encode(ENCODE), level
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_defined_name(self, defined_name: DefinedName) -> Optional[Exception]:
+        """
+        Set the defined names of the workbook or worksheet. If not specified
+        scope, the default scope is workbook.
+
+        Args:
+            defined_name (DefinedName): The defined name options
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example, create a table of A1:D5 on Sheet1:
+
+            .. code-block:: python
+
+            err = f.set_defined_name(excelize.DefinedName(
+                name="Amount",
+                refers_to="Sheet1!$A$2:$D$5",
+                comment="defined name comment",
+                scope="Sheet2",
+            ))
+        """
+        lib.SetDefinedName.restype = c_char_p
+        options = py_value_to_c(defined_name, types_go._DefinedName())
+        err = lib.SetDefinedName(self.file_index, byref(options)).decode(ENCODE)
         return None if err == "" else Exception(err)
 
     def set_sheet_background(self, sheet: str, picture: str) -> Optional[Exception]:

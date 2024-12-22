@@ -167,7 +167,8 @@ class PictureInsertType(IntEnum):
 
     PictureInsertTypePlaceOverCells = 0
     PictureInsertTypePlaceInCell = 1
-    PictureInsertTypeDISPIMG = 2
+    PictureInsertTypeIMAGE = 2
+    PictureInsertTypeDISPIMG = 3
 
 
 @dataclass
@@ -308,6 +309,14 @@ class GraphicOptions:
     hyperlink: str = ""
     hyperlink_type: str = ""
     positioning: str = ""
+
+
+@dataclass
+class Picture:
+    extension: str = ""
+    file: Optional[bytes] = None
+    format: Optional[GraphicOptions] = None
+    insert_type: PictureInsertType = PictureInsertType.PictureInsertTypePlaceOverCells
 
 
 @dataclass

@@ -21,6 +21,7 @@ from ctypes import (
     Structure,
     POINTER,
 )
+import os
 
 
 class TestExcelize(unittest.TestCase):
@@ -120,14 +121,16 @@ class TestExcelize(unittest.TestCase):
         style, err = f.get_style(2)
         self.assertEqual("invalid style ID 2", str(err))
         self.assertIsNone(style)
-        self.assertIsNone(f.save_as("TestStyle.xlsx"))
+        self.assertIsNone(f.save_as(os.path.join("test", "TestStyle.xlsx")))
         self.assertIsNone(
-            f.save_as("TestStyle.xlsx", excelize.Options(password="password"))
+            f.save_as(os.path.join("test", "TestStyle.xlsx")),
+            excelize.Options(password="password"),
         )
         self.assertIsNone(f.close())
 
         f, err = excelize.open_file(
-            "TestStyle.xlsx", excelize.Options(password="password")
+            os.path.join("test", "TestStyle.xlsx"),
+            excelize.Options(password="password"),
         )
         self.assertIsNone(err)
         with open("chart.png", "rb") as file:
@@ -179,6 +182,8 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(err)
         self.assertIsNone(f.set_active_sheet(idx))
         self.assertEqual(f.get_active_sheet_index(), idx)
+
+        self.assertIsNone(f.set_col_outline_level("Sheet1", "D", 2))
 
         self.assertIsNone(f.set_sheet_background("Sheet2", "chart.png"))
 
@@ -250,10 +255,10 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.save(excelize.Options(password="")))
         self.assertIsNone(f.close())
 
-        with open("TestStyle.xlsx", "rb") as file:
+        with open(os.path.join("test", "TestStyle.xlsx"), "rb") as file:
             f, err = excelize.open_reader(file.read())
             self.assertIsNone(err)
-            self.assertIsNone(f.save_as("TestOpenReader.xlsx"))
+            self.assertIsNone(f.save_as(os.path.join("test", "TestOpenReader.xlsx")))
 
         with open("chart.png", "rb") as file:
             _, err = excelize.open_reader(file.read(), excelize.Options(password=""))
@@ -353,7 +358,7 @@ class TestExcelize(unittest.TestCase):
                 ),
             )
         )
-        self.assertIsNone(f.save_as("TestAddChart.xlsx"))
+        self.assertIsNone(f.save_as(os.path.join("test", "TestAddChart.xlsx")))
         self.assertIsNone(f.close())
 
     def test_comment(self):
@@ -378,7 +383,7 @@ class TestExcelize(unittest.TestCase):
                 ),
             )
         )
-        self.assertIsNone(f.save_as("TestComment.xlsx"))
+        self.assertIsNone(f.save_as(os.path.join("test", "TestComment.xlsx")))
         self.assertIsNone(f.close())
 
     def test_add_form_control(self):
@@ -456,7 +461,9 @@ class TestExcelize(unittest.TestCase):
                 ),
             )
         )
-        self.assertIsNone(f.save_as("TestAddFormControl.xlsx"))
+        with open(os.path.join("test", "vbaProject.bin"), "rb") as file:
+            self.assertIsNone(f.add_vba_project(file.read()))
+        self.assertIsNone(f.save_as(os.path.join("test", "TestAddFormControl.xlsm")))
         self.assertIsNone(f.close())
 
     def test_pivot_table(self):
@@ -526,7 +533,7 @@ class TestExcelize(unittest.TestCase):
                 )
             )
         )
-        self.assertIsNone(f.save_as("TestAddPivotTable.xlsx"))
+        self.assertIsNone(f.save_as(os.path.join("test", "TestAddPivotTable.xlsx")))
         self.assertIsNone(f.close())
 
     def test_add_shape(self):
@@ -563,7 +570,7 @@ class TestExcelize(unittest.TestCase):
                 ),
             )
         )
-        self.assertIsNone(f.save_as("TestAddShape.xlsx"))
+        self.assertIsNone(f.save_as(os.path.join("test", "TestAddShape.xlsx")))
         self.assertIsNone(f.close())
 
     def test_add_slicer(self):
@@ -589,7 +596,7 @@ class TestExcelize(unittest.TestCase):
                 ),
             )
         )
-        self.assertIsNone(f.save_as("TestAddSlicer.xlsx"))
+        self.assertIsNone(f.save_as(os.path.join("test", "TestAddSlicer.xlsx")))
         self.assertIsNone(f.close())
 
     def test_add_sparkline(self):
@@ -604,7 +611,7 @@ class TestExcelize(unittest.TestCase):
                 ),
             )
         )
-        self.assertIsNone(f.save_as("TestAddSparkline.xlsx"))
+        self.assertIsNone(f.save_as(os.path.join("test", "TestAddSparkline.xlsx")))
         self.assertIsNone(f.close())
 
     def test_auto_filter(self):
@@ -628,7 +635,7 @@ class TestExcelize(unittest.TestCase):
                 ],
             )
         )
-        self.assertIsNone(f.save_as("TestAutoFilter.xlsx"))
+        self.assertIsNone(f.save_as(os.path.join("test", "TestAutoFilter.xlsx")))
         self.assertIsNone(f.close())
 
     def test_calc_cell_formula(self):
@@ -694,7 +701,7 @@ class TestExcelize(unittest.TestCase):
         self.assertTrue(link)
         self.assertEqual(target, display)
         self.assertIsNone(err)
-        self.assertIsNone(f.save_as("TestCellHyperLink.xlsx"))
+        self.assertIsNone(f.save_as(os.path.join("test", "TestCellHyperLink.xlsx")))
         self.assertIsNone(f.close())
 
     def test_column_name_to_number(self):
@@ -737,7 +744,40 @@ class TestExcelize(unittest.TestCase):
                 ),
             )
         )
-        self.assertIsNone(f.save_as("TestAddPicture.xlsx"))
+        with open("chart.png", "rb") as file:
+            self.assertIsNone(
+                f.add_picture_from_bytes(
+                    "Sheet1",
+                    "A3",
+                    excelize.Picture(
+                        extension=".png",
+                        file=file.read(),
+                        format=excelize.GraphicOptions(
+                            print_object=True,
+                            scale_x=0.1,
+                            scale_y=0.1,
+                            locked=False,
+                        ),
+                        insert_type=excelize.PictureInsertType.PictureInsertTypePlaceOverCells,
+                    ),
+                )
+            )
+        self.assertIsNone(f.save_as(os.path.join("test", "TestAddPicture.xlsx")))
+        self.assertIsNone(f.close())
+
+    def test_defined_name(self):
+        f = excelize.new_file()
+        self.assertIsNone(
+            f.set_defined_name(
+                excelize.DefinedName(
+                    name="Amount",
+                    refers_to="Sheet1!$A$2:$D$5",
+                    comment="defined name comment",
+                    scope="Sheet1",
+                )
+            )
+        )
+        self.assertIsNone(f.save_as(os.path.join("test", "TestSetDefinedName.xlsx")))
         self.assertIsNone(f.close())
 
     def test_sheet_view(self):
@@ -755,7 +795,7 @@ class TestExcelize(unittest.TestCase):
             zoom_scale=120,
         )
         self.assertIsNone(f.set_sheet_view("Sheet1", 0, expected))
-        self.assertIsNone(f.save_as("TestSheetView.xlsx"))
+        self.assertIsNone(f.save_as(os.path.join("test", "TestSheetView.xlsx")))
         self.assertIsNone(f.close())
 
     def test_sheet_visible(self):
@@ -763,7 +803,7 @@ class TestExcelize(unittest.TestCase):
         _, err = f.new_sheet("Sheet2")
         self.assertIsNone(err)
         self.assertIsNone(f.set_sheet_visible("Sheet2", False, True))
-        self.assertIsNone(f.save_as("TestSheetVisible.xlsx"))
+        self.assertIsNone(f.save_as(os.path.join("test", "TestSheetVisible.xlsx")))
         self.assertIsNone(f.close())
 
     def test_workbook_props(self):
@@ -772,7 +812,7 @@ class TestExcelize(unittest.TestCase):
             date1904=True, filter_privacy=True, code_name="code"
         )
         self.assertIsNone(f.set_workbook_props(expected))
-        self.assertIsNone(f.save_as("TestWorkbookProps.xlsx"))
+        self.assertIsNone(f.save_as(os.path.join("test", "TestWorkbookProps.xlsx")))
         self.assertIsNone(f.close())
 
     def test_type_convert(self):

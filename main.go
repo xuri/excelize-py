@@ -269,11 +269,13 @@ func cValueToGo(cVal reflect.Value, goType reflect.Type) (reflect.Value, error) 
 				// The Go data type array, for example: []excelize.Options or []string
 				subEle := ele
 				cArrayLen := int(cVal.FieldByName(field.Name + "Len").Int())
+				if subEle.Kind() == reflect.Uint8 { // []byte
+					buf := C.GoBytes(unsafe.Pointer(cArray.Interface().(*C.uchar)), C.int(cArrayLen))
+					s.Field(resultFieldIdx).Set(reflect.ValueOf(buf))
+					continue
+				}
 				cArray = cToGoArray(cArray, cArrayLen)
 				for i := 0; i < cArray.Len(); i++ {
-					if subEle.Kind() == reflect.Uint8 { // []byte
-						break
-					}
 					if goBaseTypes[subEle.Kind()] {
 						// The Go basic data type array, for example: []string
 						v, err := cToGoBaseType(cArray.Index(i), subEle.Kind())
@@ -558,6 +560,31 @@ func AddPicture(idx int, sheet, cell, name *C.char, opts *C.struct_GraphicOption
 	return C.CString(errNil)
 }
 
+// AddPictureFromBytes provides the method to add picture in a sheet by given
+// picture format set (such as offset, scale, aspect ratio setting and print
+// settings), file base name, extension name and file bytes, supported image
+// types: EMF, EMZ, GIF, JPEG, JPG, PNG, SVG, TIF, TIFF, WMF, and WMZ. Note that
+// this function only supports adding pictures placed over the cells currently,
+// and doesn't support adding pictures placed in cells or creating the Kingsoft
+// WPS Office embedded image cells
+//
+//export AddPictureFromBytes
+func AddPictureFromBytes(idx int, sheet, cell *C.char, pic *C.struct_Picture) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	goVal, err := cValueToGo(reflect.ValueOf(*pic), reflect.TypeOf(excelize.Picture{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options := goVal.Elem().Interface().(excelize.Picture)
+	if err := f.(*excelize.File).AddPictureFromBytes(C.GoString(sheet), C.GoString(cell), &options); err != nil {
+		C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
 // AddPivotTable provides the method to add pivot table by given pivot table
 // options. Note that the same fields can not in Columns, Rows and Filter
 // fields at the same time.
@@ -663,6 +690,22 @@ func AddTable(idx int, sheet *C.char, table *C.struct_Table) *C.char {
 	}
 	if err := f.(*excelize.File).AddTable(C.GoString(sheet), &tbl); err != nil {
 		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// AddVBAProject provides the method to add vbaProject.bin file which contains
+// functions and/or macros. The file extension should be XLSM or XLTM.
+//
+//export AddVBAProject
+func AddVBAProject(idx int, file *C.uchar, fileLen C.int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	buf := C.GoBytes(unsafe.Pointer(file), fileLen)
+	if err := f.(*excelize.File).AddVBAProject(buf); err != nil {
+		C.CString(err.Error())
 	}
 	return C.CString(errNil)
 }
@@ -1380,6 +1423,43 @@ func SetCellValue(idx int, sheet, cell *C.char, value *C.struct_Interface) *C.ch
 		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).SetCellValue(C.GoString(sheet), C.GoString(cell), cInterfaceToGo(*value)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetColOutlineLevel provides a function to set outline level of a single
+// column by given worksheet name and column name. The value of parameter
+// 'level' is 1-7.
+//
+//export SetColOutlineLevel
+func SetColOutlineLevel(idx int, sheet, col *C.char, level int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetColOutlineLevel(C.GoString(sheet), C.GoString(col), uint8(level)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetDefinedName provides a function to set the defined names of the workbook
+// or worksheet. If not specified scope, the default scope is workbook.
+//
+//export SetDefinedName
+func SetDefinedName(idx int, definedName *C.struct_DefinedName) *C.char {
+	var df excelize.DefinedName
+	goVal, err := cValueToGo(reflect.ValueOf(*definedName), reflect.TypeOf(excelize.DefinedName{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	df = goVal.Elem().Interface().(excelize.DefinedName)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetDefinedName(&df); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(errNil)
