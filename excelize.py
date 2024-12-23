@@ -1561,6 +1561,201 @@ class File:
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
+    def set_cell_int(
+        self,
+        sheet: str,
+        cell: str,
+        value: int,
+    ) -> Optional[Exception]:
+        """
+        Set int type value of a cell by given worksheet name, cell reference and
+        cell value.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+            value (int): The cell value
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.SetCellInt.restype = c_char_p
+        err = lib.SetCellInt(
+            self.file_index,
+            sheet.encode(ENCODE),
+            cell.encode(ENCODE),
+            value,
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_cell_rich_text(
+        self,
+        sheet: str,
+        cell: str,
+        runs: List[RichTextRun],
+    ) -> Optional[Exception]:
+        """
+        Set cell with rich text by given worksheet name, cell reference and rich
+        text runs.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+            runs (List[RichTextRun]): The rich text runs
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+
+        Example:
+            For example, set rich text on the A1 cell of the worksheet named
+            Sheet1:
+
+            .. code-block:: python
+
+            f = excelize.new_file()
+            err = f.set_cell_rich_text(
+                "Sheet1",
+                "A1",
+                [
+                    excelize.RichTextRun(
+                        text="bold",
+                        font=excelize.Font(
+                            bold=True,
+                            color="2354e8",
+                            family="Times New Roman",
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text=" and ",
+                        font=excelize.Font(
+                            family="Times New Roman",
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text="italic ",
+                        font=excelize.Font(
+                            bold=True,
+                            color="e83723",
+                            italic=True,
+                            family="Times New Roman",
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text="text with color and font-family,",
+                        font=excelize.Font(
+                            bold=True,
+                            color="2354e8",
+                            family="Times New Roman",
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text="\r\nlarge text with ",
+                        font=excelize.Font(
+                            size=14,
+                            color="ad23e8",
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text="strike",
+                        font=excelize.Font(
+                            color="e89923",
+                            strike=True,
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text=" superscript",
+                        font=excelize.Font(
+                            color="dbc21f",
+                            vert_align="superscript",
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text=" and ",
+                        font=excelize.Font(
+                            size=14,
+                            color="ad23e8",
+                            vert_align="baseline",
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text="underline",
+                        font=excelize.Font(
+                            color="23e833",
+                            vert_align="single",
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text=" subscript.",
+                        font=excelize.Font(
+                            color="017505",
+                            vert_align="subscript",
+                        ),
+                    ),
+                ],
+            )
+            if err:
+                print(err)
+            style, err = f.new_style(
+                excelize.Style(
+                    alignment=excelize.Alignment(wrap_text=True),
+                )
+            )
+            if err:
+                print(err)
+            err = f.set_cell_style("Sheet1", "A1", "A1", style)
+            if err:
+                print(err)
+            err = f.save_as("Book1.xlsx")
+            if err:
+                print(err)
+            err = f.close()
+            if err:
+                print(err)
+        """
+        lib.SetCellRichText.restype = c_char_p
+        vals = (types_go._RichTextRun * len(runs))()
+        for i, value in enumerate(runs):
+            vals[i] = py_value_to_c(value, types_go._RichTextRun())
+        err = lib.SetCellRichText(
+            self.file_index,
+            sheet.encode(ENCODE),
+            cell.encode(ENCODE),
+            byref(vals),
+            len(vals),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_cell_str(
+        self,
+        sheet: str,
+        cell: str,
+        value: str,
+    ) -> Optional[Exception]:
+        """
+        Set string type value of a cell. Total number of characters that a cell
+        can contain 32767 characters.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+            value (str): The cell value
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.SetCellStr.restype = c_char_p
+        err = lib.SetCellStr(
+            self.file_index,
+            sheet.encode(ENCODE),
+            cell.encode(ENCODE),
+            value.encode(ENCODE),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
     def set_cell_style(
         self,
         sheet: str,

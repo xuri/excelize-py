@@ -149,6 +149,8 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.set_cell_value("Sheet1", "A8", datetime.date(2016, 8, 30)))
         self.assertIsNone(f.set_cell_bool("Sheet1", "A9", True))
         self.assertIsNone(f.set_cell_bool("Sheet1", "A10", False))
+        self.assertIsNone(f.set_cell_int("Sheet1", "A11", 100))
+        self.assertIsNone(f.set_cell_str("Sheet1", "A12", "Hello"))
         self.assertEqual(
             str(f.set_cell_value("SheetN", "A9", None)),
             "sheet SheetN does not exist",
@@ -231,6 +233,8 @@ class TestExcelize(unittest.TestCase):
                 ["08-30-16"],
                 ["TRUE"],
                 ["FALSE"],
+                ["100"],
+                ["Hello"],
             ],
         )
         rows, err = f.get_rows("Sheet1", excelize.Options(raw_cell_value=True))
@@ -246,6 +250,8 @@ class TestExcelize(unittest.TestCase):
                 ["42612"],
                 ["1"],
                 ["0"],
+                ["100"],
+                ["Hello"],
             ],
         )
 
@@ -702,6 +708,100 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(target, display)
         self.assertIsNone(err)
         self.assertIsNone(f.save_as(os.path.join("test", "TestCellHyperLink.xlsx")))
+        self.assertIsNone(f.close())
+
+    def test_cell_rich_text(self):
+        f = excelize.new_file()
+        self.assertIsNone(
+            f.set_cell_rich_text(
+                "Sheet1",
+                "A1",
+                [
+                    excelize.RichTextRun(
+                        text="bold",
+                        font=excelize.Font(
+                            bold=True,
+                            color="2354e8",
+                            family="Times New Roman",
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text=" and ",
+                        font=excelize.Font(
+                            family="Times New Roman",
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text="italic ",
+                        font=excelize.Font(
+                            bold=True,
+                            color="e83723",
+                            italic=True,
+                            family="Times New Roman",
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text="text with color and font-family,",
+                        font=excelize.Font(
+                            bold=True,
+                            color="2354e8",
+                            family="Times New Roman",
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text="\r\nlarge text with ",
+                        font=excelize.Font(
+                            size=14,
+                            color="ad23e8",
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text="strike",
+                        font=excelize.Font(
+                            color="e89923",
+                            strike=True,
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text=" superscript",
+                        font=excelize.Font(
+                            color="dbc21f",
+                            vert_align="superscript",
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text=" and ",
+                        font=excelize.Font(
+                            size=14,
+                            color="ad23e8",
+                            vert_align="baseline",
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text="underline",
+                        font=excelize.Font(
+                            color="23e833",
+                            vert_align="single",
+                        ),
+                    ),
+                    excelize.RichTextRun(
+                        text=" subscript.",
+                        font=excelize.Font(
+                            color="017505",
+                            vert_align="subscript",
+                        ),
+                    ),
+                ],
+            )
+        )
+        style, err = f.new_style(
+            excelize.Style(
+                alignment=excelize.Alignment(wrap_text=True),
+            )
+        )
+        self.assertIsNone(err)
+        self.assertIsNone(f.set_cell_style("Sheet1", "A1", "A1", style))
+        self.assertIsNone(f.save_as(os.path.join("test", "TestCellRichText.xlsx")))
         self.assertIsNone(f.close())
 
     def test_column_name_to_number(self):

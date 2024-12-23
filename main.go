@@ -1389,6 +1389,59 @@ func SetCellHyperLink(idx int, sheet, cell, link, linkType *C.char, opts *C.stru
 	return C.CString(errNil)
 }
 
+// SetCellInt provides a function to set int type value of a cell by given
+// worksheet name, cell reference and cell value.
+//
+//export SetCellInt
+func SetCellInt(idx int, sheet, cell *C.char, value int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetCellInt(C.GoString(sheet), C.GoString(cell), value); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetCellRichText provides a function to set cell with rich text by given
+// worksheet name, cell reference and rich text runs.
+//
+//export SetCellRichText
+func SetCellRichText(idx int, sheet, cell *C.char, runs *C.struct_RichTextRun, length int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString("")
+	}
+	textRuns := make([]excelize.RichTextRun, length)
+	for i, val := range unsafe.Slice(runs, length) {
+		goVal, err := cValueToGo(reflect.ValueOf(val), reflect.TypeOf(excelize.RichTextRun{}))
+		if err != nil {
+			return C.CString(err.Error())
+		}
+		textRuns[i] = goVal.Elem().Interface().(excelize.RichTextRun)
+	}
+	if err := f.(*excelize.File).SetCellRichText(C.GoString(sheet), C.GoString(cell), textRuns); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetCellStr provides a function to set string type value of a cell. Total
+// number of characters that a cell can contain 32767 characters.
+//
+//export SetCellStr
+func SetCellStr(idx int, sheet, cell, value *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetCellStr(C.GoString(sheet), C.GoString(cell), C.GoString(value)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
 // SetCellStyle provides a function to add style attribute for cells by given
 // worksheet name, range reference and style ID. This function is concurrency
 // safe. Note that diagonalDown and diagonalUp type border should be use same
