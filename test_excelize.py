@@ -117,6 +117,8 @@ class TestExcelize(unittest.TestCase):
             str(f.set_cell_style("SheetN", "A1", "B2", style_id)),
             "sheet SheetN does not exist",
         )
+        self.assertIsNone(f.set_col_style("Sheet1", "H", style_id))
+        self.assertIsNone(f.set_col_visible("Sheet1", "D:F", False))
 
         style, err = f.get_style(2)
         self.assertEqual("invalid style ID 2", str(err))
@@ -712,6 +714,7 @@ class TestExcelize(unittest.TestCase):
 
     def test_cell_rich_text(self):
         f = excelize.new_file()
+        self.assertIsNone(f.set_col_width("Sheet1", "A", "A", 44))
         self.assertIsNone(
             f.set_cell_rich_text(
                 "Sheet1",

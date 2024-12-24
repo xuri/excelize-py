@@ -1497,6 +1497,53 @@ func SetColOutlineLevel(idx int, sheet, col *C.char, level int) *C.char {
 	return C.CString(errNil)
 }
 
+// SetColStyle provides a function to set style of columns by given worksheet
+// name, columns range and style ID. This function is concurrency safe. Note
+// that this will overwrite the existing styles for the columns, it won't
+// append or merge style with existing styles.
+//
+//export SetColStyle
+func SetColStyle(idx int, sheet, columns *C.char, styleID int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetColStyle(C.GoString(sheet), C.GoString(columns), styleID); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetColVisible provides a function to set visible columns by given worksheet
+// name, columns range and visibility. This function is concurrency safe.
+//
+//export SetColVisible
+func SetColVisible(idx int, sheet, columns *C.char, visible bool) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetColVisible(C.GoString(sheet), C.GoString(columns), visible); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetColWidth provides a function to set the width of a single column or
+// multiple columns. This function is concurrency safe.
+//
+//export SetColWidth
+func SetColWidth(idx int, sheet, startCol, endCol *C.char, width float64) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetColWidth(C.GoString(sheet), C.GoString(startCol), C.GoString(endCol), width); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
 // SetDefinedName provides a function to set the defined names of the workbook
 // or worksheet. If not specified scope, the default scope is workbook.
 //

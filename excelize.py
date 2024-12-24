@@ -19,6 +19,7 @@ from ctypes import (
     byref,
     c_char_p,
     c_char,
+    c_double,
     c_int,
     c_ubyte,
     cast,
@@ -1852,6 +1853,99 @@ class File:
         lib.SetColOutlineLevel.restype = c_char_p
         err = lib.SetColOutlineLevel(
             self.file_index, sheet.encode(ENCODE), col.encode(ENCODE), level
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_col_style(
+        self, sheet: str, columns: str, style_id: int
+    ) -> Optional[Exception]:
+        """
+        Set style of columns by given worksheet name, columns range and style
+        ID. This function is concurrency safe. Note that this will overwrite the
+        existing styles for the columns, it won't append or merge style with
+        existing styles.
+
+        Args:
+            sheet (str): The worksheet name
+            columns (str): The columns range
+            style_id (int): The style ID
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example set style of column H on Sheet1:
+
+            .. code-block:: python
+
+            err = f.set_col_style("Sheet1", "H", style)
+        """
+        lib.SetColStyle.restype = c_char_p
+        err = lib.SetColStyle(
+            self.file_index, sheet.encode(ENCODE), columns.encode(ENCODE), style_id
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_col_visible(
+        self, sheet: str, columns: str, visible: bool
+    ) -> Optional[Exception]:
+        """
+        Set visible columns by given worksheet name, columns range and
+        visibility.
+
+        Args:
+            sheet (str): The worksheet name
+            columns (str): The columns range
+            visible (bool): The column visible
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example hide column D on Sheet1:
+
+            .. code-block:: python
+
+            err = f.set_col_visible("Sheet1", "D", False)
+        """
+        lib.SetColVisible.restype = c_char_p
+        err = lib.SetColVisible(
+            self.file_index, sheet.encode(ENCODE), columns.encode(ENCODE), visible
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_col_width(
+        self, sheet: str, start_col: str, end_col: str, width: float
+    ) -> Optional[Exception]:
+        """
+        Set the width of a single column or multiple columns.
+
+        Args:
+            sheet (str): The worksheet name
+            start_col (str): The start column name
+            end_col (bool): The end column name
+            width (float): The column width
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example set column width for column A to H on Sheet1:
+
+            .. code-block:: python
+
+            err = f.set_col_width("Sheet1", "A", "H", 20)
+        """
+        lib.SetColWidth.restype = c_char_p
+        err = lib.SetColWidth(
+            self.file_index,
+            sheet.encode(ENCODE),
+            start_col.encode(ENCODE),
+            end_col.encode(ENCODE),
+            c_double(width),
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
