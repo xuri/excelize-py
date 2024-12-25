@@ -194,11 +194,11 @@ struct GraphicOptions
 // Picture maps the format settings of the picture.
 struct Picture
 {
-	char *Extension;
+    char *Extension;
     int FileLen;
-	unsigned char *File;
-	struct GraphicOptions *Format;
-	unsigned char InsertType;
+    unsigned char *File;
+    struct GraphicOptions *Format;
+    unsigned char InsertType;
 };
 
 // RichTextRun directly maps the settings of the rich text run.
@@ -219,6 +219,35 @@ struct Comment
     unsigned int Height;
     int ParagraphLen;
     struct RichTextRun *Paragraph;
+};
+
+// ConditionalFormatOptions directly maps the conditional format settings of the cells.
+struct ConditionalFormatOptions
+{
+    char *Type;
+    bool AboveAverage;
+    bool Percent;
+    int *Format;
+    char *Criteria;
+    char *Value;
+    char *MinType;
+    char *MidType;
+    char *MaxType;
+    char *MinValue;
+    char *MidValue;
+    char *MaxValue;
+    char *MinColor;
+    char *MidColor;
+    char *MaxColor;
+    char *BarColor;
+    char *BarBorderColor;
+    char *BarDirection;
+    bool BarOnly;
+    bool BarSolid;
+    char *IconStyle;
+    bool ReverseIcons;
+    bool IconsOnly;
+    bool StopIfTrue;
 };
 
 // FormControl directly maps the form controls information.

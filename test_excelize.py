@@ -68,6 +68,11 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(props.application, "Go Excelize")
         self.assertIsNone(err)
 
+    def test_default_font(self):
+        f = excelize.new_file()
+        font_name = "Arial"
+        self.assertIsNone(f.set_default_font(font_name))
+
     def test_style(self):
         f = excelize.new_file()
         s = excelize.Style(
@@ -257,6 +262,7 @@ class TestExcelize(unittest.TestCase):
             ],
         )
 
+        self.assertIsNone(f.move_sheet("Sheet2", "Sheet1"))
         self.assertIsNone(f.ungroup_sheets())
         self.assertIsNone(f.update_linked_value())
         self.assertIsNone(f.save())
@@ -805,6 +811,33 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(err)
         self.assertIsNone(f.set_cell_style("Sheet1", "A1", "A1", style))
         self.assertIsNone(f.save_as(os.path.join("test", "TestCellRichText.xlsx")))
+        self.assertIsNone(f.close())
+
+    def test_conditional_format(self):
+        f = excelize.new_file()
+        format, err = f.new_conditional_style(
+            excelize.Style(
+                font=excelize.Font(color="9A0511"),
+                fill=excelize.Fill(type="pattern", color=["FEC7CE"], pattern=1),
+            )
+        )
+        self.assertIsNone(err)
+        self.assertIsNone(
+            f.set_conditional_format(
+                "Sheet1",
+                "A1:A10",
+                [
+                    excelize.ConditionalFormatOptions(
+                        type="cell",
+                        criteria="between",
+                        format=format,
+                        min_value="6",
+                        max_value="8",
+                    )
+                ],
+            )
+        )
+        self.assertIsNone(f.save_as(os.path.join("test", "TestConditionalFormat.xlsx")))
         self.assertIsNone(f.close())
 
     def test_column_name_to_number(self):

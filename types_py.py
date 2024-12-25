@@ -337,6 +337,34 @@ class Comment:
 
 
 @dataclass
+class ConditionalFormatOptions:
+    type: str = ""
+    above_average: bool = False
+    percent: bool = False
+    format: Optional[int] = None
+    criteria: str = ""
+    value: str = ""
+    min_type: str = ""
+    mid_type: str = ""
+    max_type: str = ""
+    min_value: str = ""
+    mid_value: str = ""
+    max_value: str = ""
+    min_color: str = ""
+    mid_color: str = ""
+    max_color: str = ""
+    bar_color: str = ""
+    bar_border_color: str = ""
+    bar_direction: str = ""
+    bar_only: bool = False
+    bar_solid: bool = False
+    icon_style: str = ""
+    reverse_icons: bool = False
+    icons_only: bool = False
+    stop_if_true: bool = False
+
+
+@dataclass
 class FormControl:
     cell: str = ""
     macro: str = ""

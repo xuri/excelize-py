@@ -198,6 +198,35 @@ class _Comment(Structure):
     ]
 
 
+class _ConditionalFormatOptions(Structure):
+    _fields_ = [
+        ("Type", c_char_p),
+        ("AboveAverage", c_bool),
+        ("Percent", c_bool),
+        ("Format", POINTER(c_int)),
+        ("Criteria", c_char_p),
+        ("Value", c_char_p),
+        ("MinType", c_char_p),
+        ("MidType", c_char_p),
+        ("MaxType", c_char_p),
+        ("MinValue", c_char_p),
+        ("MidValue", c_char_p),
+        ("MaxValue", c_char_p),
+        ("MinColor", c_char_p),
+        ("MidColor", c_char_p),
+        ("MaxColor", c_char_p),
+        ("BarColor", c_char_p),
+        ("BarBorderColor", c_char_p),
+        ("BarDirection", c_char_p),
+        ("BarOnly", c_bool),
+        ("BarSolid", c_bool),
+        ("IconStyle", c_char_p),
+        ("ReverseIcons", c_bool),
+        ("IconsOnly", c_bool),
+        ("StopIfTrue", c_bool),
+    ]
+
+
 class _FormControl(Structure):
     _fields_ = [
         ("Cell", c_char_p),
