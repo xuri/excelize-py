@@ -1466,6 +1466,104 @@ class File:
         err = res.err.decode(ENCODE)
         return res.style, None if err == "" else Exception(err)
 
+    def protect_sheet(
+        self, sheet: str, opts: SheetProtectionOptions
+    ) -> Optional[Exception]:
+        """
+        Prevent other users from accidentally or deliberately changing, moving,
+        or deleting data in a worksheet. The optional field AlgorithmName
+        specified hash algorithm, support XOR, MD4, MD5, SHA-1, SHA2-56,
+        SHA-384, and SHA-512 currently, if no hash algorithm specified, will be
+        using the XOR algorithm as default.
+
+        Args:
+            sheet (str): The worksheet name
+            opts (SheetProtectionOptions): The sheet protection options
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example, protect Sheet1 with protection settings:
+
+            .. code-block:: python
+
+            err = f.protect_sheet("Sheet1", excelize.SheetProtectionOptions(
+                algorithm_name="SHA-512",
+                password="password",
+                select_locked_cells=True,
+                select_unlocked_cells=True,
+                edit_scenarios=True,
+            ))
+        """
+        lib.ProtectSheet.restype = c_char_p
+        options = py_value_to_c(opts, types_go._SheetProtectionOptions())
+        err = lib.ProtectSheet(
+            self.file_index, sheet.encode(ENCODE), byref(options)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def protect_workbook(self, opts: WorkbookProtectionOptions) -> Optional[Exception]:
+        """
+        Prevent other users from viewing hidden worksheets, adding, moving,
+        deleting, or hiding worksheets, and renaming worksheets in a workbook.
+        The optional field AlgorithmName specified hash algorithm, support XOR,
+        MD4, MD5, SHA-1, SHA2-56, SHA-384, and SHA-512 currently, if no hash
+        algorithm specified, will be using the XOR algorithm as default. The
+        generated workbook only works on Microsoft Office 2007 and later.
+
+        Args:
+            opts (WorkbookProtectionOptions): The workbook protection options
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example, protect workbook with protection settings:
+
+            .. code-block:: python
+
+            err = f.protect_workbook(excelize.WorkbookProtectionOptions(
+                password="password",
+                lock_structure=True,
+            ))
+        """
+        lib.ProtectWorkbook.restype = c_char_p
+        options = py_value_to_c(opts, types_go._WorkbookProtectionOptions())
+        err = lib.ProtectWorkbook(self.file_index, byref(options)).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def remove_col(self, sheet: str, col: str) -> Optional[Exception]:
+        """
+        Remove single column by given worksheet name and column index.
+        Use this method with caution, which will affect changes in references
+        such as formulas, charts, and so on. If there is any referenced value of
+        the worksheet, it will cause a file error when you open it. The excelize
+        only partially updates these references currently.
+
+        Args:
+            sheet (str): The worksheet name
+            col (str): The column name
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example, remove column C in Sheet1:
+
+            .. code-block:: python
+
+            err = f.remove_col("Sheet1", "C")
+        """
+        lib.RemoveCol.restype = c_char_p
+        err = lib.RemoveCol(
+            self.file_index, sheet.encode(ENCODE), col.encode(ENCODE)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
     def set_active_sheet(self, index: int) -> Optional[Exception]:
         """
         Set the default active sheet of the workbook by a given index. Note that
@@ -1666,6 +1764,12 @@ class File:
             .. code-block:: python
 
             f = excelize.new_file()
+            err = f.set_row_height("Sheet1", 1, 35)
+            if err:
+                print(err)
+            err = f.set_col_width("Sheet1", "A", "A", 44)
+            if err:
+                print(err)
             err = f.set_cell_rich_text(
                 "Sheet1",
                 "A1",
@@ -2076,6 +2180,36 @@ class File:
         lib.SetDefinedName.restype = c_char_p
         options = py_value_to_c(defined_name, types_go._DefinedName())
         err = lib.SetDefinedName(self.file_index, byref(options)).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_row_height(
+        self, sheet: str, row: int, height: float
+    ) -> Optional[Exception]:
+        """
+        Set the height of a single row. If the value of height is 0, will hide
+        the specified row, if the value of height is -1, will unset the custom
+        row height.
+
+        Args:
+            sheet (str): The worksheet name
+            row (int): The row number
+            height (float): The row height
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example, set the height of the first row in Sheet1:
+
+            .. code-block:: python
+
+            err = f.set_row_height("Sheet1", 1, 50)
+        """
+        lib.SetRowHeight.restype = c_char_p
+        err = lib.SetRowHeight(
+            self.file_index, sheet.encode(ENCODE), c_int(row), c_double(height)
+        ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
     def set_sheet_background(self, sheet: str, picture: str) -> Optional[Exception]:

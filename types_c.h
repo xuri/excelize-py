@@ -450,6 +450,28 @@ struct Shape
     struct RichTextRun *Paragraph;
 };
 
+// SheetProtectionOptions directly maps the settings of worksheet protection.
+struct SheetProtectionOptions
+{
+	char *AlgorithmName;
+	bool AutoFilter;
+	bool DeleteColumns;
+	bool DeleteRows;
+	bool EditObjects;
+	bool EditScenarios;
+	bool FormatCells;
+	bool FormatColumns;
+	bool FormatRows;
+	bool InsertColumns;
+	bool InsertHyperlinks;
+	bool InsertRows;
+	char *Password;
+	bool PivotTables;
+	bool SelectLockedCells;
+	bool SelectUnlockedCells;
+	bool Sort;
+};
+
 // SlicerOptions represents the settings of the slicer.
 struct SlicerOptions
 {

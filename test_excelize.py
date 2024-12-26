@@ -261,8 +261,28 @@ class TestExcelize(unittest.TestCase):
                 ["Hello"],
             ],
         )
-
+        self.assertIsNone(
+            f.protect_sheet(
+                "Sheet1",
+                excelize.SheetProtectionOptions(
+                    algorithm_name="SHA-512",
+                    password="password",
+                    select_locked_cells=True,
+                    select_unlocked_cells=True,
+                    edit_scenarios=True,
+                ),
+            )
+        )
+        self.assertIsNone(
+            f.protect_workbook(
+                excelize.WorkbookProtectionOptions(
+                    password="password",
+                    lock_structure=True,
+                )
+            )
+        )
         self.assertIsNone(f.move_sheet("Sheet2", "Sheet1"))
+        self.assertIsNone(f.remove_col("Sheet1", "Z"))
         self.assertIsNone(f.ungroup_sheets())
         self.assertIsNone(f.update_linked_value())
         self.assertIsNone(f.save())
@@ -720,6 +740,7 @@ class TestExcelize(unittest.TestCase):
 
     def test_cell_rich_text(self):
         f = excelize.new_file()
+        self.assertIsNone(f.set_row_height("Sheet1", 1, 35))
         self.assertIsNone(f.set_col_width("Sheet1", "A", "A", 44))
         self.assertIsNone(
             f.set_cell_rich_text(

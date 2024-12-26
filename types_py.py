@@ -546,6 +546,27 @@ class Shape:
 
 
 @dataclass
+class SheetProtectionOptions:
+    algorithm_name: str = ""
+    auto_filter: bool = False
+    delete_columns: bool = False
+    delete_rows: bool = False
+    edit_objects: bool = False
+    edit_scenarios: bool = False
+    format_cells: bool = False
+    format_columns: bool = False
+    format_rows: bool = False
+    insert_columns: bool = False
+    insert_hyperlinks: bool = False
+    insert_rows: bool = False
+    password: str = ""
+    pivot_tables: bool = False
+    select_locked_cells: bool = False
+    select_unlocked_cells: bool = False
+    sort: bool = False
+
+
+@dataclass
 class SlicerOptions:
     name: str = ""
     cell: str = ""
@@ -636,5 +657,5 @@ class WorkbookPropsOptions:
 class WorkbookProtectionOptions:
     algorithm_name: str = ""
     password: str = ""
-    lock_structure: Optional[bool] = None
-    lock_windows: Optional[bool] = None
+    lock_structure: bool = False
+    lock_windows: bool = False

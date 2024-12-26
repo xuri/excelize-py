@@ -427,6 +427,28 @@ class _Shape(Structure):
     ]
 
 
+class _SheetProtectionOptions(Structure):
+    _fields_ = [
+        ("AlgorithmName", c_char_p),
+        ("AutoFilter", c_bool),
+        ("DeleteColumns", c_bool),
+        ("DeleteRows", c_bool),
+        ("EditObjects", c_bool),
+        ("EditScenarios", c_bool),
+        ("FormatCells", c_bool),
+        ("FormatColumns", c_bool),
+        ("FormatRows", c_bool),
+        ("InsertColumns", c_bool),
+        ("InsertHyperlinks", c_bool),
+        ("InsertRows", c_bool),
+        ("Password", c_char_p),
+        ("PivotTables", c_bool),
+        ("SelectLockedCells", c_bool),
+        ("SelectUnlockedCells", c_bool),
+        ("Sort", c_bool),
+    ]
+
+
 class _SlicerOptions(Structure):
     _fields_ = [
         ("Name", c_char_p),

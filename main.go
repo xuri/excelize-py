@@ -1286,6 +1286,71 @@ func OpenReader(b *C.uchar, bLen C.int, opts *C.struct_Options) C.struct_Options
 	return C.struct_OptionsResult{idx: C.int(idx), err: C.CString(errNil)}
 }
 
+// ProtectSheet provides a function to prevent other users from accidentally or
+// deliberately changing, moving, or deleting data in a worksheet. The
+// optional field AlgorithmName specified hash algorithm, support XOR, MD4,
+// MD5, SHA-1, SHA2-56, SHA-384, and SHA-512 currently, if no hash algorithm
+// specified, will be using the XOR algorithm as default.
+//
+//export ProtectSheet
+func ProtectSheet(idx int, sheet *C.char, opts *C.struct_SheetProtectionOptions) *C.char {
+	var options excelize.SheetProtectionOptions
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.SheetProtectionOptions{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options = goVal.Elem().Interface().(excelize.SheetProtectionOptions)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).ProtectSheet(C.GoString(sheet), &options); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// ProtectWorkbook provides a function to prevent other users from viewing
+// hidden worksheets, adding, moving, deleting, or hiding worksheets, and
+// renaming worksheets in a workbook. The optional field AlgorithmName
+// specified hash algorithm, support XOR, MD4, MD5, SHA-1, SHA2-56, SHA-384,
+// and SHA-512 currently, if no hash algorithm specified, will be using the XOR
+// algorithm as default. The generated workbook only works on Microsoft Office
+// 2007 and later.
+//
+//export ProtectWorkbook
+func ProtectWorkbook(idx int, opts *C.struct_WorkbookProtectionOptions) *C.char {
+	var options excelize.WorkbookProtectionOptions
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.WorkbookProtectionOptions{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options = goVal.Elem().Interface().(excelize.WorkbookProtectionOptions)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).ProtectWorkbook(&options); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// RemoveCol provides a function to remove single column by given worksheet
+// name and column index.
+//
+//export RemoveCol
+func RemoveCol(idx int, sheet, col *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).RemoveCol(C.GoString(sheet), C.GoString(col)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
 // Save provides a function to override the spreadsheet with origin path.
 //
 //export Save
@@ -1646,6 +1711,22 @@ func SetDefinedName(idx int, definedName *C.struct_DefinedName) *C.char {
 	}
 	if err := f.(*excelize.File).SetDefinedName(&df); err != nil {
 		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetRowHeight provides a function to set the height of a single row. If the
+// value of height is 0, will hide the specified row, if the value of height is
+// -1, will unset the custom row height.
+//
+//export SetRowHeight
+func SetRowHeight(idx int, sheet *C.char, row int, height float64) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetRowHeight(C.GoString(sheet), row, height); err != nil {
+		C.CString(err.Error())
 	}
 	return C.CString(errNil)
 }
