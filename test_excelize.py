@@ -500,6 +500,90 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.save_as(os.path.join("test", "TestAddFormControl.xlsm")))
         self.assertIsNone(f.close())
 
+    def test_header_footer(self):
+        f = excelize.new_file()
+        self.assertIsNone(
+            f.set_header_footer(
+                "Sheet1",
+                excelize.HeaderFooterOptions(
+                    different_first=True,
+                    different_odd_even=True,
+                    odd_header="&R&P",
+                    odd_footer="&C&F",
+                    even_header="&L&P",
+                    even_footer="&L&D&R&T",
+                    first_header='&CCenter &"-,Bold"Bold&"-,Regular"HeaderU+000A&D',
+                ),
+            )
+        )
+        self.assertIsNone(f.save_as(os.path.join("test", "TestHeaderFooter.xlsx")))
+        self.assertIsNone(f.close())
+
+    def test_page_layout(self):
+        f = excelize.new_file()
+        self.assertIsNone(
+            f.set_page_layout(
+                "Sheet1",
+                excelize.PageLayoutOptions(
+                    size=1,
+                    orientation="landscape",
+                    first_page_number=1,
+                    adjust_to=120,
+                    fit_to_height=2,
+                    fit_to_width=2,
+                    black_and_white=True,
+                    page_order="overThenDown",
+                ),
+            )
+        )
+        self.assertIsNone(f.save_as(os.path.join("test", "TestPageLayout.xlsx")))
+        self.assertIsNone(f.close())
+
+    def test_page_margins(self):
+        f = excelize.new_file()
+        self.assertIsNone(
+            f.set_page_margins(
+                "Sheet1",
+                excelize.PageLayoutMarginsOptions(
+                    bottom=1.0,
+                    footer=1.0,
+                    header=1.0,
+                    left=1.0,
+                    right=1.0,
+                    top=1.0,
+                    horizontally=True,
+                    vertically=True,
+                ),
+            )
+        )
+        self.assertIsNone(f.save_as(os.path.join("test", "TestPageMargins.xlsx")))
+        self.assertIsNone(f.close())
+
+    def test_panes(self):
+        f = excelize.new_file()
+        self.assertIsNone(
+            f.set_panes(
+                "Sheet1",
+                excelize.Panes(
+                    freeze=True,
+                    split=False,
+                    x_split=1,
+                    y_split=0,
+                    top_left_cell="B1",
+                    active_pane="topRight",
+                    selection=[
+                        excelize.Selection(
+                            sq_ref="K16",
+                            active_cell="K16",
+                            pane="topRight",
+                        )
+                    ],
+                ),
+            )
+        )
+        self.assertIsNone(f.save_as(os.path.join("test", "TestPanes.xlsx")))
+        self.assertIsNone(f.close())
+
     def test_pivot_table(self):
         f = excelize.new_file()
         month = [

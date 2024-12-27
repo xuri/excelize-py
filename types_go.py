@@ -128,6 +128,21 @@ class _FormulaOpts(Structure):
     ]
 
 
+class _HeaderFooterOptions(Structure):
+    _fields_ = [
+        ("AlignWithMargins", POINTER(c_bool)),
+        ("DifferentFirst", c_bool),
+        ("DifferentOddEven", c_bool),
+        ("ScaleWithDoc", POINTER(c_bool)),
+        ("OddHeader", c_char_p),
+        ("OddFooter", c_char_p),
+        ("EvenHeader", c_char_p),
+        ("EvenFooter", c_char_p),
+        ("FirstHeader", c_char_p),
+        ("FirstFooter", c_char_p),
+    ]
+
+
 class _HyperlinkOpts(Structure):
     _fields_ = [
         ("Display", POINTER(c_char_p)),
@@ -168,6 +183,32 @@ class _GraphicOptions(Structure):
     ]
 
 
+class _PageLayoutMarginsOptions(Structure):
+    _fields_ = [
+        ("Bottom", POINTER(c_double)),
+        ("Footer", POINTER(c_double)),
+        ("Header", POINTER(c_double)),
+        ("Left", POINTER(c_double)),
+        ("Right", POINTER(c_double)),
+        ("Top", POINTER(c_double)),
+        ("Horizontally", POINTER(c_bool)),
+        ("Vertically", POINTER(c_bool)),
+    ]
+
+
+class _PageLayoutOptions(Structure):
+    _fields_ = [
+        ("Size", POINTER(c_int)),
+        ("Orientation", POINTER(c_char_p)),
+        ("FirstPageNumber", POINTER(c_uint)),
+        ("AdjustTo", POINTER(c_uint)),
+        ("FitToHeight", POINTER(c_int)),
+        ("FitToWidth", POINTER(c_int)),
+        ("BlackAndWhite", POINTER(c_bool)),
+        ("PageOrder", POINTER(c_char_p)),
+    ]
+
+
 class _Picture(Structure):
     _fields_ = [
         ("Extension", c_char_p),
@@ -175,6 +216,27 @@ class _Picture(Structure):
         ("File", POINTER(c_ubyte)),
         ("Format", POINTER(_GraphicOptions)),
         ("InsertType", c_uint),
+    ]
+
+
+class _Selection(Structure):
+    _fields_ = [
+        ("SQRef", c_char_p),
+        ("ActiveCell", c_char_p),
+        ("Pane", c_char_p),
+    ]
+
+
+class _Panes(Structure):
+    _fields_ = [
+        ("Freeze", c_bool),
+        ("Split", c_bool),
+        ("XSplit", c_int),
+        ("YSplit", c_int),
+        ("TopLeftCell", c_char_p),
+        ("ActivePane", c_char_p),
+        ("SelectionLen", c_int),
+        ("Selection", POINTER(_Selection)),
     ]
 
 

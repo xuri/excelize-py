@@ -83,7 +83,7 @@ def load_lib():
 lib = CDLL(os.path.join(os.path.dirname(__file__), load_lib()))
 ENCODE = "utf-8"
 __version__ = "0.0.2"
-uppercase_words = ["id", "xml"]
+uppercase_words = ["id", "sq", "xml"]
 
 
 def py_to_base_ctype(py_value, c_type):
@@ -2180,6 +2180,108 @@ class File:
         lib.SetDefinedName.restype = c_char_p
         options = py_value_to_c(defined_name, types_go._DefinedName())
         err = lib.SetDefinedName(self.file_index, byref(options)).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_header_footer(
+        self, sheet: str, opts: HeaderFooterOptions
+    ) -> Optional[Exception]:
+        """
+        Set headers and footers by given worksheet name and the control
+        characters.
+
+        Args:
+            sheet (str): The worksheet name
+            opts (HeaderFooterOptions): The header footer options
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example:
+
+            .. code-block:: python
+
+            err = f.set_header_footer(
+                "Sheet1",
+                excelize.HeaderFooterOptions(
+                    different_first=True,
+                    different_odd_even=True,
+                    odd_header="&R&P",
+                    odd_footer="&C&F",
+                    even_header="&L&P",
+                    even_footer="&L&D&R&T",
+                    first_header="&CCenter &\"-,Bold\"Bold&\"-,Regular\"HeaderU+000A&D",
+                ),
+            )
+        """
+        lib.SetHeaderFooter.restype = c_char_p
+        options = py_value_to_c(opts, types_go._HeaderFooterOptions())
+        err = lib.SetHeaderFooter(
+            self.file_index, sheet.encode(ENCODE), byref(options)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_page_layout(
+        self, sheet: str, opts: PageLayoutOptions
+    ) -> Optional[Exception]:
+        """
+        Sets worksheet page layout.
+
+        Args:
+            sheet (str): The worksheet name
+            opts (PageLayoutOptions): The page layout options
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.SetPageLayout.restype = c_char_p
+        options = py_value_to_c(opts, types_go._PageLayoutOptions())
+        err = lib.SetPageLayout(
+            self.file_index, sheet.encode(ENCODE), byref(options)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_page_margins(
+        self, sheet: str, opts: PageLayoutMarginsOptions
+    ) -> Optional[Exception]:
+        """
+        Set worksheet page margins.
+
+        Args:
+            sheet (str): The worksheet name
+            opts (PageLayoutMarginsOptions): The page margins options
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.SetPageMargins.restype = c_char_p
+        options = py_value_to_c(opts, types_go._PageLayoutMarginsOptions())
+        err = lib.SetPageMargins(
+            self.file_index, sheet.encode(ENCODE), byref(options)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_panes(self, sheet: str, opts: Panes) -> Optional[Exception]:
+        """
+        Create and remove freeze panes and split panes by given worksheet name
+        and panes options.
+
+        Args:
+            sheet (str): The worksheet name
+            opts (Panes): The panes options
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.SetPanes.restype = c_char_p
+        options = py_value_to_c(opts, types_go._Panes())
+        err = lib.SetPanes(
+            self.file_index, sheet.encode(ENCODE), byref(options)
+        ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
     def set_row_height(

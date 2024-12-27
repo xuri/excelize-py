@@ -174,6 +174,10 @@ func cToGoArray(cArray reflect.Value, cArrayLen int) reflect.Value {
 		val := cArray.Interface().(*C.struct_RichTextRun)
 		arr := unsafe.Slice(val, cArrayLen)
 		return reflect.ValueOf(arr)
+	case "main._Ctype_struct_Selection":
+		val := cArray.Interface().(*C.struct_Selection)
+		arr := unsafe.Slice(val, cArrayLen)
+		return reflect.ValueOf(arr)
 	}
 	return cArray
 }
@@ -1710,6 +1714,88 @@ func SetDefinedName(idx int, definedName *C.struct_DefinedName) *C.char {
 		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).SetDefinedName(&df); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetHeaderFooter provides a function to set headers and footers by given
+// worksheet name and the control characters.
+//
+//export SetHeaderFooter
+func SetHeaderFooter(idx int, sheet *C.char, opts *C.struct_HeaderFooterOptions) *C.char {
+	var options excelize.HeaderFooterOptions
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.HeaderFooterOptions{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options = goVal.Elem().Interface().(excelize.HeaderFooterOptions)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetHeaderFooter(C.GoString(sheet), &options); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetPageLayout provides a function to sets worksheet page layout.
+//
+//export SetPageLayout
+func SetPageLayout(idx int, sheet *C.char, opts *C.struct_PageLayoutOptions) *C.char {
+	var options excelize.PageLayoutOptions
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.PageLayoutOptions{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options = goVal.Elem().Interface().(excelize.PageLayoutOptions)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetPageLayout(C.GoString(sheet), &options); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetPageMargins provides a function to set worksheet page margins.
+//
+//export SetPageMargins
+func SetPageMargins(idx int, sheet *C.char, opts *C.struct_PageLayoutMarginsOptions) *C.char {
+	var options excelize.PageLayoutMarginsOptions
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.PageLayoutMarginsOptions{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options = goVal.Elem().Interface().(excelize.PageLayoutMarginsOptions)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetPageMargins(C.GoString(sheet), &options); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetPanes provides a function to create and remove freeze panes and split panes
+// by given worksheet name and panes options.
+//
+//export SetPanes
+func SetPanes(idx int, sheet *C.char, opts *C.struct_Panes) *C.char {
+	var options excelize.Panes
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.Panes{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options = goVal.Elem().Interface().(excelize.Panes)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetPanes(C.GoString(sheet), &options); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(errNil)

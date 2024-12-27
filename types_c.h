@@ -143,6 +143,21 @@ struct FormulaOpts
     char **Ref;
 };
 
+// HeaderFooterOptions directly maps the settings of header and footer.
+struct HeaderFooterOptions
+{
+    bool *AlignWithMargins;
+    bool DifferentFirst;
+    bool DifferentOddEven;
+    bool *ScaleWithDoc;
+    char *OddHeader;
+    char *OddFooter;
+    char *EvenHeader;
+    char *EvenFooter;
+    char *FirstHeader;
+    char *FirstFooter;
+};
+
 // HyperlinkOpts can be passed to SetCellHyperlink to set optional hyperlink
 // attributes (e.g. display value)
 struct HyperlinkOpts
@@ -191,6 +206,32 @@ struct GraphicOptions
     char *Positioning;
 };
 
+// PageLayoutMarginsOptions directly maps the settings of page layout margins.
+struct PageLayoutMarginsOptions
+{
+    double *Bottom;
+    double *Footer;
+    double *Header;
+    double *Left;
+    double *Right;
+    double *Top;
+    bool *Horizontally;
+    bool *Vertically;
+};
+
+// PageLayoutOptions directly maps the settings of page layout.
+struct PageLayoutOptions
+{
+    int *Size;
+    char **Orientation;
+    unsigned int *FirstPageNumber;
+    unsigned int *AdjustTo;
+    int *FitToHeight;
+    int *FitToWidth;
+    bool *BlackAndWhite;
+    char **PageOrder;
+};
+
 // Picture maps the format settings of the picture.
 struct Picture
 {
@@ -199,6 +240,27 @@ struct Picture
     unsigned char *File;
     struct GraphicOptions *Format;
     unsigned char InsertType;
+};
+
+// Selection directly maps the settings of the worksheet selection.
+struct Selection
+{
+    char *SQRef;
+    char *ActiveCell;
+    char *Pane;
+};
+
+// Panes directly maps the settings of the panes.
+struct Panes
+{
+    bool Freeze;
+    bool Split;
+    int XSplit;
+    int YSplit;
+    char *TopLeftCell;
+    char *ActivePane;
+    int SelectionLen;
+    struct Selection *Selection;
 };
 
 // RichTextRun directly maps the settings of the rich text run.
@@ -453,23 +515,23 @@ struct Shape
 // SheetProtectionOptions directly maps the settings of worksheet protection.
 struct SheetProtectionOptions
 {
-	char *AlgorithmName;
-	bool AutoFilter;
-	bool DeleteColumns;
-	bool DeleteRows;
-	bool EditObjects;
-	bool EditScenarios;
-	bool FormatCells;
-	bool FormatColumns;
-	bool FormatRows;
-	bool InsertColumns;
-	bool InsertHyperlinks;
-	bool InsertRows;
-	char *Password;
-	bool PivotTables;
-	bool SelectLockedCells;
-	bool SelectUnlockedCells;
-	bool Sort;
+    char *AlgorithmName;
+    bool AutoFilter;
+    bool DeleteColumns;
+    bool DeleteRows;
+    bool EditObjects;
+    bool EditScenarios;
+    bool FormatCells;
+    bool FormatColumns;
+    bool FormatRows;
+    bool InsertColumns;
+    bool InsertHyperlinks;
+    bool InsertRows;
+    char *Password;
+    bool PivotTables;
+    bool SelectLockedCells;
+    bool SelectUnlockedCells;
+    bool Sort;
 };
 
 // SlicerOptions represents the settings of the slicer.

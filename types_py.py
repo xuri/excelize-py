@@ -266,6 +266,20 @@ class FormulaOpts:
 
 
 @dataclass
+class HeaderFooterOptions:
+    align_with_margins: Optional[bool] = None
+    different_first: bool = False
+    different_odd_even: bool = False
+    scale_with_doc: Optional[bool] = None
+    odd_header: str = ""
+    odd_footer: str = ""
+    even_header: str = ""
+    even_footer: str = ""
+    first_header: str = ""
+    first_footer: str = ""
+
+
+@dataclass
 class HyperlinkOpts:
     display: Optional[str] = None
     tooltip: Optional[str] = None
@@ -312,11 +326,53 @@ class GraphicOptions:
 
 
 @dataclass
+class PageLayoutMarginsOptions:
+    bottom: Optional[float] = (None,)
+    footer: Optional[float] = (None,)
+    header: Optional[float] = (None,)
+    left: Optional[float] = (None,)
+    right: Optional[float] = (None,)
+    top: Optional[float] = (None,)
+    horizontally: Optional[bool] = (None,)
+    vertically: Optional[bool] = (None,)
+
+
+@dataclass
+class PageLayoutOptions:
+    size: Optional[int] = (None,)
+    orientation: Optional[str] = (None,)
+    first_page_number: Optional[int] = (None,)
+    adjust_to: Optional[int] = (None,)
+    fit_to_height: Optional[int] = (None,)
+    fit_to_width: Optional[int] = (None,)
+    black_and_white: Optional[bool] = (None,)
+    page_order: Optional[str] = (None,)
+
+
+@dataclass
 class Picture:
     extension: str = ""
     file: Optional[bytes] = None
     format: Optional[GraphicOptions] = None
     insert_type: PictureInsertType = PictureInsertType.PictureInsertTypePlaceOverCells
+
+
+@dataclass
+class Selection:
+    sq_ref: str = ""
+    active_cell: str = ""
+    pane: str = ""
+
+
+@dataclass
+class Panes:
+    freeze: bool = False
+    split: bool = False
+    x_split: int = 0
+    y_split: int = 0
+    top_left_cell: str = ""
+    active_pane: str = ""
+    selection: Optional[List[Selection]] = None
 
 
 @dataclass
