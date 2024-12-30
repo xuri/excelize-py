@@ -512,6 +512,29 @@ struct Shape
     struct RichTextRun *Paragraph;
 };
 
+// SheetPropsOptions directly maps the settings of sheet view.
+struct SheetPropsOptions
+{
+    char **CodeName;
+    bool *EnableFormatConditionsCalculation;
+    bool *Published;
+    bool *AutoPageBreaks;
+    bool *FitToPage;
+    int *TabColorIndexed;
+    char **TabColorRGB;
+    int *TabColorTheme;
+    double *TabColorTint;
+    bool *OutlineSummaryBelow;
+    bool *OutlineSummaryRight;
+    unsigned int *BaseColWidth;
+    double *DefaultColWidth;
+    double *DefaultRowHeight;
+    bool *CustomHeight;
+    bool *ZeroHeight;
+    bool *ThickTop;
+    bool *ThickBottom;
+};
+
 // SheetProtectionOptions directly maps the settings of worksheet protection.
 struct SheetProtectionOptions
 {

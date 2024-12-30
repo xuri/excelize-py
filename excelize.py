@@ -83,7 +83,7 @@ def load_lib():
 lib = CDLL(os.path.join(os.path.dirname(__file__), load_lib()))
 ENCODE = "utf-8"
 __version__ = "0.0.2"
-uppercase_words = ["id", "sq", "xml"]
+uppercase_words = ["id", "rgb", "sq", "xml"]
 
 
 def py_to_base_ctype(py_value, c_type):
@@ -2360,6 +2360,108 @@ class File:
             extension.encode(ENCODE),
             cast(picture, POINTER(c_ubyte)),
             len(picture),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_sheet_col(
+        self,
+        sheet: str,
+        cell: str,
+        values: List[Union[None, int, str, bool, datetime, date]],
+    ) -> Optional[Exception]:
+        """
+        Writes cells to column by given worksheet name, starting cell reference
+        and cell values list.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+            values (List[Union[None, int, str, bool, datetime, date]]): The cell
+            values
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.SetSheetCol.restype = c_char_p
+        vals = (types_go._Interface * len(values))()
+        for i, value in enumerate(values):
+            vals[i] = py_value_to_c_interface(value)
+        err = lib.SetSheetCol(
+            self.file_index,
+            sheet.encode(ENCODE),
+            cell.encode(ENCODE),
+            byref(vals),
+            len(vals),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_sheet_dimension(self, sheet: str, range_ref: str) -> Optional[Exception]:
+        """
+        Set or remove the used range of the worksheet by a given range
+        reference. It specifies the row and column bounds of used cells in the
+        worksheet. The range reference is set using the A1 reference style
+        (e.g., "A1:D5"). Passing an empty range reference will remove the used
+        range of the worksheet.
+
+        Args:
+            sheet (str): The worksheet name
+            range_ref (str): The top-left and right-bottom cell range reference
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.SetSheetDimension.restype = c_char_p
+        err = lib.SetSheetDimension(
+            self.file_index,
+            sheet.encode(ENCODE),
+            range_ref.encode(ENCODE),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_sheet_name(self, source: str, target: str) -> Optional[Exception]:
+        """
+        Set the worksheet name by given source and target worksheet names.
+        Maximum 31 characters are allowed in sheet title and this function only
+        changes the name of the sheet and will not update the sheet name in the
+        formula or reference associated with the cell. So there may be problem
+        formula error or reference missing.
+
+        Args:
+            source (str): The source sheet name
+            target (str): The target sheet name
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.SetSheetName.restype = c_char_p
+        err = lib.SetSheetName(
+            self.file_index,
+            source.encode(ENCODE),
+            target.encode(ENCODE),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_sheet_props(
+        self, sheet: str, opts: SheetPropsOptions
+    ) -> Optional[Exception]:
+        """
+        Set worksheet properties.
+
+        Args:
+            sheet (str): The worksheet name
+            opts (SheetPropsOptions): The sheet properties options
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.SetSheetProps.restype = c_char_p
+        options = py_value_to_c(opts, types_go._SheetPropsOptions())
+        err = lib.SetSheetProps(
+            self.file_index, sheet.encode(ENCODE), byref(options)
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 

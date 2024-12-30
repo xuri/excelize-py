@@ -1850,6 +1850,80 @@ func SetSheetBackgroundFromBytes(idx int, sheet, extension *C.char, picture *C.u
 	return C.CString(errNil)
 }
 
+// SetSheetCol writes an array to column by given worksheet name, starting
+// cell reference and a pointer to array type 'slice'.
+//
+//export SetSheetCol
+func SetSheetCol(idx int, sheet, cell *C.char, slice *C.struct_Interface, length int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	cells := make([]interface{}, length)
+	for i, val := range unsafe.Slice(slice, length) {
+		cells[i] = cInterfaceToGo(val)
+	}
+	if err := f.(*excelize.File).SetSheetCol(C.GoString(sheet), C.GoString(cell), &cells); err != nil {
+		C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetSheetDimension provides the method to set or remove the used range of the
+// worksheet by a given range reference. It specifies the row and column bounds
+// of used cells in the worksheet. The range reference is set using the A1
+// reference style(e.g., "A1:D5"). Passing an empty range reference will remove
+// the used range of the worksheet.
+//
+//export SetSheetDimension
+func SetSheetDimension(idx int, sheet, rangeRef *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetSheetDimension(C.GoString(sheet), C.GoString(rangeRef)); err != nil {
+		C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetSheetName provides a function to set the worksheet name by given source and
+// target worksheet names. Maximum 31 characters are allowed in sheet title and
+// this function only changes the name of the sheet and will not update the
+// sheet name in the formula or reference associated with the cell. So there
+// may be problem formula error or reference missing.
+//
+//export SetSheetName
+func SetSheetName(idx int, source, target *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetSheetName(C.GoString(source), C.GoString(target)); err != nil {
+		C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetSheetProps provides a function to set worksheet properties.
+//
+//export SetSheetProps
+func SetSheetProps(idx int, sheet *C.char, opts *C.struct_SheetPropsOptions) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.SheetPropsOptions{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options := goVal.Elem().Interface().(excelize.SheetPropsOptions)
+	if err := f.(*excelize.File).SetSheetProps(C.GoString(sheet), &options); err != nil {
+		C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
 // SetSheetRow writes an array to row by given worksheet name, starting
 // cell reference and a pointer to array type 'slice'. This function is
 // concurrency safe.

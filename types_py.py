@@ -602,6 +602,28 @@ class Shape:
 
 
 @dataclass
+class SheetPropsOptions:
+    code_name: Optional[str] = None
+    enable_format_conditions_calculation: Optional[bool] = None
+    published: Optional[bool] = None
+    auto_page_breaks: Optional[bool] = None
+    fit_to_page: Optional[bool] = None
+    tab_color_indexed: Optional[int] = None
+    tab_color_rgb: Optional[str] = None
+    tab_color_theme: Optional[int] = None
+    tab_color_tint: Optional[float] = None
+    outline_summary_below: Optional[bool] = None
+    outline_summary_right: Optional[bool] = None
+    base_col_width: Optional[int] = None
+    default_col_width: Optional[float] = None
+    default_row_height: Optional[float] = None
+    custom_height: Optional[bool] = None
+    zero_height: Optional[bool] = None
+    thick_top: Optional[bool] = None
+    thick_bottom: Optional[bool] = None
+
+
+@dataclass
 class SheetProtectionOptions:
     algorithm_name: str = ""
     auto_filter: bool = False

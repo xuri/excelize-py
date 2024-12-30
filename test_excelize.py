@@ -495,6 +495,9 @@ class TestExcelize(unittest.TestCase):
                 ),
             )
         )
+        self.assertIsNone(
+            f.set_sheet_props("Sheet1", excelize.SheetPropsOptions(code_name="Sheet1"))
+        )
         with open(os.path.join("test", "vbaProject.bin"), "rb") as file:
             self.assertIsNone(f.add_vba_project(file.read()))
         self.assertIsNone(f.save_as(os.path.join("test", "TestAddFormControl.xlsm")))
@@ -1019,6 +1022,27 @@ class TestExcelize(unittest.TestCase):
             )
         )
         self.assertIsNone(f.save_as(os.path.join("test", "TestSetDefinedName.xlsx")))
+        self.assertIsNone(f.close())
+
+    def test_set_sheet_col(self):
+        f = excelize.new_file()
+        self.assertIsNone(
+            f.set_sheet_col(
+                "Sheet1",
+                "B1",
+                [
+                    None,
+                    "Hello",
+                    100,
+                    123.45,
+                    True,
+                    datetime.datetime(2016, 8, 30, 11, 51, 0),
+                ],
+            )
+        )
+        self.assertIsNone(f.set_sheet_dimension("Sheet1", "A1:B6"))
+        self.assertIsNone(f.set_sheet_name("Sheet1", "SheetN"))
+        self.assertIsNone(f.save_as(os.path.join("test", "TestSetSheetCol.xlsx")))
         self.assertIsNone(f.close())
 
     def test_sheet_view(self):

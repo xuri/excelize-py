@@ -489,6 +489,29 @@ class _Shape(Structure):
     ]
 
 
+class _SheetPropsOptions(Structure):
+    _fields_ = [
+        ("CodeName", POINTER(c_char_p)),
+        ("EnableFormatConditionsCalculation", POINTER(c_bool)),
+        ("Published", POINTER(c_bool)),
+        ("AutoPageBreaks", POINTER(c_bool)),
+        ("FitToPage", POINTER(c_bool)),
+        ("TabColorIndexed", POINTER(c_int)),
+        ("TabColorRGB", POINTER(c_char_p)),
+        ("TabColorTheme", POINTER(c_int)),
+        ("TabColorTint", POINTER(c_double)),
+        ("OutlineSummaryBelow", POINTER(c_bool)),
+        ("OutlineSummaryRight", POINTER(c_bool)),
+        ("BaseColWidth", POINTER(c_uint)),
+        ("DefaultColWidth", POINTER(c_double)),
+        ("DefaultRowHeight", POINTER(c_double)),
+        ("CustomHeight", POINTER(c_bool)),
+        ("ZeroHeight", POINTER(c_bool)),
+        ("ThickTop", POINTER(c_bool)),
+        ("ThickBottom", POINTER(c_bool)),
+    ]
+
+
 class _SheetProtectionOptions(Structure):
     _fields_ = [
         ("AlgorithmName", c_char_p),
