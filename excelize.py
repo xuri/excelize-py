@@ -17,6 +17,7 @@ import types_go
 from types_py import *
 from ctypes import (
     byref,
+    c_bool,
     c_char_p,
     c_char,
     c_double,
@@ -1354,6 +1355,23 @@ class File:
             return c_value_to_py(res.style, Style()), None
         return None, Exception(err)
 
+    def get_tables(self, sheet: str) -> Tuple[List[Table], Optional[Exception]]:
+        """
+        Get all tables in a worksheet by given worksheet name.
+
+        Args:
+            sheet (str): The worksheet name
+
+        Returns:
+            Tuple[List[Table], Optional[Exception]]: A tuple containing the
+            tables and an exception if an error occurred, otherwise None.
+        """
+        lib.GetTables.restype = types_go._GetTablesResult
+        res = lib.GetTables(self.file_index, sheet.encode(ENCODE))
+        tables = c_value_to_py(res, GetTablesResult()).tables
+        err = res.err.decode(ENCODE)
+        return tables, None if err == "" else Exception(err)
+
     def merge_cell(
         self, sheet: str, top_left_cell: str, bottom_right_cell: str
     ) -> Optional[Exception]:
@@ -2311,6 +2329,100 @@ class File:
         lib.SetRowHeight.restype = c_char_p
         err = lib.SetRowHeight(
             self.file_index, sheet.encode(ENCODE), c_int(row), c_double(height)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_row_outline(self, sheet: str, row: int, level: int) -> Optional[Exception]:
+        """
+        Set outline level number of a single row by given worksheet name and
+        Excel row number. The value of parameter 'level' is 1-7.
+
+        Args:
+            sheet (str): The worksheet name
+            row (int): The row number
+            level (int): The outline level
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example, outline row 2 in Sheet1 to level 1:
+
+            .. code-block:: python
+
+            err = f.set_row_outline("Sheet1", 2, 1)
+        """
+        lib.SetRowOutlineLevel.restype = c_char_p
+        err = lib.SetRowOutlineLevel(
+            self.file_index, sheet.encode(ENCODE), c_int(row), c_int(level)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_row_style(
+        self, sheet: str, start: int, end: int, style_id: int
+    ) -> Optional[Exception]:
+        """
+        Set the style of rows by given worksheet name, row range, and style ID.
+        Note that this will overwrite the existing styles for the rows, it won't
+        append or merge style with existing styles.
+
+        Args:
+            sheet (str): The worksheet name
+            start (int): The start row number
+            end (int): The end row number
+            style_id (int): The style ID
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example set style of row 1 on Sheet1:
+
+            .. code-block:: python
+
+            err = f.set_row_style("Sheet1", 1, 1, style_id)
+        """
+        lib.SetRowStyle.restype = c_char_p
+        err = lib.SetRowStyle(
+            self.file_index,
+            sheet.encode(ENCODE),
+            c_int(start),
+            c_int(end),
+            c_int(style_id),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_row_visible(
+        self, sheet: str, row: int, visible: bool
+    ) -> Optional[Exception]:
+        """
+        Set visible of a single row by given worksheet name and Excel row
+        number.
+
+        Args:
+            sheet (str): The worksheet name
+            row (int): The row number
+            visible (bool): The row's visibility
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example, hide row 2 in Sheet1:
+
+            .. code-block:: python
+
+            err = f.set_row_visible("Sheet1", 2, False)
+        """
+        lib.SetRowVisible.restype = c_char_p
+        err = lib.SetRowVisible(
+            self.file_index,
+            sheet.encode(ENCODE),
+            c_int(row),
+            c_bool(visible),
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 

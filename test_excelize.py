@@ -124,6 +124,8 @@ class TestExcelize(unittest.TestCase):
         )
         self.assertIsNone(f.set_col_style("Sheet1", "H", style_id))
         self.assertIsNone(f.set_col_visible("Sheet1", "D:F", False))
+        self.assertIsNone(f.set_row_style("Sheet1", 1, 1, style_id))
+        self.assertIsNone(f.set_row_visible("Sheet1", 1, False))
 
         style, err = f.get_style(2)
         self.assertEqual("invalid style ID 2", str(err))
@@ -193,6 +195,7 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(f.get_active_sheet_index(), idx)
 
         self.assertIsNone(f.set_col_outline_level("Sheet1", "D", 2))
+        self.assertIsNone(f.set_row_outline("Sheet1", 2, 1))
 
         self.assertIsNone(f.set_sheet_background("Sheet2", "chart.png"))
 
@@ -705,6 +708,11 @@ class TestExcelize(unittest.TestCase):
                 ),
             )
         )
+        tables, err = f.get_tables("Sheet1")
+        self.assertIsNone(err)
+        self.assertEqual(len(tables), 1)
+        self.assertEqual(tables[0].name, "Table1")
+        self.assertEqual(tables[0].range, "A1:D5")
         self.assertIsNone(
             f.add_slicer(
                 "Sheet1",

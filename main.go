@@ -12,7 +12,7 @@
 package main
 
 /*
-#include <types_c.h>
+#include "types_c.h"
 */
 import "C"
 
@@ -325,6 +325,9 @@ func goValueToC(goVal, cVal reflect.Value) (reflect.Value, error) {
 	for i := 0; i < goVal.Type().NumField(); i++ {
 		cField, _ := c.Type().FieldByName(goVal.Type().Field(i).Name)
 		field := goVal.Type().Field(i)
+		if !unicode.IsUpper(rune(field.Name[0])) {
+			continue
+		}
 		if goBaseTypes[field.Type.Kind()] {
 			goBaseVal := goVal.FieldByName(field.Name)
 			cBaseVal, err := goBaseTypeToC(goBaseVal, goBaseVal.Type().Kind())
@@ -1124,6 +1127,33 @@ func GetStyle(idx, styleID int) C.struct_GetStyleResult {
 	return C.struct_GetStyleResult{style: cVal.Elem().Interface().(C.struct_Style), err: C.CString(errNil)}
 }
 
+// 1 provides the method to get all tables in a worksheet by given
+// worksheet name.
+//
+//export GetTables
+func GetTables(idx int, sheet *C.char) C.struct_GetTablesResult {
+	type GetTableResult struct {
+		Tables []excelize.Table
+	}
+	var result GetTableResult
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetTablesResult{err: C.CString(errFilePtr)}
+	}
+	tables, err := f.(*excelize.File).GetTables(C.GoString(sheet))
+	if err != nil {
+		return C.struct_GetTablesResult{err: C.CString(err.Error())}
+	}
+	result.Tables = tables
+	cVal, err := goValueToC(reflect.ValueOf(result), reflect.ValueOf(&C.struct_GetTablesResult{}))
+	if err != nil {
+		return C.struct_GetTablesResult{err: C.CString(err.Error())}
+	}
+	ret := cVal.Elem().Interface().(C.struct_GetTablesResult)
+	ret.err = C.CString(errNil)
+	return ret
+}
+
 // MergeCell provides a function to merge cells by given range reference and
 // sheet name. Merging cells only keeps the upper-left cell value, and
 // discards the other values.
@@ -1812,6 +1842,53 @@ func SetRowHeight(idx int, sheet *C.char, row int, height float64) *C.char {
 		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).SetRowHeight(C.GoString(sheet), row, height); err != nil {
+		C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetRowOutlineLevel provides a function to set outline level number of a
+// single row by given worksheet name and Excel row number. The value of
+// parameter 'level' is 1-7.
+//
+//export SetRowOutlineLevel
+func SetRowOutlineLevel(idx int, sheet *C.char, row, level int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetRowOutlineLevel(C.GoString(sheet), row, uint8(level)); err != nil {
+		C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetRowStyle provides a function to set the style of rows by given worksheet
+// name, row range, and style ID. Note that this will overwrite the existing
+// styles for the rows, it won't append or merge style with existing styles.
+//
+//export SetRowStyle
+func SetRowStyle(idx int, sheet *C.char, start, end, styleID int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetRowStyle(C.GoString(sheet), start, end, styleID); err != nil {
+		C.CString(err.Error())
+	}
+	return C.CString(errNil)
+}
+
+// SetRowVisible provides a function to set visible of a single row by given
+// worksheet name and Excel row number.
+//
+//export SetRowVisible
+func SetRowVisible(idx int, sheet *C.char, row int, visible bool) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetRowVisible(C.GoString(sheet), row, visible); err != nil {
 		C.CString(err.Error())
 	}
 	return C.CString(errNil)

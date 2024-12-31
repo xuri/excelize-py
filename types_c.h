@@ -362,6 +362,14 @@ struct ChartAxis
     struct RichTextRun *Title;
 };
 
+// ChartDataLabel directly maps the format settings of the chart labels.
+struct ChartDataLabel
+{
+    struct Alignment Alignment;
+    struct Font Font;
+    struct Fill Fill;
+};
+
 // ChartDimension directly maps the dimension of the chart.
 struct ChartDimension
 {
@@ -416,6 +424,7 @@ struct ChartSeries
     struct Fill Fill;
     struct ChartLine Line;
     struct ChartMarker Marker;
+    struct ChartDataLabel DataLabel;
     unsigned char DataLabelPosition;
 };
 
@@ -752,5 +761,12 @@ struct NewStyleResult
 struct GetStyleResult
 {
     struct Style style;
+    char *err;
+};
+
+struct GetTablesResult
+{
+    int TablesLen;
+    struct Table *Tables;
     char *err;
 };

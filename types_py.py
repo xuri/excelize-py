@@ -468,6 +468,13 @@ class ChartAxis:
 
 
 @dataclass
+class ChartDataLabel:
+    alignment: Alignment = Alignment
+    font: Font = Font
+    fill: Fill = Fill
+
+
+@dataclass
 class ChartDimension:
     width: int = 0
     height: int = 0
@@ -515,6 +522,7 @@ class ChartSeries:
     fill: Fill = Fill
     line: ChartLine = ChartLine
     marker: ChartMarker = ChartMarker
+    data_label: ChartDataLabel = ChartDataLabel
     data_label_position: ChartDataLabelPositionType = (
         ChartDataLabelPositionType.ChartDataLabelsPositionUnset
     )
@@ -700,6 +708,11 @@ class Table:
     show_header_row: Optional[bool] = None
     show_last_column: bool = False
     show_row_stripes: Optional[bool] = None
+
+
+@dataclass
+class GetTablesResult:
+    tables: Optional[List[Table]] = None
 
 
 @dataclass

@@ -339,6 +339,14 @@ class _ChartAxis(Structure):
     ]
 
 
+class _ChartDataLabel(Structure):
+    _fields_ = [
+        ("Alignment", _Alignment),
+        ("Font", _Font),
+        ("Fill", _Fill),
+    ]
+
+
 class _ChartDimension(Structure):
     _fields_ = [
         ("Width", c_uint),
@@ -392,6 +400,7 @@ class _ChartSeries(Structure):
         ("Fill", _Fill),
         ("Line", _ChartLine),
         ("Marker", _ChartMarker),
+        ("DataLabel", _ChartDataLabel),
         ("DataLabelPosition", c_uint),
     ]
 
@@ -735,6 +744,14 @@ class _NewStyleResult(Structure):
 class _GetStyleResult(Structure):
     _fields_ = [
         ("style", _Style),
+        ("err", c_char_p),
+    ]
+
+
+class _GetTablesResult(Structure):
+    _fields_ = [
+        ("TablesLen", c_int),
+        ("Tables", POINTER(_Table)),
         ("err", c_char_p),
     ]
 
