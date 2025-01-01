@@ -184,7 +184,7 @@ class TestExcelize(unittest.TestCase):
 
         self.assertIsNone(f.duplicate_row("Sheet1", 20))
         self.assertIsNone(f.duplicate_row_to("Sheet1", 20, 20))
-
+        self.assertIsNone(f.insert_cols("Sheet1", "C", 2))
         self.assertIsNone(f.merge_cell("Sheet1", "A1", "B2"))
         self.assertIsNone(f.unmerge_cell("Sheet1", "A1", "B2"))
 
@@ -193,6 +193,9 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(err)
         self.assertIsNone(f.set_active_sheet(idx))
         self.assertEqual(f.get_active_sheet_index(), idx)
+        index, err = f.get_sheet_index("Sheet2")
+        self.assertEqual(idx, index)
+        self.assertIsNone(err)
 
         self.assertIsNone(f.set_col_outline_level("Sheet1", "D", 2))
         self.assertIsNone(f.set_row_outline("Sheet1", 2, 1))
@@ -1049,6 +1052,9 @@ class TestExcelize(unittest.TestCase):
             )
         )
         self.assertIsNone(f.set_sheet_dimension("Sheet1", "A1:B6"))
+        dimension, err = f.get_sheet_dimension("Sheet1")
+        self.assertIsNone(err)
+        self.assertEqual(dimension, "A1:B6")
         self.assertIsNone(f.set_sheet_name("Sheet1", "SheetN"))
         self.assertIsNone(f.save_as(os.path.join("test", "TestSetSheetCol.xlsx")))
         self.assertIsNone(f.close())

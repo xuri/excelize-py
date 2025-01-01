@@ -671,9 +671,15 @@ struct WorkbookProtectionOptions
     bool LockWindows;
 };
 
-struct GetCellFormulaResult
+struct StringErrorResult
 {
     char *val;
+    char *err;
+};
+
+struct IntErrorResult
+{
+    int val;
     char *err;
 };
 
@@ -684,12 +690,6 @@ struct GetCellHyperLinkResult
     char *err;
 };
 
-struct CalcCellValueResult
-{
-    char *val;
-    char *err;
-};
-
 struct CellNameToCoordinatesResult
 {
     int col;
@@ -697,39 +697,9 @@ struct CellNameToCoordinatesResult
     char *err;
 };
 
-struct ColumnNameToNumberResult
-{
-    int col;
-    char *err;
-};
-
-struct ColumnNumberToNameResult
-{
-    char *col;
-    char *err;
-};
-
-struct CoordinatesToCellNameResult
-{
-    char *cell;
-    char *err;
-};
-
-struct OptionsResult
-{
-    int idx;
-    char *err;
-};
-
 struct GetAppPropsResult
 {
     struct AppProperties opts;
-    char *err;
-};
-
-struct GetCellValueResult
-{
-    char *val;
     char *err;
 };
 
@@ -746,18 +716,6 @@ struct GetRowsResult
     char *err;
 };
 
-struct NewSheetResult
-{
-    int idx;
-    char *err;
-};
-
-struct NewStyleResult
-{
-    int style;
-    char *err;
-};
-
 struct GetStyleResult
 {
     struct Style style;
@@ -768,5 +726,5 @@ struct GetTablesResult
 {
     int TablesLen;
     struct Table *Tables;
-    char *err;
+    char *Err;
 };

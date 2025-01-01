@@ -647,9 +647,16 @@ class _WorkbookProtectionOptions(Structure):
     ]
 
 
-class _CalcCellValueResult(Structure):
+class _StringErrorResult(Structure):
     _fields_ = [
         ("val", c_char_p),
+        ("err", c_char_p),
+    ]
+
+
+class _IntErrorResult(Structure):
+    _fields_ = [
+        ("val", c_int),
         ("err", c_char_p),
     ]
 
@@ -662,37 +669,9 @@ class _CellNameToCoordinatesResult(Structure):
     ]
 
 
-class _ColumnNameToNumberResult(Structure):
-    _fields_ = [
-        ("col", c_int),
-        ("err", c_char_p),
-    ]
-
-
-class _ColumnNumberToNameResult(Structure):
-    _fields_ = [
-        ("col", c_char_p),
-        ("err", c_char_p),
-    ]
-
-
-class _CoordinatesToCellNameResult(Structure):
-    _fields_ = [
-        ("cell", c_char_p),
-        ("err", c_char_p),
-    ]
-
-
 class _GetAppPropsResult(Structure):
     _fields_ = [
         ("opts", _AppProperties),
-        ("err", c_char_p),
-    ]
-
-
-class _GetCellFormulaResult(Structure):
-    _fields_ = [
-        ("val", c_char_p),
         ("err", c_char_p),
     ]
 
@@ -701,13 +680,6 @@ class _GetCellHyperLinkResult(Structure):
     _fields_ = [
         ("link", c_bool),
         ("target", c_char_p),
-        ("err", c_char_p),
-    ]
-
-
-class _GetCellValueResult(Structure):
-    _fields_ = [
-        ("val", c_char_p),
         ("err", c_char_p),
     ]
 
@@ -727,20 +699,6 @@ class _GetRowsResult(Structure):
     ]
 
 
-class _NewSheetResult(Structure):
-    _fields_ = [
-        ("idx", c_int),
-        ("err", c_char_p),
-    ]
-
-
-class _NewStyleResult(Structure):
-    _fields_ = [
-        ("style", c_int),
-        ("err", c_char_p),
-    ]
-
-
 class _GetStyleResult(Structure):
     _fields_ = [
         ("style", _Style),
@@ -752,12 +710,5 @@ class _GetTablesResult(Structure):
     _fields_ = [
         ("TablesLen", c_int),
         ("Tables", POINTER(_Table)),
-        ("err", c_char_p),
-    ]
-
-
-class _OptionsResult(Structure):
-    _fields_ = [
-        ("idx", c_int),
-        ("err", c_char_p),
+        ("Err", c_char_p),
     ]

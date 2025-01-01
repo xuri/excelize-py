@@ -713,6 +713,7 @@ class Table:
 @dataclass
 class GetTablesResult:
     tables: Optional[List[Table]] = None
+    err: str = ""
 
 
 @dataclass

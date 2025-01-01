@@ -1001,7 +1001,7 @@ class File:
             result as a string and an exception if an error occurred, otherwise
             None.
         """
-        lib.CalcCellValue.restype = types_go._CalcCellValueResult
+        lib.CalcCellValue.restype = types_go._StringErrorResult
         options = (
             byref(py_value_to_c(opts[0], types_go._Options()))
             if opts
@@ -1222,7 +1222,7 @@ class File:
             Tuple[str, Optional[Exception]]: A tuple containing the cell formula
             string and an exception if an error occurred, otherwise None.
         """
-        lib.GetCellFormula.restype = types_go._GetCellFormulaResult
+        lib.GetCellFormula.restype = types_go._StringErrorResult
         res = lib.GetCellFormula(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
         )
@@ -1285,7 +1285,7 @@ class File:
             Tuple[str, Optional[Exception]]: A tuple containing the cell value
             as a string and an exception if an error occurred, otherwise None.
         """
-        lib.GetCellValue.restype = types_go._GetCellValueResult
+        lib.GetCellValue.restype = types_go._StringErrorResult
         options = (
             byref(py_value_to_c(opts[0], types_go._Options()))
             if opts
@@ -1336,6 +1336,41 @@ class File:
 
         return rows, None if err == "" else Exception(err)
 
+    def get_sheet_dimension(self, sheet: str) -> Tuple[str, Optional[Exception]]:
+        """
+        Get style definition by given style index.
+
+        Args:
+            sheet (str): The worksheet name
+
+        Returns:
+            Tuple[str, Optional[Exception]]: A tuple containing the sheet
+            dimension, and an Exception object if an error occurred, otherwise
+            None.
+        """
+        lib.GetSheetDimension.restype = types_go._StringErrorResult
+        res = lib.GetSheetDimension(self.file_index, sheet.encode(ENCODE))
+        err = res.err.decode(ENCODE)
+        return res.val.decode(ENCODE), None if err == "" else Exception(err)
+
+    def get_sheet_index(self, sheet: str) -> Tuple[int, Optional[Exception]]:
+        """
+        Get a sheet index of the workbook by the given sheet name. If the given
+        sheet name is invalid or sheet doesn't exist, it will return an integer
+        type value -1.
+
+        Args:
+            sheet (str): The worksheet name
+
+        Returns:
+            Tuple[int, Optional[Exception]]: A tuple containing the sheet index,
+            and an Exception object if an error occurred, otherwise None.
+        """
+        lib.GetSheetIndex.restype = types_go._IntErrorResult
+        res = lib.GetSheetIndex(self.file_index, sheet.encode(ENCODE))
+        err = res.err.decode(ENCODE)
+        return res.val, None if err == "" else Exception(err)
+
     def get_style(self, style_id: int) -> Tuple[Optional[Style], Optional[Exception]]:
         """
         Get style definition by given style index.
@@ -1369,8 +1404,41 @@ class File:
         lib.GetTables.restype = types_go._GetTablesResult
         res = lib.GetTables(self.file_index, sheet.encode(ENCODE))
         tables = c_value_to_py(res, GetTablesResult()).tables
-        err = res.err.decode(ENCODE)
+        err = res.Err.decode(ENCODE)
         return tables, None if err == "" else Exception(err)
+
+    def insert_cols(self, sheet: str, col: str, n: int) -> Optional[Exception]:
+        """
+        Insert new columns before the given column name and number of columns.
+        Use this method with caution, which will affect changes in references
+        such as formulas, charts, and so on. If there is any referenced value of
+        the worksheet, it will cause a file error when you open it. The excelize
+        only partially updates these references currently.
+
+        Args:
+            sheet (str): The worksheet name
+            col (str): The column name
+            n (int): The columns
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example, create two columns before column C in Sheet1:
+
+            .. code-block:: python
+
+            err = f.insert_cols("Sheet1", "C", 2)
+        """
+        lib.InsertCols.restype = c_char_p
+        err = lib.InsertCols(
+            self.file_index,
+            sheet.encode(ENCODE),
+            col.encode(ENCODE),
+            c_int(n),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
 
     def merge_cell(
         self, sheet: str, top_left_cell: str, bottom_right_cell: str
@@ -1440,11 +1508,11 @@ class File:
             Tuple[int, Optional[Exception]]: A tuple containing the style index
             and an exception if any error occurs.
         """
-        lib.NewConditionalStyle.restype = types_go._NewStyleResult
+        lib.NewConditionalStyle.restype = types_go._IntErrorResult
         options = py_value_to_c(style, types_go._Style())
         res = lib.NewConditionalStyle(self.file_index, byref(options))
         err = res.err.decode(ENCODE)
-        return res.style, None if err == "" else Exception(err)
+        return res.val, None if err == "" else Exception(err)
 
     def new_sheet(self, sheet: str) -> Tuple[int, Optional[Exception]]:
         """
@@ -1459,10 +1527,10 @@ class File:
             Tuple[int, Optional[Exception]]: A tuple containing the index of the
             new sheet and an Exception if an error occurred, otherwise None.
         """
-        lib.NewSheet.restype = types_go._NewSheetResult
+        lib.NewSheet.restype = types_go._IntErrorResult
         res = lib.NewSheet(self.file_index, sheet.encode(ENCODE))
         err = res.err.decode(ENCODE)
-        return res.idx, None if err == "" else Exception(err)
+        return res.val, None if err == "" else Exception(err)
 
     def new_style(self, style: Style) -> Tuple[int, Optional[Exception]]:
         """
@@ -1478,11 +1546,11 @@ class File:
             Tuple[int, Optional[Exception]]: A tuple containing the style index
             and an exception if any error occurs.
         """
-        lib.NewStyle.restype = types_go._NewStyleResult
+        lib.NewStyle.restype = types_go._IntErrorResult
         options = py_value_to_c(style, types_go._Style())
         res = lib.NewStyle(self.file_index, byref(options))
         err = res.err.decode(ENCODE)
-        return res.style, None if err == "" else Exception(err)
+        return res.val, None if err == "" else Exception(err)
 
     def protect_sheet(
         self, sheet: str, opts: SheetProtectionOptions
@@ -2767,10 +2835,10 @@ def column_name_to_number(name: str) -> Tuple[int, Optional[Exception]]:
         Tuple[int, Optional[Exception]]: A tuple containing the column number
         and an Exception if an error occurred, otherwise None.
     """
-    lib.ColumnNameToNumber.restype = types_go._ColumnNameToNumberResult
+    lib.ColumnNameToNumber.restype = types_go._IntErrorResult
     res = lib.ColumnNameToNumber(name.encode(ENCODE))
     err = res.err.decode(ENCODE)
-    return res.col, None if err == "" else Exception(err)
+    return res.val, None if err == "" else Exception(err)
 
 
 def column_number_to_name(num: int) -> Tuple[str, Optional[Exception]]:
@@ -2784,10 +2852,10 @@ def column_number_to_name(num: int) -> Tuple[str, Optional[Exception]]:
         Tuple[str, Optional[Exception]]: A tuple containing the column name and
         an Exception if an error occurred, otherwise None.
     """
-    lib.ColumnNumberToName.restype = types_go._ColumnNumberToNameResult
+    lib.ColumnNumberToName.restype = types_go._StringErrorResult
     res = lib.ColumnNumberToName(c_int(num))
     err = res.err.decode(ENCODE)
-    return res.col.decode(ENCODE), None if err == "" else Exception(err)
+    return res.val.decode(ENCODE), None if err == "" else Exception(err)
 
 
 def coordinates_to_cell_name(
@@ -2807,13 +2875,13 @@ def coordinates_to_cell_name(
         Tuple[str, Optional[Exception]]: A tuple containing the cell name as a
         string and an Exception if an error occurred, otherwise None.
     """
-    lib.CoordinatesToCellName.restype = types_go._CoordinatesToCellNameResult
+    lib.CoordinatesToCellName.restype = types_go._StringErrorResult
     options = False
     if len(abs) > 0:
         options = abs[0]
     res = lib.CoordinatesToCellName(col, row, options)
     err = res.err.decode(ENCODE)
-    return res.cell.decode(ENCODE), None if err == "" else Exception(err)
+    return res.val.decode(ENCODE), None if err == "" else Exception(err)
 
 
 def new_file() -> File:
@@ -2841,13 +2909,13 @@ def open_file(
         Tuple[Optional[File], Optional[Exception]]: A tuple containing a File
         object if successful, or None and an Exception if an error occurred.
     """
-    lib.OpenFile.restype, options = types_go._OptionsResult, None
+    lib.OpenFile.restype, options = types_go._IntErrorResult, None
     if len(opts) > 0:
         options = byref(py_value_to_c(opts[0], types_go._Options()))
     res = lib.OpenFile(filename.encode(ENCODE), options)
     err = res.err.decode(ENCODE)
     if err == "":
-        return File(res.idx), None
+        return File(res.val), None
     return None, Exception(err)
 
 
@@ -2865,11 +2933,11 @@ def open_reader(
         Tuple[Optional[File], Optional[Exception]]: A tuple containing a File
         object if successful, or None and an Exception if an error occurred.
     """
-    lib.OpenReader.restype, options = types_go._OptionsResult, None
+    lib.OpenReader.restype, options = types_go._IntErrorResult, None
     if len(opts) > 0:
         options = byref(py_value_to_c(opts[0], types_go._Options()))
     res = lib.OpenReader(cast(buffer, POINTER(c_ubyte)), len(buffer), options)
     err = res.err.decode(ENCODE)
     if err == "":
-        return File(res.idx), None
+        return File(res.val), None
     return None, Exception(err)

@@ -44,10 +44,10 @@ const (
 )
 
 var (
-	files      = sync.Map{}
-	errNil     string
-	errFilePtr = "can not find file pointer"
-	errArgType = errors.New("invalid argument data type")
+	files       = sync.Map{}
+	emptyString string
+	errFilePtr  = "can not find file pointer"
+	errArgType  = errors.New("invalid argument data type")
 
 	// goBaseTypes defines Go's basic data types.
 	goBaseTypes = map[reflect.Kind]bool{
@@ -325,7 +325,7 @@ func goValueToC(goVal, cVal reflect.Value) (reflect.Value, error) {
 	for i := 0; i < goVal.Type().NumField(); i++ {
 		cField, _ := c.Type().FieldByName(goVal.Type().Field(i).Name)
 		field := goVal.Type().Field(i)
-		if !unicode.IsUpper(rune(field.Name[0])) {
+		if unicode.IsLower(rune(field.Name[0])) {
 			continue
 		}
 		if goBaseTypes[field.Type.Kind()] {
@@ -457,12 +457,12 @@ func AddChart(idx int, sheet, cell *C.char, chart *C.struct_Chart, length int) *
 		if err := f.(*excelize.File).AddChart(C.GoString(sheet), C.GoString(cell), charts[0], charts[1:]...); err != nil {
 			return C.CString(err.Error())
 		}
-		return C.CString(errNil)
+		return C.CString(emptyString)
 	}
 	if err := f.(*excelize.File).AddChart(C.GoString(sheet), C.GoString(cell), charts[0]); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // AddChartSheet provides the method to create a chartsheet by given chart
@@ -489,12 +489,12 @@ func AddChartSheet(idx int, sheet *C.char, chart *C.struct_Chart, length int) *C
 		if err := f.(*excelize.File).AddChartSheet(C.GoString(sheet), charts[0], charts[1:]...); err != nil {
 			return C.CString(err.Error())
 		}
-		return C.CString(errNil)
+		return C.CString(emptyString)
 	}
 	if err := f.(*excelize.File).AddChartSheet(C.GoString(sheet), charts[0]); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // AddComment provides the method to add comments in a sheet by giving the
@@ -517,7 +517,7 @@ func AddComment(idx int, sheet *C.char, opts *C.struct_Comment) *C.char {
 	if err := f.(*excelize.File).AddComment(C.GoString(sheet), comment); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // AddFormControl provides the method to add form control button in a worksheet
@@ -541,7 +541,7 @@ func AddFormControl(idx int, sheet *C.char, opts *C.struct_FormControl) *C.char 
 	if err := f.(*excelize.File).AddFormControl(C.GoString(sheet), options); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // Add picture in a sheet by given picture format set (such as offset, scale,
@@ -563,12 +563,12 @@ func AddPicture(idx int, sheet, cell, name *C.char, opts *C.struct_GraphicOption
 		if err := f.(*excelize.File).AddPicture(C.GoString(sheet), C.GoString(cell), C.GoString(name), &options); err != nil {
 			return C.CString(err.Error())
 		}
-		return C.CString(errNil)
+		return C.CString(emptyString)
 	}
 	if err := f.(*excelize.File).AddPicture(C.GoString(sheet), C.GoString(cell), C.GoString(name), nil); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // AddPictureFromBytes provides the method to add picture in a sheet by given
@@ -593,7 +593,7 @@ func AddPictureFromBytes(idx int, sheet, cell *C.char, pic *C.struct_Picture) *C
 	if err := f.(*excelize.File).AddPictureFromBytes(C.GoString(sheet), C.GoString(cell), &options); err != nil {
 		C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // AddPivotTable provides the method to add pivot table by given pivot table
@@ -614,7 +614,7 @@ func AddPivotTable(idx int, opts *C.struct_PivotTableOptions) *C.char {
 	if err := f.(*excelize.File).AddPivotTable(&options); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // AddShape provides the method to add shape in a sheet by given worksheet
@@ -636,7 +636,7 @@ func AddShape(idx int, sheet *C.char, opts *C.struct_Shape) *C.char {
 	if err := f.(*excelize.File).AddShape(C.GoString(sheet), &options); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // AddSlicer function inserts a slicer by giving the worksheet name and slicer
@@ -657,7 +657,7 @@ func AddSlicer(idx int, sheet *C.char, opts *C.struct_SlicerOptions) *C.char {
 	if err := f.(*excelize.File).AddSlicer(C.GoString(sheet), &options); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // AddSparkline provides a function to add sparklines to the worksheet by
@@ -681,7 +681,7 @@ func AddSparkline(idx int, sheet *C.char, opts *C.struct_SparklineOptions) *C.ch
 	if err := f.(*excelize.File).AddSparkline(C.GoString(sheet), &options); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // AddTable provides the method to add table in a worksheet by given worksheet
@@ -702,7 +702,7 @@ func AddTable(idx int, sheet *C.char, table *C.struct_Table) *C.char {
 	if err := f.(*excelize.File).AddTable(C.GoString(sheet), &tbl); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // AddVBAProject provides the method to add vbaProject.bin file which contains
@@ -718,7 +718,7 @@ func AddVBAProject(idx int, file *C.uchar, fileLen C.int) *C.char {
 	if err := f.(*excelize.File).AddVBAProject(buf); err != nil {
 		C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // AutoFilter provides the method to add auto filter in a worksheet by given
@@ -742,7 +742,7 @@ func AutoFilter(idx int, sheet, rangeRef *C.char, opts *C.struct_AutoFilterOptio
 	if err := f.(*excelize.File).AutoFilter(C.GoString(sheet), C.GoString(rangeRef), options); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // CalcCellValue provides a function to get calculated cell value. This feature
@@ -751,24 +751,24 @@ func AutoFilter(idx int, sheet, rangeRef *C.char, opts *C.struct_AutoFilterOptio
 // other formulas are not supported currently.
 //
 //export CalcCellValue
-func CalcCellValue(idx int, sheet, cell *C.char, opts *C.struct_Options) C.struct_CalcCellValueResult {
+func CalcCellValue(idx int, sheet, cell *C.char, opts *C.struct_Options) C.struct_StringErrorResult {
 	var options excelize.Options
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.struct_CalcCellValueResult{val: C.CString(""), err: C.CString(errFilePtr)}
+		return C.struct_StringErrorResult{val: C.CString(emptyString), err: C.CString(errFilePtr)}
 	}
 	if opts != nil {
 		goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.Options{}))
 		if err != nil {
-			return C.struct_CalcCellValueResult{val: C.CString(""), err: C.CString(err.Error())}
+			return C.struct_StringErrorResult{val: C.CString(emptyString), err: C.CString(err.Error())}
 		}
 		options = goVal.Elem().Interface().(excelize.Options)
 	}
 	val, err := f.(*excelize.File).CalcCellValue(C.GoString(sheet), C.GoString(cell), options)
 	if err != nil {
-		return C.struct_CalcCellValueResult{val: C.CString(val), err: C.CString(err.Error())}
+		return C.struct_StringErrorResult{val: C.CString(val), err: C.CString(err.Error())}
 	}
-	return C.struct_CalcCellValueResult{val: C.CString(val), err: C.CString(errNil)}
+	return C.struct_StringErrorResult{val: C.CString(val), err: C.CString(emptyString)}
 }
 
 // CellNameToCoordinates converts alphanumeric cell name to [X, Y] coordinates
@@ -780,7 +780,7 @@ func CellNameToCoordinates(cell *C.char) C.struct_CellNameToCoordinatesResult {
 	if err != nil {
 		return C.struct_CellNameToCoordinatesResult{col: C.int(col), row: C.int(row), err: C.CString(err.Error())}
 	}
-	return C.struct_CellNameToCoordinatesResult{col: C.int(col), row: C.int(row), err: C.CString(errNil)}
+	return C.struct_CellNameToCoordinatesResult{col: C.int(col), row: C.int(row), err: C.CString(emptyString)}
 }
 
 // ColumnNameToNumber provides a function to convert Excel sheet column name
@@ -788,36 +788,36 @@ func CellNameToCoordinates(cell *C.char) C.struct_CellNameToCoordinatesResult {
 // incorrect.
 //
 //export ColumnNameToNumber
-func ColumnNameToNumber(name *C.char) C.struct_CellNameToCoordinatesResult {
+func ColumnNameToNumber(name *C.char) C.struct_IntErrorResult {
 	col, err := excelize.ColumnNameToNumber(C.GoString(name))
 	if err != nil {
-		return C.struct_CellNameToCoordinatesResult{col: C.int(col), err: C.CString(err.Error())}
+		return C.struct_IntErrorResult{val: C.int(col), err: C.CString(err.Error())}
 	}
-	return C.struct_CellNameToCoordinatesResult{col: C.int(col), err: C.CString(errNil)}
+	return C.struct_IntErrorResult{val: C.int(col), err: C.CString(emptyString)}
 }
 
 // ColumnNumberToName provides a function to convert the integer to Excel
 // sheet column title.
 //
 //export ColumnNumberToName
-func ColumnNumberToName(num int) C.struct_ColumnNumberToNameResult {
+func ColumnNumberToName(num int) C.struct_StringErrorResult {
 	col, err := excelize.ColumnNumberToName(num)
 	if err != nil {
-		return C.struct_ColumnNumberToNameResult{col: C.CString(col), err: C.CString(err.Error())}
+		return C.struct_StringErrorResult{val: C.CString(col), err: C.CString(err.Error())}
 	}
-	return C.struct_ColumnNumberToNameResult{col: C.CString(col), err: C.CString(errNil)}
+	return C.struct_StringErrorResult{val: C.CString(col), err: C.CString(emptyString)}
 }
 
 // CoordinatesToCellName converts [X, Y] coordinates to alpha-numeric cell name
 // or returns an error.
 //
 //export CoordinatesToCellName
-func CoordinatesToCellName(col, row int, abs bool) C.struct_CoordinatesToCellNameResult {
+func CoordinatesToCellName(col, row int, abs bool) C.struct_StringErrorResult {
 	cell, err := excelize.CoordinatesToCellName(col, row, abs)
 	if err != nil {
-		return C.struct_CoordinatesToCellNameResult{cell: C.CString(cell), err: C.CString(err.Error())}
+		return C.struct_StringErrorResult{val: C.CString(cell), err: C.CString(err.Error())}
 	}
-	return C.struct_CoordinatesToCellNameResult{cell: C.CString(cell), err: C.CString(errNil)}
+	return C.struct_StringErrorResult{val: C.CString(cell), err: C.CString(emptyString)}
 }
 
 // Close closes and cleanup the open temporary file for the spreadsheet.
@@ -832,7 +832,7 @@ func Close(idx int) *C.char {
 	if err := f.(*excelize.File).Close(); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // CopySheet provides a function to duplicate a worksheet by gave source and
@@ -848,7 +848,7 @@ func CopySheet(idx, from, to int) *C.char {
 	if err := f.(*excelize.File).CopySheet(from, to); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // DeleteChart provides a function to delete chart in spreadsheet by given
@@ -863,7 +863,7 @@ func DeleteChart(idx int, sheet, cell *C.char) *C.char {
 	if err := f.(*excelize.File).DeleteChart(C.GoString(sheet), C.GoString(cell)); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // DeleteComment provides the method to delete comment in a sheet by given
@@ -878,7 +878,7 @@ func DeleteComment(idx int, sheet, cell *C.char) *C.char {
 	if err := f.(*excelize.File).DeleteComment(C.GoString(sheet), C.GoString(cell)); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // DeletePicture provides a function to delete charts in spreadsheet by given
@@ -894,7 +894,7 @@ func DeletePicture(idx int, sheet, cell *C.char) *C.char {
 	if err := f.(*excelize.File).DeletePicture(C.GoString(sheet), C.GoString(cell)); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // DeleteSheet provides a function to delete worksheet in a workbook by given
@@ -912,7 +912,7 @@ func DeleteSheet(idx int, sheet *C.char) *C.char {
 	if err := f.(*excelize.File).DeleteSheet(C.GoString(sheet)); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // DeleteSlicer provides the method to delete a slicer by a given slicer name.
@@ -926,7 +926,7 @@ func DeleteSlicer(idx int, name *C.char) *C.char {
 	if err := f.(*excelize.File).DeleteSlicer(C.GoString(name)); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // DuplicateRow inserts a copy of specified row (by its Excel row number)
@@ -944,7 +944,7 @@ func DuplicateRow(idx int, sheet *C.char, row int) *C.char {
 	if err := f.(*excelize.File).DuplicateRow(C.GoString(sheet), row); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // DuplicateRowTo inserts a copy of specified row by it Excel number to
@@ -963,7 +963,7 @@ func DuplicateRowTo(idx int, sheet *C.char, row, row2 int) *C.char {
 	if err := f.(*excelize.File).DuplicateRowTo(C.GoString(sheet), row, row2); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // GetActiveSheetIndex provides a function to get active sheet index of the
@@ -994,23 +994,23 @@ func GetAppProps(idx int) C.struct_GetAppPropsResult {
 	if err != nil {
 		return C.struct_GetAppPropsResult{err: C.CString(err.Error())}
 	}
-	return C.struct_GetAppPropsResult{opts: cVal.Elem().Interface().(C.struct_AppProperties), err: C.CString(errNil)}
+	return C.struct_GetAppPropsResult{opts: cVal.Elem().Interface().(C.struct_AppProperties), err: C.CString(emptyString)}
 }
 
 // GetCellFormula provides a function to get formula from cell by given
 // worksheet name and cell reference in spreadsheet.
 //
 //export GetCellFormula
-func GetCellFormula(idx int, sheet, cell *C.char) C.struct_GetCellFormulaResult {
+func GetCellFormula(idx int, sheet, cell *C.char) C.struct_StringErrorResult {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.struct_GetCellFormulaResult{val: C.CString(""), err: C.CString(errFilePtr)}
+		return C.struct_StringErrorResult{val: C.CString(emptyString), err: C.CString(errFilePtr)}
 	}
 	formula, err := f.(*excelize.File).GetCellFormula(C.GoString(sheet), C.GoString(cell))
 	if err != nil {
-		return C.struct_GetCellFormulaResult{val: C.CString(formula), err: C.CString(err.Error())}
+		return C.struct_StringErrorResult{val: C.CString(formula), err: C.CString(err.Error())}
 	}
-	return C.struct_GetCellFormulaResult{val: C.CString(formula), err: C.CString(errNil)}
+	return C.struct_StringErrorResult{val: C.CString(formula), err: C.CString(emptyString)}
 }
 
 // GetCellHyperLink gets a cell hyperlink based on the given worksheet name and
@@ -1022,13 +1022,13 @@ func GetCellFormula(idx int, sheet, cell *C.char) C.struct_GetCellFormulaResult 
 func GetCellHyperLink(idx int, sheet, cell *C.char) C.struct_GetCellHyperLinkResult {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.struct_GetCellHyperLinkResult{link: false, target: C.CString(""), err: C.CString(errFilePtr)}
+		return C.struct_GetCellHyperLinkResult{link: false, target: C.CString(emptyString), err: C.CString(errFilePtr)}
 	}
 	link, target, err := f.(*excelize.File).GetCellHyperLink(C.GoString(sheet), C.GoString(cell))
 	if err != nil {
 		return C.struct_GetCellHyperLinkResult{link: C._Bool(link), target: C.CString(target), err: C.CString(err.Error())}
 	}
-	return C.struct_GetCellHyperLinkResult{link: C._Bool(link), target: C.CString(target), err: C.CString(errNil)}
+	return C.struct_GetCellHyperLinkResult{link: C._Bool(link), target: C.CString(target), err: C.CString(emptyString)}
 }
 
 // GetCellValue provides a function to get formatted value from cell by given
@@ -1039,24 +1039,24 @@ func GetCellHyperLink(idx int, sheet, cell *C.char) C.struct_GetCellHyperLinkRes
 // merged range.
 //
 //export GetCellValue
-func GetCellValue(idx int, sheet, cell *C.char, opts *C.struct_Options) C.struct_GetCellValueResult {
+func GetCellValue(idx int, sheet, cell *C.char, opts *C.struct_Options) C.struct_StringErrorResult {
 	var options excelize.Options
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.struct_GetCellValueResult{val: C.CString(""), err: C.CString(errFilePtr)}
+		return C.struct_StringErrorResult{val: C.CString(emptyString), err: C.CString(errFilePtr)}
 	}
 	if opts != nil {
 		goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.Options{}))
 		if err != nil {
-			return C.struct_GetCellValueResult{val: C.CString(""), err: C.CString(err.Error())}
+			return C.struct_StringErrorResult{val: C.CString(emptyString), err: C.CString(err.Error())}
 		}
 		options = goVal.Elem().Interface().(excelize.Options)
 	}
 	val, err := f.(*excelize.File).GetCellValue(C.GoString(sheet), C.GoString(cell), options)
 	if err != nil {
-		return C.struct_GetCellValueResult{val: C.CString(val), err: C.CString(err.Error())}
+		return C.struct_StringErrorResult{val: C.CString(val), err: C.CString(err.Error())}
 	}
-	return C.struct_GetCellValueResult{val: C.CString(val), err: C.CString(errNil)}
+	return C.struct_StringErrorResult{val: C.CString(val), err: C.CString(emptyString)}
 }
 
 // GetRows return all the rows in a sheet by given worksheet name, returned as
@@ -1104,8 +1104,40 @@ func GetRows(idx int, sheet *C.char, opts *C.struct_Options) C.struct_GetRowsRes
 		return C.struct_GetRowsResult{err: C.CString(err.Error())}
 	}
 	ret := cVal.Elem().Interface().(C.struct_GetRowsResult)
-	ret.err = C.CString(errNil)
+	ret.err = C.CString(emptyString)
 	return ret
+}
+
+// GetSheetDimension provides the method to get the used range of the worksheet.
+//
+//export GetSheetDimension
+func GetSheetDimension(idx int, sheet *C.char) C.struct_StringErrorResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_StringErrorResult{val: C.CString(emptyString), err: C.CString(errFilePtr)}
+	}
+	dimension, err := f.(*excelize.File).GetSheetDimension(C.GoString(sheet))
+	if err != nil {
+		return C.struct_StringErrorResult{val: C.CString(dimension), err: C.CString(err.Error())}
+	}
+	return C.struct_StringErrorResult{val: C.CString(dimension), err: C.CString(emptyString)}
+}
+
+// GetSheetIndex provides a function to get a sheet index of the workbook by
+// the given sheet name. If the given sheet name is invalid or sheet doesn't
+// exist, it will return an integer type value -1.
+//
+//export GetSheetIndex
+func GetSheetIndex(idx int, sheet *C.char) C.struct_IntErrorResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_IntErrorResult{val: C.int(-1), err: C.CString(errFilePtr)}
+	}
+	idx, err := f.(*excelize.File).GetSheetIndex(C.GoString(sheet))
+	if err != nil {
+		return C.struct_IntErrorResult{val: C.int(idx), err: C.CString(err.Error())}
+	}
+	return C.struct_IntErrorResult{val: C.int(idx), err: C.CString(emptyString)}
 }
 
 // GetStyle provides a function to get style definition by given style index.
@@ -1124,34 +1156,47 @@ func GetStyle(idx, styleID int) C.struct_GetStyleResult {
 	if err != nil {
 		return C.struct_GetStyleResult{err: C.CString(err.Error())}
 	}
-	return C.struct_GetStyleResult{style: cVal.Elem().Interface().(C.struct_Style), err: C.CString(errNil)}
+	return C.struct_GetStyleResult{style: cVal.Elem().Interface().(C.struct_Style), err: C.CString(emptyString)}
 }
 
-// 1 provides the method to get all tables in a worksheet by given
+// GetTables provides the method to get all tables in a worksheet by given
 // worksheet name.
 //
 //export GetTables
 func GetTables(idx int, sheet *C.char) C.struct_GetTablesResult {
-	type GetTableResult struct {
-		Tables []excelize.Table
-	}
-	var result GetTableResult
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.struct_GetTablesResult{err: C.CString(errFilePtr)}
+		return C.struct_GetTablesResult{Err: C.CString(errFilePtr)}
 	}
 	tables, err := f.(*excelize.File).GetTables(C.GoString(sheet))
 	if err != nil {
-		return C.struct_GetTablesResult{err: C.CString(err.Error())}
+		return C.struct_GetTablesResult{Err: C.CString(err.Error())}
 	}
-	result.Tables = tables
-	cVal, err := goValueToC(reflect.ValueOf(result), reflect.ValueOf(&C.struct_GetTablesResult{}))
-	if err != nil {
-		return C.struct_GetTablesResult{err: C.CString(err.Error())}
+	cArray := C.malloc(C.size_t(len(tables)) * C.size_t(unsafe.Sizeof(C.struct_Table{})))
+	cStructArray := (*[1 << 30]C.struct_Table)(cArray)[:len(tables):len(tables)]
+	for i, t := range tables {
+		cVal, err := goValueToC(reflect.ValueOf(t), reflect.ValueOf(&C.struct_Table{}))
+		if err != nil {
+			return C.struct_GetTablesResult{Err: C.CString(err.Error())}
+		}
+		cStructArray[i] = cVal.Elem().Interface().(C.struct_Table)
 	}
-	ret := cVal.Elem().Interface().(C.struct_GetTablesResult)
-	ret.err = C.CString(errNil)
-	return ret
+	return C.struct_GetTablesResult{TablesLen: C.int(len(tables)), Tables: (*C.struct_Table)(cArray), Err: C.CString(emptyString)}
+}
+
+// InsertCols provides a function to insert new columns before the given column
+// name and number of columns.
+//
+//export InsertCols
+func InsertCols(idx int, sheet, col *C.char, n int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(emptyString)
+	}
+	if err := f.(*excelize.File).InsertCols(C.GoString(sheet), C.GoString(col), n); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
 }
 
 // MergeCell provides a function to merge cells by given range reference and
@@ -1162,12 +1207,12 @@ func GetTables(idx int, sheet *C.char) C.struct_GetTablesResult {
 func MergeCell(idx int, sheet, topLeftCell, bottomRightCell *C.char) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString("")
+		return C.CString(emptyString)
 	}
 	if err := f.(*excelize.File).MergeCell(C.GoString(sheet), C.GoString(topLeftCell), C.GoString(bottomRightCell)); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // MoveSheet moves a sheet to a specified position in the workbook. The function
@@ -1180,12 +1225,12 @@ func MergeCell(idx int, sheet, topLeftCell, bottomRightCell *C.char) *C.char {
 func MoveSheet(idx int, source, target *C.char) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString("")
+		return C.CString(emptyString)
 	}
 	if err := f.(*excelize.File).MoveSheet(C.GoString(source), C.GoString(target)); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // NewConditionalStyle provides a function to create style for conditional
@@ -1193,22 +1238,22 @@ func MoveSheet(idx int, source, target *C.char) *C.char {
 // function.
 //
 //export NewConditionalStyle
-func NewConditionalStyle(idx int, style *C.struct_Style) C.struct_NewStyleResult {
+func NewConditionalStyle(idx int, style *C.struct_Style) C.struct_IntErrorResult {
 	var s excelize.Style
 	goVal, err := cValueToGo(reflect.ValueOf(*style), reflect.TypeOf(excelize.Style{}))
 	if err != nil {
-		return C.struct_NewStyleResult{style: C.int(0), err: C.CString(err.Error())}
+		return C.struct_IntErrorResult{val: C.int(0), err: C.CString(err.Error())}
 	}
 	s = goVal.Elem().Interface().(excelize.Style)
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.struct_NewStyleResult{style: C.int(0), err: C.CString(errFilePtr)}
+		return C.struct_IntErrorResult{val: C.int(0), err: C.CString(errFilePtr)}
 	}
 	styleID, err := f.(*excelize.File).NewConditionalStyle(&s)
 	if err != nil {
-		return C.struct_NewStyleResult{style: C.int(styleID), err: C.CString(err.Error())}
+		return C.struct_IntErrorResult{val: C.int(styleID), err: C.CString(err.Error())}
 	}
-	return C.struct_NewStyleResult{style: C.int(styleID), err: C.CString(errNil)}
+	return C.struct_IntErrorResult{val: C.int(styleID), err: C.CString(emptyString)}
 }
 
 // NewFile provides a function to create new file by default template.
@@ -1231,56 +1276,56 @@ func NewFile() int {
 // `Sheet1` will be created.
 //
 //export NewSheet
-func NewSheet(idx int, sheet *C.char) C.struct_NewSheetResult {
+func NewSheet(idx int, sheet *C.char) C.struct_IntErrorResult {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.struct_NewSheetResult{idx: C.int(-1), err: C.CString(errFilePtr)}
+		return C.struct_IntErrorResult{val: C.int(-1), err: C.CString(errFilePtr)}
 	}
 	idx, err := f.(*excelize.File).NewSheet(C.GoString(sheet))
 	if err != nil {
-		return C.struct_NewSheetResult{idx: C.int(idx), err: C.CString(err.Error())}
+		return C.struct_IntErrorResult{val: C.int(idx), err: C.CString(err.Error())}
 	}
-	return C.struct_NewSheetResult{idx: C.int(idx), err: C.CString(errNil)}
+	return C.struct_IntErrorResult{val: C.int(idx), err: C.CString(emptyString)}
 }
 
 // NewStyle provides a function to create the style for cells by given options.
 // Note that the color field uses RGB color code.
 //
 //export NewStyle
-func NewStyle(idx int, style *C.struct_Style) C.struct_NewStyleResult {
+func NewStyle(idx int, style *C.struct_Style) C.struct_IntErrorResult {
 	var s excelize.Style
 	goVal, err := cValueToGo(reflect.ValueOf(*style), reflect.TypeOf(excelize.Style{}))
 	if err != nil {
-		return C.struct_NewStyleResult{style: C.int(0), err: C.CString(err.Error())}
+		return C.struct_IntErrorResult{val: C.int(0), err: C.CString(err.Error())}
 	}
 	s = goVal.Elem().Interface().(excelize.Style)
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.struct_NewStyleResult{style: C.int(0), err: C.CString(errFilePtr)}
+		return C.struct_IntErrorResult{val: C.int(0), err: C.CString(errFilePtr)}
 	}
 	styleID, err := f.(*excelize.File).NewStyle(&s)
 	if err != nil {
-		return C.struct_NewStyleResult{style: C.int(styleID), err: C.CString(err.Error())}
+		return C.struct_IntErrorResult{val: C.int(styleID), err: C.CString(err.Error())}
 	}
-	return C.struct_NewStyleResult{style: C.int(styleID), err: C.CString(errNil)}
+	return C.struct_IntErrorResult{val: C.int(styleID), err: C.CString(emptyString)}
 }
 
 // OpenFile take the name of a spreadsheet file and returns a populated
 // spreadsheet file struct for it.
 //
 //export OpenFile
-func OpenFile(filename *C.char, opts *C.struct_Options) C.struct_OptionsResult {
+func OpenFile(filename *C.char, opts *C.struct_Options) C.struct_IntErrorResult {
 	var options excelize.Options
 	if opts != nil {
 		goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.Options{}))
 		if err != nil {
-			return C.struct_OptionsResult{idx: C.int(-1), err: C.CString(err.Error())}
+			return C.struct_IntErrorResult{val: C.int(-1), err: C.CString(err.Error())}
 		}
 		options = goVal.Elem().Interface().(excelize.Options)
 	}
 	f, err := excelize.OpenFile(C.GoString(filename), options)
 	if err != nil {
-		return C.struct_OptionsResult{idx: C.int(-1), err: C.CString(err.Error())}
+		return C.struct_IntErrorResult{val: C.int(-1), err: C.CString(err.Error())}
 	}
 	var idx int
 	files.Range(func(_, _ interface{}) bool {
@@ -1289,26 +1334,26 @@ func OpenFile(filename *C.char, opts *C.struct_Options) C.struct_OptionsResult {
 	})
 	idx++
 	files.Store(idx, f)
-	return C.struct_OptionsResult{idx: C.int(idx), err: C.CString(errNil)}
+	return C.struct_IntErrorResult{val: C.int(idx), err: C.CString(emptyString)}
 }
 
 // OpenReader read data stream from io.Reader and return a populated spreadsheet
 // file.
 //
 //export OpenReader
-func OpenReader(b *C.uchar, bLen C.int, opts *C.struct_Options) C.struct_OptionsResult {
+func OpenReader(b *C.uchar, bLen C.int, opts *C.struct_Options) C.struct_IntErrorResult {
 	var options excelize.Options
 	if opts != nil {
 		goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.Options{}))
 		if err != nil {
-			return C.struct_OptionsResult{idx: C.int(-1), err: C.CString(err.Error())}
+			return C.struct_IntErrorResult{val: C.int(-1), err: C.CString(err.Error())}
 		}
 		options = goVal.Elem().Interface().(excelize.Options)
 	}
 	buf := C.GoBytes(unsafe.Pointer(b), bLen)
 	f, err := excelize.OpenReader(bytes.NewReader(buf), options)
 	if err != nil {
-		return C.struct_OptionsResult{idx: C.int(-1), err: C.CString(err.Error())}
+		return C.struct_IntErrorResult{val: C.int(-1), err: C.CString(err.Error())}
 	}
 	var idx int
 	files.Range(func(_, _ interface{}) bool {
@@ -1317,7 +1362,7 @@ func OpenReader(b *C.uchar, bLen C.int, opts *C.struct_Options) C.struct_Options
 	})
 	idx++
 	files.Store(idx, f)
-	return C.struct_OptionsResult{idx: C.int(idx), err: C.CString(errNil)}
+	return C.struct_IntErrorResult{val: C.int(idx), err: C.CString(emptyString)}
 }
 
 // ProtectSheet provides a function to prevent other users from accidentally or
@@ -1341,7 +1386,7 @@ func ProtectSheet(idx int, sheet *C.char, opts *C.struct_SheetProtectionOptions)
 	if err := f.(*excelize.File).ProtectSheet(C.GoString(sheet), &options); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // ProtectWorkbook provides a function to prevent other users from viewing
@@ -1367,7 +1412,7 @@ func ProtectWorkbook(idx int, opts *C.struct_WorkbookProtectionOptions) *C.char 
 	if err := f.(*excelize.File).ProtectWorkbook(&options); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // RemoveCol provides a function to remove single column by given worksheet
@@ -1382,7 +1427,7 @@ func RemoveCol(idx int, sheet, col *C.char) *C.char {
 	if err := f.(*excelize.File).RemoveCol(C.GoString(sheet), C.GoString(col)); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // Save provides a function to override the spreadsheet with origin path.
@@ -1403,12 +1448,12 @@ func Save(idx int, opts *C.struct_Options) *C.char {
 		if err := f.(*excelize.File).Save(options); err != nil {
 			return C.CString(err.Error())
 		}
-		return C.CString(errNil)
+		return C.CString(emptyString)
 	}
 	if err := f.(*excelize.File).Save(); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SaveAs provides a function to create or update to a spreadsheet at the
@@ -1418,7 +1463,7 @@ func Save(idx int, opts *C.struct_Options) *C.char {
 func SaveAs(idx int, name *C.char, opts *C.struct_Options) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString("")
+		return C.CString(emptyString)
 	}
 	if opts != nil {
 		var options excelize.Options
@@ -1430,12 +1475,12 @@ func SaveAs(idx int, name *C.char, opts *C.struct_Options) *C.char {
 		if err := f.(*excelize.File).SaveAs(C.GoString(name), options); err != nil {
 			return C.CString(err.Error())
 		}
-		return C.CString(errNil)
+		return C.CString(emptyString)
 	}
 	if err := f.(*excelize.File).SaveAs(C.GoString(name)); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetActiveSheet provides a function to set the default active sheet of the
@@ -1450,7 +1495,7 @@ func SetActiveSheet(idx, index int) *C.char {
 		return C.CString(errFilePtr)
 	}
 	f.(*excelize.File).SetActiveSheet(index)
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetCellBool provides a function to set bool type value of a cell by given
@@ -1465,7 +1510,7 @@ func SetCellBool(idx int, sheet, cell *C.char, value bool) *C.char {
 	if err := f.(*excelize.File).SetCellBool(C.GoString(sheet), C.GoString(cell), value); err != nil {
 		C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetCellFormula provides a function to set formula on the cell is taken
@@ -1480,7 +1525,7 @@ func SetCellBool(idx int, sheet, cell *C.char, value bool) *C.char {
 func SetCellFormula(idx int, sheet, cell, formula *C.char, opts *C.struct_FormulaOpts) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString("")
+		return C.CString(emptyString)
 	}
 	if opts != nil {
 		var options excelize.FormulaOpts
@@ -1492,12 +1537,12 @@ func SetCellFormula(idx int, sheet, cell, formula *C.char, opts *C.struct_Formul
 		if err := f.(*excelize.File).SetCellFormula(C.GoString(sheet), C.GoString(cell), C.GoString(formula), options); err != nil {
 			return C.CString(err.Error())
 		}
-		return C.CString(errNil)
+		return C.CString(emptyString)
 	}
 	if err := f.(*excelize.File).SetCellFormula(C.GoString(sheet), C.GoString(cell), C.GoString(formula)); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetCellHyperLink provides a function to set cell hyperlink by given
@@ -1513,7 +1558,7 @@ func SetCellFormula(idx int, sheet, cell, formula *C.char, opts *C.struct_Formul
 func SetCellHyperLink(idx int, sheet, cell, link, linkType *C.char, opts *C.struct_HyperlinkOpts) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString("")
+		return C.CString(emptyString)
 	}
 	if opts != nil {
 		var options excelize.HyperlinkOpts
@@ -1525,12 +1570,12 @@ func SetCellHyperLink(idx int, sheet, cell, link, linkType *C.char, opts *C.stru
 		if err := f.(*excelize.File).SetCellHyperLink(C.GoString(sheet), C.GoString(cell), C.GoString(link), C.GoString(linkType), options); err != nil {
 			return C.CString(err.Error())
 		}
-		return C.CString(errNil)
+		return C.CString(emptyString)
 	}
 	if err := f.(*excelize.File).SetCellHyperLink(C.GoString(sheet), C.GoString(cell), C.GoString(link), C.GoString(linkType)); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetCellInt provides a function to set int type value of a cell by given
@@ -1545,7 +1590,7 @@ func SetCellInt(idx int, sheet, cell *C.char, value int) *C.char {
 	if err := f.(*excelize.File).SetCellInt(C.GoString(sheet), C.GoString(cell), value); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetCellRichText provides a function to set cell with rich text by given
@@ -1555,7 +1600,7 @@ func SetCellInt(idx int, sheet, cell *C.char, value int) *C.char {
 func SetCellRichText(idx int, sheet, cell *C.char, runs *C.struct_RichTextRun, length int) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString("")
+		return C.CString(emptyString)
 	}
 	textRuns := make([]excelize.RichTextRun, length)
 	for i, val := range unsafe.Slice(runs, length) {
@@ -1568,7 +1613,7 @@ func SetCellRichText(idx int, sheet, cell *C.char, runs *C.struct_RichTextRun, l
 	if err := f.(*excelize.File).SetCellRichText(C.GoString(sheet), C.GoString(cell), textRuns); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetCellStr provides a function to set string type value of a cell. Total
@@ -1583,7 +1628,7 @@ func SetCellStr(idx int, sheet, cell, value *C.char) *C.char {
 	if err := f.(*excelize.File).SetCellStr(C.GoString(sheet), C.GoString(cell), C.GoString(value)); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetCellStyle provides a function to add style attribute for cells by given
@@ -1601,7 +1646,7 @@ func SetCellStyle(idx int, sheet, topLeftCell, bottomRightCell *C.char, styleID 
 	if err := f.(*excelize.File).SetCellStyle(C.GoString(sheet), C.GoString(topLeftCell), C.GoString(bottomRightCell), styleID); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetCellValue provides a function to set the value of a cell. The specified
@@ -1622,7 +1667,7 @@ func SetCellValue(idx int, sheet, cell *C.char, value *C.struct_Interface) *C.ch
 	if err := f.(*excelize.File).SetCellValue(C.GoString(sheet), C.GoString(cell), cInterfaceToGo(*value)); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetColOutlineLevel provides a function to set outline level of a single
@@ -1638,7 +1683,7 @@ func SetColOutlineLevel(idx int, sheet, col *C.char, level int) *C.char {
 	if err := f.(*excelize.File).SetColOutlineLevel(C.GoString(sheet), C.GoString(col), uint8(level)); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetColStyle provides a function to set style of columns by given worksheet
@@ -1655,7 +1700,7 @@ func SetColStyle(idx int, sheet, columns *C.char, styleID int) *C.char {
 	if err := f.(*excelize.File).SetColStyle(C.GoString(sheet), C.GoString(columns), styleID); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetColVisible provides a function to set visible columns by given worksheet
@@ -1670,7 +1715,7 @@ func SetColVisible(idx int, sheet, columns *C.char, visible bool) *C.char {
 	if err := f.(*excelize.File).SetColVisible(C.GoString(sheet), C.GoString(columns), visible); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetColWidth provides a function to set the width of a single column or
@@ -1685,7 +1730,7 @@ func SetColWidth(idx int, sheet, startCol, endCol *C.char, width float64) *C.cha
 	if err := f.(*excelize.File).SetColWidth(C.GoString(sheet), C.GoString(startCol), C.GoString(endCol), width); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetConditionalFormat provides a function to create conditional formatting
@@ -1697,7 +1742,7 @@ func SetColWidth(idx int, sheet, startCol, endCol *C.char, width float64) *C.cha
 func SetConditionalFormat(idx int, sheet, rangeRef *C.char, opts *C.struct_ConditionalFormatOptions, length int) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString("")
+		return C.CString(emptyString)
 	}
 	options := make([]excelize.ConditionalFormatOptions, length)
 	for i, val := range unsafe.Slice(opts, length) {
@@ -1710,7 +1755,7 @@ func SetConditionalFormat(idx int, sheet, rangeRef *C.char, opts *C.struct_Condi
 	if err := f.(*excelize.File).SetConditionalFormat(C.GoString(sheet), C.GoString(rangeRef), options); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetDefaultFont provides the default font name currently set in the
@@ -1725,7 +1770,7 @@ func SetDefaultFont(idx int, fontName *C.char) *C.char {
 	if err := f.(*excelize.File).SetDefaultFont(C.GoString(fontName)); err != nil {
 		C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetDefinedName provides a function to set the defined names of the workbook
@@ -1746,7 +1791,7 @@ func SetDefinedName(idx int, definedName *C.struct_DefinedName) *C.char {
 	if err := f.(*excelize.File).SetDefinedName(&df); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetHeaderFooter provides a function to set headers and footers by given
@@ -1767,7 +1812,7 @@ func SetHeaderFooter(idx int, sheet *C.char, opts *C.struct_HeaderFooterOptions)
 	if err := f.(*excelize.File).SetHeaderFooter(C.GoString(sheet), &options); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetPageLayout provides a function to sets worksheet page layout.
@@ -1787,7 +1832,7 @@ func SetPageLayout(idx int, sheet *C.char, opts *C.struct_PageLayoutOptions) *C.
 	if err := f.(*excelize.File).SetPageLayout(C.GoString(sheet), &options); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetPageMargins provides a function to set worksheet page margins.
@@ -1807,7 +1852,7 @@ func SetPageMargins(idx int, sheet *C.char, opts *C.struct_PageLayoutMarginsOpti
 	if err := f.(*excelize.File).SetPageMargins(C.GoString(sheet), &options); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetPanes provides a function to create and remove freeze panes and split panes
@@ -1828,7 +1873,7 @@ func SetPanes(idx int, sheet *C.char, opts *C.struct_Panes) *C.char {
 	if err := f.(*excelize.File).SetPanes(C.GoString(sheet), &options); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetRowHeight provides a function to set the height of a single row. If the
@@ -1844,7 +1889,7 @@ func SetRowHeight(idx int, sheet *C.char, row int, height float64) *C.char {
 	if err := f.(*excelize.File).SetRowHeight(C.GoString(sheet), row, height); err != nil {
 		C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetRowOutlineLevel provides a function to set outline level number of a
@@ -1860,7 +1905,7 @@ func SetRowOutlineLevel(idx int, sheet *C.char, row, level int) *C.char {
 	if err := f.(*excelize.File).SetRowOutlineLevel(C.GoString(sheet), row, uint8(level)); err != nil {
 		C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetRowStyle provides a function to set the style of rows by given worksheet
@@ -1876,7 +1921,7 @@ func SetRowStyle(idx int, sheet *C.char, start, end, styleID int) *C.char {
 	if err := f.(*excelize.File).SetRowStyle(C.GoString(sheet), start, end, styleID); err != nil {
 		C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetRowVisible provides a function to set visible of a single row by given
@@ -1891,7 +1936,7 @@ func SetRowVisible(idx int, sheet *C.char, row int, visible bool) *C.char {
 	if err := f.(*excelize.File).SetRowVisible(C.GoString(sheet), row, visible); err != nil {
 		C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetSheetBackground provides a function to set background picture by given
@@ -1907,7 +1952,7 @@ func SetSheetBackground(idx int, sheet, picture *C.char) *C.char {
 	if err := f.(*excelize.File).SetSheetBackground(C.GoString(sheet), C.GoString(picture)); err != nil {
 		C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetSheetBackgroundFromBytes provides a function to set background picture by
@@ -1924,7 +1969,7 @@ func SetSheetBackgroundFromBytes(idx int, sheet, extension *C.char, picture *C.u
 	if err := f.(*excelize.File).SetSheetBackgroundFromBytes(C.GoString(sheet), C.GoString(extension), buf); err != nil {
 		C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetSheetCol writes an array to column by given worksheet name, starting
@@ -1943,7 +1988,7 @@ func SetSheetCol(idx int, sheet, cell *C.char, slice *C.struct_Interface, length
 	if err := f.(*excelize.File).SetSheetCol(C.GoString(sheet), C.GoString(cell), &cells); err != nil {
 		C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetSheetDimension provides the method to set or remove the used range of the
@@ -1961,7 +2006,7 @@ func SetSheetDimension(idx int, sheet, rangeRef *C.char) *C.char {
 	if err := f.(*excelize.File).SetSheetDimension(C.GoString(sheet), C.GoString(rangeRef)); err != nil {
 		C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetSheetName provides a function to set the worksheet name by given source and
@@ -1979,7 +2024,7 @@ func SetSheetName(idx int, source, target *C.char) *C.char {
 	if err := f.(*excelize.File).SetSheetName(C.GoString(source), C.GoString(target)); err != nil {
 		C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetSheetProps provides a function to set worksheet properties.
@@ -1998,7 +2043,7 @@ func SetSheetProps(idx int, sheet *C.char, opts *C.struct_SheetPropsOptions) *C.
 	if err := f.(*excelize.File).SetSheetProps(C.GoString(sheet), &options); err != nil {
 		C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetSheetRow writes an array to row by given worksheet name, starting
@@ -2018,7 +2063,7 @@ func SetSheetRow(idx int, sheet, cell *C.char, row *C.struct_Interface, length i
 	if err := f.(*excelize.File).SetSheetRow(C.GoString(sheet), C.GoString(cell), &cells); err != nil {
 		C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetSheetView sets sheet view options. The viewIndex may be negative and if
@@ -2038,7 +2083,7 @@ func SetSheetView(idx int, sheet *C.char, viewIndex int, opts *C.struct_ViewOpti
 	if err := f.(*excelize.File).SetSheetView(C.GoString(sheet), viewIndex, &options); err != nil {
 		C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetSheetVisible provides a function to set worksheet visible by given
@@ -2055,7 +2100,7 @@ func SetSheetVisible(idx int, sheet *C.char, visible, veryHidden bool) *C.char {
 	if err := f.(*excelize.File).SetSheetVisible(C.GoString(sheet), visible, veryHidden); err != nil {
 		C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // SetWorkbookProps provides a function to sets workbook properties.
@@ -2074,7 +2119,7 @@ func SetWorkbookProps(idx int, opts *C.struct_WorkbookPropsOptions) *C.char {
 	if err := f.(*excelize.File).SetWorkbookProps(&options); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // UngroupSheets provides a function to ungroup worksheets.
@@ -2088,7 +2133,7 @@ func UngroupSheets(idx int) *C.char {
 	if err := f.(*excelize.File).UngroupSheets(); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // UnmergeCell provides a function to unmerge a given range reference.
@@ -2097,12 +2142,12 @@ func UngroupSheets(idx int) *C.char {
 func UnmergeCell(idx int, sheet, topLeftCell, bottomRightCell *C.char) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString("")
+		return C.CString(emptyString)
 	}
 	if err := f.(*excelize.File).UnmergeCell(C.GoString(sheet), C.GoString(topLeftCell), C.GoString(bottomRightCell)); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 // UpdateLinkedValue fix linked values within a spreadsheet are not updating in
@@ -2118,7 +2163,7 @@ func UpdateLinkedValue(idx int) *C.char {
 	if err := f.(*excelize.File).UpdateLinkedValue(); err != nil {
 		return C.CString(err.Error())
 	}
-	return C.CString(errNil)
+	return C.CString(emptyString)
 }
 
 func main() {
