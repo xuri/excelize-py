@@ -1,5 +1,6 @@
-"""Copyright 2024 The excelize Authors. All rights reserved. Use of this source
-code is governed by a BSD-style license that can be found in the LICENSE file.
+"""Copyright 2024 - 2025 The excelize Authors. All rights reserved. Use of this
+source code is governed by a BSD-style license that can be found in the LICENSE
+file.
 
 Package excelize-py is a Python port of Go Excelize library, providing a set of
 functions that allow you to write and read from XLAM / XLSM / XLSX / XLTM / XLTX
@@ -1079,6 +1080,33 @@ class File:
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
+    def delete_defined_name(self, defined_name: DefinedName) -> Optional[Exception]:
+        """
+        Delete the defined names of the workbook or worksheet. If not specified
+        scope, the default scope is workbook.
+
+        Args:
+            defined_name (DefinedName): The defined name options
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example:
+
+            .. code-block:: python
+
+            err = f.delete_defined_name(excelize.DefinedName(
+                name="Amount",
+                scope="Sheet2",
+            ))
+        """
+        lib.DeleteDefinedName.restype = c_char_p
+        options = py_value_to_c(defined_name, types_go._DefinedName())
+        err = lib.DeleteDefinedName(self.file_index, byref(options)).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
     def delete_picture(self, sheet: str, cell: str) -> Optional[Exception]:
         """
         Delete all pictures in a cell by given worksheet name and cell reference.
@@ -1264,6 +1292,25 @@ class File:
             res.target.decode(ENCODE),
             None if err == "" else Exception(err),
         )
+
+    def get_cell_style(self, sheet: str, cell: str) -> Tuple[int, Optional[Exception]]:
+        """
+        Get cell style index by given worksheet name and cell reference.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+
+        Returns:
+            Tuple[int, Optional[Exception]]: A tuple containing the cell style,
+            and an Exception object if an error occurred, otherwise None.
+        """
+        lib.GetCellStyle.restype = types_go._IntErrorResult
+        res = lib.GetCellStyle(
+            self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
+        )
+        err = res.err.decode(ENCODE)
+        return res.val, None if err == "" else Exception(err)
 
     def get_cell_value(
         self, sheet: str, cell: str, *opts: Options
@@ -1648,6 +1695,53 @@ class File:
         err = lib.RemoveCol(
             self.file_index, sheet.encode(ENCODE), col.encode(ENCODE)
         ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def remove_page_break(self, sheet: str, cell: str) -> Optional[Exception]:
+        """
+        Remove a page break by given worksheet name and cell reference.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.RemovePageBreak.restype = c_char_p
+        err = lib.RemovePageBreak(
+            self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def remove_row(self, sheet: str, row: int) -> Optional[Exception]:
+        """
+        Remove single row by given worksheet name and Excel row number. Use this
+        method with caution, which will affect changes in references such as
+        formulas, charts, and so on. If there is any referenced value of the
+        worksheet, it will cause a file error when you open it. The excelize
+        only partially updates these references currently.
+
+        Args:
+            sheet (str): The worksheet name
+            row (int): The row number
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example, remove row 3 in Sheet1:
+
+            .. code-block:: python
+
+            err = f.remove_row("Sheet1", 3)
+        """
+        lib.RemoveRow.restype = c_char_p
+        err = lib.RemoveRow(self.file_index, sheet.encode(ENCODE), c_int(row)).decode(
+            ENCODE
+        )
         return None if err == "" else Exception(err)
 
     def set_active_sheet(self, index: int) -> Optional[Exception]:

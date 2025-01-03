@@ -1,5 +1,6 @@
-// Copyright 2024 The excelize Authors. All rights reserved. Use of this source
-// code is governed by a BSD-style license that can be found in the LICENSE file.
+// Copyright 2024 - 2025 The excelize Authors. All rights reserved. Use of this
+// source code is governed by a BSD-style license that can be found in the
+// LICENSE file.
 //
 // Package excelize-py is a Python port of Go Excelize library, providing a set
 // of functions that allow you to write and read from XLAM / XLSM / XLSX / XLTM

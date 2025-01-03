@@ -1,5 +1,6 @@
-// Copyright 2024 The excelize Authors. All rights reserved. Use of this source
-// code is governed by a BSD-style license that can be found in the LICENSE file.
+// Copyright 2024 - 2025 The excelize Authors. All rights reserved. Use of this
+// source code is governed by a BSD-style license that can be found in the
+// LICENSE file.
 //
 // Package excelize-py is a Python port of Go Excelize library, providing a set
 // of functions that allow you to write and read from XLAM / XLSM / XLSX / XLTM
@@ -881,6 +882,28 @@ func DeleteComment(idx int, sheet, cell *C.char) *C.char {
 	return C.CString(emptyString)
 }
 
+// DeleteDefinedName provides a function to delete the defined names of the
+// workbook or worksheet. If not specified scope, the default scope is
+// workbook.
+//
+//export DeleteDefinedName
+func DeleteDefinedName(idx int, definedName *C.struct_DefinedName) *C.char {
+	var df excelize.DefinedName
+	goVal, err := cValueToGo(reflect.ValueOf(*definedName), reflect.TypeOf(excelize.DefinedName{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	df = goVal.Elem().Interface().(excelize.DefinedName)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).DeleteDefinedName(&df); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
 // DeletePicture provides a function to delete charts in spreadsheet by given
 // worksheet name and cell reference. Note that the image file won't be
 // deleted from the document currently.
@@ -1029,6 +1052,22 @@ func GetCellHyperLink(idx int, sheet, cell *C.char) C.struct_GetCellHyperLinkRes
 		return C.struct_GetCellHyperLinkResult{link: C._Bool(link), target: C.CString(target), err: C.CString(err.Error())}
 	}
 	return C.struct_GetCellHyperLinkResult{link: C._Bool(link), target: C.CString(target), err: C.CString(emptyString)}
+}
+
+// GetCellStyle provides a function to get cell style index by given worksheet
+// name and cell reference. This function is concurrency safe.
+//
+//export GetCellStyle
+func GetCellStyle(idx int, sheet, cell *C.char) C.struct_IntErrorResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_IntErrorResult{val: C.int(0), err: C.CString(errFilePtr)}
+	}
+	idx, err := f.(*excelize.File).GetCellStyle(C.GoString(sheet), C.GoString(cell))
+	if err != nil {
+		return C.struct_IntErrorResult{val: C.int(idx), err: C.CString(err.Error())}
+	}
+	return C.struct_IntErrorResult{val: C.int(idx), err: C.CString(emptyString)}
 }
 
 // GetCellValue provides a function to get formatted value from cell by given
@@ -1425,6 +1464,36 @@ func RemoveCol(idx int, sheet, col *C.char) *C.char {
 		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).RemoveCol(C.GoString(sheet), C.GoString(col)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// RemovePageBreak remove a page break by given worksheet name and cell
+// reference.
+//
+//export RemovePageBreak
+func RemovePageBreak(idx int, sheet, cell *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).RemovePageBreak(C.GoString(sheet), C.GoString(cell)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// RemoveRow provides a function to remove single row by given worksheet name
+// and Excel row number.
+//
+//export RemoveRow
+func RemoveRow(idx int, sheet *C.char, row int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).RemoveRow(C.GoString(sheet), row); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)

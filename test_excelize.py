@@ -1,5 +1,6 @@
-"""Copyright 2024 The excelize Authors. All rights reserved. Use of this source
-code is governed by a BSD-style license that can be found in the LICENSE file.
+"""Copyright 2024 - 2025 The excelize Authors. All rights reserved. Use of this
+source code is governed by a BSD-style license that can be found in the LICENSE
+file.
 
 Package excelize-py is a Python port of Go Excelize library, providing a set of
 functions that allow you to write and read from XLAM / XLSM / XLSX / XLTM / XLTX
@@ -118,6 +119,9 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(err)
         self.assertEqual(style, s)
         self.assertIsNone(f.set_cell_style("Sheet1", "A1", "B2", style_id))
+        result, err = f.get_cell_style("Sheet1", "A2")
+        self.assertIsNone(err)
+        self.assertEqual(result, style_id)
         self.assertEqual(
             str(f.set_cell_style("SheetN", "A1", "B2", style_id)),
             "sheet SheetN does not exist",
@@ -289,6 +293,8 @@ class TestExcelize(unittest.TestCase):
         )
         self.assertIsNone(f.move_sheet("Sheet2", "Sheet1"))
         self.assertIsNone(f.remove_col("Sheet1", "Z"))
+        self.assertIsNone(f.remove_page_break("Sheet1", "A1"))
+        self.assertIsNone(f.remove_row("Sheet1", 100))
         self.assertIsNone(f.ungroup_sheets())
         self.assertIsNone(f.update_linked_value())
         self.assertIsNone(f.save())
@@ -1028,6 +1034,14 @@ class TestExcelize(unittest.TestCase):
                     name="Amount",
                     refers_to="Sheet1!$A$2:$D$5",
                     comment="defined name comment",
+                    scope="Sheet1",
+                )
+            )
+        )
+        self.assertIsNone(
+            f.delete_defined_name(
+                excelize.DefinedName(
+                    name="Amount",
                     scope="Sheet1",
                 )
             )
