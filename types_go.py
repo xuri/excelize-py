@@ -662,6 +662,13 @@ class _IntErrorResult(Structure):
     ]
 
 
+class _BoolErrorResult(Structure):
+    _fields_ = [
+        ("val", c_bool),
+        ("err", c_char_p),
+    ]
+
+
 class _CellNameToCoordinatesResult(Structure):
     _fields_ = [
         ("col", c_int),

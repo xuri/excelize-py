@@ -684,6 +684,12 @@ struct IntErrorResult
     char *err;
 };
 
+struct BoolErrorResult
+{
+    bool val;
+    char *err;
+};
+
 struct GetCellHyperLinkResult
 {
     bool link;

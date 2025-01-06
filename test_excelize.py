@@ -73,6 +73,9 @@ class TestExcelize(unittest.TestCase):
         f = excelize.new_file()
         font_name = "Arial"
         self.assertIsNone(f.set_default_font(font_name))
+        val, err = f.get_default_font()
+        self.assertEqual(val, font_name)
+        self.assertIsNone(err)
 
     def test_style(self):
         f = excelize.new_file()
@@ -127,9 +130,27 @@ class TestExcelize(unittest.TestCase):
             "sheet SheetN does not exist",
         )
         self.assertIsNone(f.set_col_style("Sheet1", "H", style_id))
+        col_style, err = f.get_col_style("Sheet1", "H")
+        self.assertEqual(col_style, style_id)
+        self.assertIsNone(err)
+
         self.assertIsNone(f.set_col_visible("Sheet1", "D:F", False))
+        col_visible, err = f.get_col_visible("Sheet1", "E")
+        self.assertFalse(col_visible)
+        self.assertIsNone(err)
+        col_visible, err = f.get_col_visible("Sheet1", "G")
+        self.assertTrue(col_visible)
+        self.assertIsNone(err)
+
         self.assertIsNone(f.set_row_style("Sheet1", 1, 1, style_id))
+
         self.assertIsNone(f.set_row_visible("Sheet1", 1, False))
+        row_visible, err = f.get_row_visible("Sheet1", 1)
+        self.assertFalse(row_visible)
+        self.assertIsNone(err)
+        row_visible, err = f.get_row_visible("Sheet1", 2)
+        self.assertTrue(row_visible)
+        self.assertIsNone(err)
 
         style, err = f.get_style(2)
         self.assertEqual("invalid style ID 2", str(err))
