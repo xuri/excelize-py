@@ -206,6 +206,21 @@ class AppProperties:
 
 
 @dataclass
+class Cell:
+    style_id: int = 0
+    formula: str = ""
+    value: Optional[Interface] = None
+
+
+@dataclass
+class RowOpts:
+    height: float = 0
+    hidden: bool = False
+    style_id: int = 0
+    outline_level: int = 0
+
+
+@dataclass
 class Border:
     type: str = ""
     color: str = ""

@@ -45,10 +45,11 @@ const (
 )
 
 var (
-	files       = sync.Map{}
-	emptyString string
-	errFilePtr  = "can not find file pointer"
-	errArgType  = errors.New("invalid argument data type")
+	files, sw          = sync.Map{}, sync.Map{}
+	emptyString        string
+	errFilePtr         = "can not find file pointer"
+	errStreamWriterPtr = "can not find stream writer pointer"
+	errArgType         = errors.New("invalid argument data type")
 
 	// goBaseTypes defines Go's basic data types.
 	goBaseTypes = map[reflect.Kind]bool{
@@ -592,7 +593,7 @@ func AddPictureFromBytes(idx int, sheet, cell *C.char, pic *C.struct_Picture) *C
 	}
 	options := goVal.Elem().Interface().(excelize.Picture)
 	if err := f.(*excelize.File).AddPictureFromBytes(C.GoString(sheet), C.GoString(cell), &options); err != nil {
-		C.CString(err.Error())
+		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
 }
@@ -717,7 +718,7 @@ func AddVBAProject(idx int, file *C.uchar, fileLen C.int) *C.char {
 	}
 	buf := C.GoBytes(unsafe.Pointer(file), fileLen)
 	if err := f.(*excelize.File).AddVBAProject(buf); err != nil {
-		C.CString(err.Error())
+		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
 }
@@ -1391,6 +1392,91 @@ func NewSheet(idx int, sheet *C.char) C.struct_IntErrorResult {
 	return C.struct_IntErrorResult{val: C.int(idx), err: C.CString(emptyString)}
 }
 
+// NewStreamWriter returns stream writer struct by given worksheet name used for
+// writing data on a new existing empty worksheet with large amounts of data.
+// Note that after writing data with the stream writer for the worksheet, you
+// must call the 'Flush' method to end the streaming writing process, ensure
+// that the order of row numbers is ascending when set rows, and the normal
+// mode functions and stream mode functions can not be work mixed to writing
+// data on the worksheets. The stream writer will try to use temporary files on
+// disk to reduce the memory usage when in-memory chunks data over 16MB, and
+// you can't get cell value at this time.
+//
+//export NewStreamWriter
+func NewStreamWriter(idx int, sheet *C.char) C.struct_IntErrorResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_IntErrorResult{val: C.int(0), err: C.CString(errFilePtr)}
+	}
+	streamWriter, err := f.(*excelize.File).NewStreamWriter(C.GoString(sheet))
+	if err != nil {
+		return C.struct_IntErrorResult{val: C.int(0), err: C.CString(err.Error())}
+	}
+	var swIdx int
+	sw.Range(func(_, _ interface{}) bool {
+		swIdx++
+		return true
+	})
+	swIdx++
+	sw.Store(swIdx, streamWriter)
+	return C.struct_IntErrorResult{val: C.int(swIdx), err: C.CString(emptyString)}
+}
+
+// StreamAddTable creates an Excel table for the StreamWriter using the given
+// cell range and format set.
+//
+//export StreamAddTable
+func StreamAddTable(swIdx int, table *C.struct_Table) *C.char {
+	var tbl excelize.Table
+	streamWriter, ok := sw.Load(swIdx)
+	if !ok {
+		return C.CString(errStreamWriterPtr)
+	}
+	goVal, err := cValueToGo(reflect.ValueOf(*table), reflect.TypeOf(excelize.Table{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	tbl = goVal.Elem().Interface().(excelize.Table)
+	if err := streamWriter.(*excelize.StreamWriter).AddTable(&tbl); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// StreamSetRow writes an array to stream rows by giving starting cell reference
+// and a pointer to an array of values. Note that you must call the 'StreamFlush'
+// function to end the streaming writing process.
+//
+//export StreamSetRow
+func StreamSetRow(swIDx int, cell *C.char, row *C.struct_Interface, length int) *C.char {
+	streamWriter, ok := sw.Load(swIDx)
+	if !ok {
+		return C.CString(errStreamWriterPtr)
+	}
+	cells := make([]interface{}, length)
+	for i, val := range unsafe.Slice(row, length) {
+		cells[i] = cInterfaceToGo(val)
+	}
+	if err := streamWriter.(*excelize.StreamWriter).SetRow(C.GoString(cell), cells); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// StreamFlush ending the streaming writing process.
+//
+//export StreamFlush
+func StreamFlush(swIDx int, sheet *C.char) *C.char {
+	streamWriter, ok := sw.Load(swIDx)
+	if !ok {
+		return C.CString(errStreamWriterPtr)
+	}
+	if err := streamWriter.(*excelize.StreamWriter).Flush(); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
 // NewStyle provides a function to create the style for cells by given options.
 // Note that the color field uses RGB color code.
 //
@@ -1641,7 +1727,7 @@ func SetCellBool(idx int, sheet, cell *C.char, value bool) *C.char {
 		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).SetCellBool(C.GoString(sheet), C.GoString(cell), value); err != nil {
-		C.CString(err.Error())
+		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
 }
@@ -1901,7 +1987,7 @@ func SetDefaultFont(idx int, fontName *C.char) *C.char {
 		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).SetDefaultFont(C.GoString(fontName)); err != nil {
-		C.CString(err.Error())
+		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
 }
@@ -2020,7 +2106,7 @@ func SetRowHeight(idx int, sheet *C.char, row int, height float64) *C.char {
 		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).SetRowHeight(C.GoString(sheet), row, height); err != nil {
-		C.CString(err.Error())
+		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
 }
@@ -2036,7 +2122,7 @@ func SetRowOutlineLevel(idx int, sheet *C.char, row, level int) *C.char {
 		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).SetRowOutlineLevel(C.GoString(sheet), row, uint8(level)); err != nil {
-		C.CString(err.Error())
+		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
 }
@@ -2052,7 +2138,7 @@ func SetRowStyle(idx int, sheet *C.char, start, end, styleID int) *C.char {
 		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).SetRowStyle(C.GoString(sheet), start, end, styleID); err != nil {
-		C.CString(err.Error())
+		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
 }
@@ -2067,7 +2153,7 @@ func SetRowVisible(idx int, sheet *C.char, row int, visible bool) *C.char {
 		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).SetRowVisible(C.GoString(sheet), row, visible); err != nil {
-		C.CString(err.Error())
+		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
 }
@@ -2083,7 +2169,7 @@ func SetSheetBackground(idx int, sheet, picture *C.char) *C.char {
 		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).SetSheetBackground(C.GoString(sheet), C.GoString(picture)); err != nil {
-		C.CString(err.Error())
+		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
 }
@@ -2100,7 +2186,7 @@ func SetSheetBackgroundFromBytes(idx int, sheet, extension *C.char, picture *C.u
 	}
 	buf := C.GoBytes(unsafe.Pointer(picture), pictureLen)
 	if err := f.(*excelize.File).SetSheetBackgroundFromBytes(C.GoString(sheet), C.GoString(extension), buf); err != nil {
-		C.CString(err.Error())
+		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
 }
@@ -2119,7 +2205,7 @@ func SetSheetCol(idx int, sheet, cell *C.char, slice *C.struct_Interface, length
 		cells[i] = cInterfaceToGo(val)
 	}
 	if err := f.(*excelize.File).SetSheetCol(C.GoString(sheet), C.GoString(cell), &cells); err != nil {
-		C.CString(err.Error())
+		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
 }
@@ -2137,7 +2223,7 @@ func SetSheetDimension(idx int, sheet, rangeRef *C.char) *C.char {
 		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).SetSheetDimension(C.GoString(sheet), C.GoString(rangeRef)); err != nil {
-		C.CString(err.Error())
+		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
 }
@@ -2155,7 +2241,7 @@ func SetSheetName(idx int, source, target *C.char) *C.char {
 		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).SetSheetName(C.GoString(source), C.GoString(target)); err != nil {
-		C.CString(err.Error())
+		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
 }
@@ -2174,7 +2260,7 @@ func SetSheetProps(idx int, sheet *C.char, opts *C.struct_SheetPropsOptions) *C.
 	}
 	options := goVal.Elem().Interface().(excelize.SheetPropsOptions)
 	if err := f.(*excelize.File).SetSheetProps(C.GoString(sheet), &options); err != nil {
-		C.CString(err.Error())
+		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
 }
@@ -2194,7 +2280,7 @@ func SetSheetRow(idx int, sheet, cell *C.char, row *C.struct_Interface, length i
 		cells[i] = cInterfaceToGo(val)
 	}
 	if err := f.(*excelize.File).SetSheetRow(C.GoString(sheet), C.GoString(cell), &cells); err != nil {
-		C.CString(err.Error())
+		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
 }
@@ -2214,7 +2300,7 @@ func SetSheetView(idx int, sheet *C.char, viewIndex int, opts *C.struct_ViewOpti
 	}
 	options := goVal.Elem().Interface().(excelize.ViewOptions)
 	if err := f.(*excelize.File).SetSheetView(C.GoString(sheet), viewIndex, &options); err != nil {
-		C.CString(err.Error())
+		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
 }
@@ -2231,7 +2317,7 @@ func SetSheetVisible(idx int, sheet *C.char, visible, veryHidden bool) *C.char {
 		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).SetSheetVisible(C.GoString(sheet), visible, veryHidden); err != nil {
-		C.CString(err.Error())
+		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
 }

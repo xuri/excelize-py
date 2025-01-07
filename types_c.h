@@ -82,6 +82,25 @@ struct AppProperties
     char *AppVersion;
 };
 
+// Cell can be used directly in StreamWriter.SetRow to specify a style and
+// a value.
+struct Cell
+{
+    int StyleID;
+    char *Formula;
+    struct Interface Value;
+};
+
+// RowOpts define the options for the set row, it can be used directly in
+// StreamWriter.SetRow to specify the style and properties of the row.
+struct RowOpts
+{
+    double Height;
+    bool Hidden;
+    int StyleID;
+    int OutlineLevel;
+};
+
 // Border directly maps the border settings of the cells.
 struct Border
 {

@@ -60,6 +60,23 @@ class _AppProperties(Structure):
     ]
 
 
+class _Cell(Structure):
+    _fields_ = [
+        ("StyleID", c_int),
+        ("Formula", c_char_p),
+        ("Value", _Interface),
+    ]
+
+
+class _RowOpts(Structure):
+    _fields_ = [
+        ("Height", c_double),
+        ("Hidden", c_bool),
+        ("StyleID", c_int),
+        ("OutlineLevel", c_int),
+    ]
+
+
 class _Border(Structure):
     _fields_ = [
         ("Type", c_char_p),

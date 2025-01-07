@@ -77,6 +77,31 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(val, font_name)
         self.assertIsNone(err)
 
+    def test_stream_writer(self):
+        f = excelize.new_file()
+        _, err = f.new_stream_writer("SheetN")
+        self.assertEqual(str(err), "sheet SheetN does not exist")
+        sw, err = f.new_stream_writer("Sheet1")
+        self.assertIsNone(err)
+        self.assertIsNone(sw.set_row("A1", ["Column1", "Column2", "Column3"]))
+        for r in range(4, 11):
+            row = [random.randrange(640000) for _ in range(1, 4)]
+            cell, err = excelize.coordinates_to_cell_name(1, r, False)
+            self.assertIsNone(err)
+            self.assertIsNone(sw.set_row(cell, row))
+
+        self.assertIsNone(
+            sw.add_table(
+                excelize.Table(
+                    name="Table1",
+                    range="A1:C3",
+                ),
+            )
+        )
+        
+        self.assertIsNone(sw.flush())
+        self.assertIsNone(f.save_as(os.path.join("test", "TestStreamWriter.xlsx")))
+
     def test_style(self):
         f = excelize.new_file()
         s = excelize.Style(

@@ -439,10 +439,89 @@ def py_value_to_c_interface(py_value):
     return py_value_to_c(interface, types_go._Interface())
 
 
+class StreamWriter:
+    sw_index: int
+
+    def __init__(self, sw_index: int):
+        self.sw_index = sw_index
+
+    def add_table(self, table: Table) -> Optional[Exception]:
+        """
+        Creates an Excel table for the stream writer using the given cell range
+        and format set.
+
+        Note that the table must be at least two lines including the header. The
+        header cells must contain strings and must be unique. Currently, only
+        one table is allowed for a stream writer. The function must be called
+        after the rows are written but before 'flush'.
+
+        Args:
+            table (Table): The table options
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example, create a table of A1:D5 on Sheet1:
+
+            .. code-block:: python
+
+            err = sw.add_table(excelize.Table(range="A1:D5"))
+        """
+        lib.StreamAddTable.restype = c_char_p
+        options = py_value_to_c(table, types_go._Table())
+        err = lib.StreamAddTable(self.sw_index, byref(options)).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_row(
+        self,
+        cell: str,
+        values: List[Union[None, int, str, bool, datetime, date]],
+    ) -> Optional[Exception]:
+        """
+        Writes an array to stream rows by giving starting cell reference and a
+        pointer to an array of values. Note that you must call the 'flush'
+        function to end the streaming writing process.
+
+        Args:
+            cell (str): The cell reference
+            values (List[Union[None, int, str, bool, datetime, date]]): The cell
+            values
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.StreamSetRow.restype = c_char_p
+        vals = (types_go._Interface * len(values))()
+        for i, value in enumerate(values):
+            vals[i] = py_value_to_c_interface(value)
+        err = lib.StreamSetRow(
+            self.sw_index,
+            cell.encode(ENCODE),
+            byref(vals),
+            len(vals),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def flush(self) -> Optional[Exception]:
+        """
+        Ending the streaming writing process.
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.StreamFlush.restype = c_char_p
+        err = lib.StreamFlush(self.sw_index).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+
 class File:
     file_index: int
 
-    def __init__(self, file_index):
+    def __init__(self, file_index: int):
         self.file_index = file_index
 
     def save(self, *opts: Options) -> Optional[Exception]:
@@ -1659,6 +1738,65 @@ class File:
         res = lib.NewSheet(self.file_index, sheet.encode(ENCODE))
         err = res.err.decode(ENCODE)
         return res.val, None if err == "" else Exception(err)
+
+    def new_stream_writer(
+        self, sheet: str
+    ) -> Tuple[Optional[StreamWriter], Optional[Exception]]:
+        """
+        Returns stream writer struct by given worksheet name used for writing
+        data on a new existing empty worksheet with large amounts of data. Note
+        that after writing data with the stream writer for the worksheet, you
+        must call the 'flush' method to end the streaming writing process,
+        ensure that the order of row numbers is ascending when set rows, and the
+        normal mode functions and stream mode functions can not be work mixed to
+        writing data on the worksheets. The stream writer will try to use
+        temporary files on disk to reduce the memory usage when in-memory chunks
+        data over 16MB, and you can't get cell value at this time.
+
+        Args:
+            sheet (str): The worksheet name
+
+        Returns:
+            Tuple[Optional[StreamWriter], Optional[Exception]]: A tuple
+            containing stream writer object if successful, or None and an
+            Exception if an error occurred.
+
+        Example:
+            For example, set data for worksheet of size 102400 rows x 50 columns
+            with numbers:
+
+            .. code-block:: python
+
+            import excelize, random
+
+            f = excelize.new_file()
+            sw, err = f.new_stream_writer("Sheet1")
+            if err:
+                print(err)
+            for r in range(2, 102401):
+                row = [random.randrange(640000) for _ in range(1, 51)]
+                cell, err = excelize.coordinates_to_cell_name(1, r, False)
+                if err:
+                    print(err)
+                err = sw.set_row(cell, row)
+                if err:
+                    print(err)
+            err = sw.flush()
+            if err:
+                print(err)
+            err = f.save_as("Book1.xlsx")
+            if err:
+                print(err)
+            err = f.close()
+            if err:
+                print(err)
+        """
+        lib.NewStreamWriter.restype = types_go._IntErrorResult
+        res = lib.NewStreamWriter(self.file_index, sheet.encode(ENCODE))
+        err = res.err.decode(ENCODE)
+        if err == "":
+            return StreamWriter(res.val), None
+        return None, Exception(err)
 
     def new_style(self, style: Style) -> Tuple[int, Optional[Exception]]:
         """
