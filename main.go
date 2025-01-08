@@ -1443,6 +1443,77 @@ func StreamAddTable(swIdx int, table *C.struct_Table) *C.char {
 	return C.CString(emptyString)
 }
 
+// StreamInsertPageBreak creates a page break to determine where the printed
+// page ends and where begins the next one by a given cell reference, the
+// content before the page break will be printed on one page and after the page
+// break on another.
+//
+//export StreamInsertPageBreak
+func StreamInsertPageBreak(swIDx int, cell *C.char) *C.char {
+	streamWriter, ok := sw.Load(swIDx)
+	if !ok {
+		return C.CString(errStreamWriterPtr)
+	}
+	if err := streamWriter.(*excelize.StreamWriter).InsertPageBreak(C.GoString(cell)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// StreamMergeCell provides a function to merge cells by a given range reference
+// for the StreamWriter. Don't create a merged cell that overlaps with another
+// existing merged cell.
+//
+//export StreamMergeCell
+func StreamMergeCell(swIDx int, topLeftCell, bottomRightCell *C.char) *C.char {
+	streamWriter, ok := sw.Load(swIDx)
+	if !ok {
+		return C.CString(errStreamWriterPtr)
+	}
+	if err := streamWriter.(*excelize.StreamWriter).MergeCell(C.GoString(topLeftCell), C.GoString(bottomRightCell)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// StreamSetColWidth provides a function to set the width of a single column or
+// multiple columns for the StreamWriter. Note that you must call
+// the 'StreamSetColWidth' function before the 'StreamSetRow' function.
+//
+//export StreamSetColWidth
+func StreamSetColWidth(swIDx int, minVal, maxVal int, width float64) *C.char {
+	streamWriter, ok := sw.Load(swIDx)
+	if !ok {
+		return C.CString(errStreamWriterPtr)
+	}
+	if err := streamWriter.(*excelize.StreamWriter).SetColWidth(minVal, maxVal, width); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// StreamSetPanes provides a function to create and remove freeze panes and
+// split panes by giving panes options for the StreamWriter. Note that you must
+// call the 'StreamSetPanes' function before the 'StreamSetRow' function.
+//
+//export StreamSetPanes
+func StreamSetPanes(swIDx int, opts *C.struct_Panes) *C.char {
+	var options excelize.Panes
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.Panes{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	streamWriter, ok := sw.Load(swIDx)
+	if !ok {
+		return C.CString(errStreamWriterPtr)
+	}
+	options = goVal.Elem().Interface().(excelize.Panes)
+	if err := streamWriter.(*excelize.StreamWriter).SetPanes(&options); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
 // StreamSetRow writes an array to stream rows by giving starting cell reference
 // and a pointer to an array of values. Note that you must call the 'StreamFlush'
 // function to end the streaming writing process.

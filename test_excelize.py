@@ -83,6 +83,30 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(str(err), "sheet SheetN does not exist")
         sw, err = f.new_stream_writer("Sheet1")
         self.assertIsNone(err)
+
+        self.assertIsNone(sw.insert_page_break("A1"))
+        self.assertIsNone(sw.merge_cell("D1", "E2"))
+        self.assertIsNone(sw.set_col_width(3, 2, 20))
+        self.assertIsNone(
+            sw.set_panes(
+                excelize.Panes(
+                    freeze=True,
+                    split=False,
+                    x_split=1,
+                    y_split=0,
+                    top_left_cell="B1",
+                    active_pane="topRight",
+                    selection=[
+                        excelize.Selection(
+                            sq_ref="K16",
+                            active_cell="K16",
+                            pane="topRight",
+                        )
+                    ],
+                ),
+            )
+        )
+
         self.assertIsNone(sw.set_row("A1", ["Column1", "Column2", "Column3"]))
         for r in range(4, 11):
             row = [random.randrange(640000) for _ in range(1, 4)]
@@ -98,7 +122,7 @@ class TestExcelize(unittest.TestCase):
                 ),
             )
         )
-        
+
         self.assertIsNone(sw.flush())
         self.assertIsNone(f.save_as(os.path.join("test", "TestStreamWriter.xlsx")))
 

@@ -84,7 +84,7 @@ def load_lib():
 
 lib = CDLL(os.path.join(os.path.dirname(__file__), load_lib()))
 ENCODE = "utf-8"
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 uppercase_words = ["id", "rgb", "sq", "xml"]
 
 
@@ -472,6 +472,97 @@ class StreamWriter:
         lib.StreamAddTable.restype = c_char_p
         options = py_value_to_c(table, types_go._Table())
         err = lib.StreamAddTable(self.sw_index, byref(options)).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def insert_page_break(self, cell: str) -> Optional[Exception]:
+        """
+        Creates a page break to determine where the printed page ends and where
+        begins the next one by a given cell reference, the content before the
+        page break will be printed on one page and after the page break on
+        another.
+
+        Args:
+            cell (str): The cell reference
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.StreamInsertPageBreak.restype = c_char_p
+        err = lib.StreamInsertPageBreak(self.sw_index, cell.encode(ENCODE)).decode(
+            ENCODE
+        )
+        return None if err == "" else Exception(err)
+
+    def merge_cell(
+        self, top_left_cell: str, bottom_right_cell: str
+    ) -> Optional[Exception]:
+        """
+        Merge cells by a given range reference for the stream writer. Don't
+        create a merged cell that overlaps with another existing merged cell.
+
+        Args:
+            top_left_cell (str): The top-left cell reference
+            bottom_right_cell (str): The right-bottom cell reference
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.StreamMergeCell.restype = c_char_p
+        err = lib.StreamMergeCell(
+            self.sw_index,
+            top_left_cell.encode(ENCODE),
+            bottom_right_cell.encode(ENCODE),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_col_width(
+        self, start_col: int, end_col: int, width: float
+    ) -> Optional[Exception]:
+        """
+        Set the width of a single column or multiple columns for the stream
+        writer. Note that you must call the 'set_col_width' function before the
+        'set_row' function.
+
+        Args:
+            start_col (int): The start column number
+            end_col (int): The end column number
+            width (float): The column width
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example set the width column B:C as 20:
+
+            .. code-block:: python
+
+            err = sw.set_col_width(2, 3, 20)
+        """
+        lib.StreamSetColWidth.restype = c_char_p
+        err = lib.StreamSetColWidth(
+            self.sw_index, c_int(start_col), c_int(end_col), c_double(width)
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_panes(self, opts: Panes) -> Optional[Exception]:
+        """
+        Create and remove freeze panes and split panes by giving panes options
+        for the stream writer. Note that you must call the 'set_panes' function
+        before the 'set_row' function.
+
+        Args:
+            opts (Panes): The panes options
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.StreamSetPanes.restype = c_char_p
+        options = py_value_to_c(opts, types_go._Panes())
+        err = lib.StreamSetPanes(self.sw_index, byref(options)).decode(ENCODE)
         return None if err == "" else Exception(err)
 
     def set_row(
@@ -2477,7 +2568,7 @@ class File:
         Args:
             sheet (str): The worksheet name
             start_col (str): The start column name
-            end_col (bool): The end column name
+            end_col (str): The end column name
             width (float): The column width
 
         Returns:
