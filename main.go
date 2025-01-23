@@ -2412,6 +2412,40 @@ func SetWorkbookProps(idx int, opts *C.struct_WorkbookPropsOptions) *C.char {
 	return C.CString(emptyString)
 }
 
+//SearchSheet finds the matching cell in the specified worksheet of the Excel file by inputing searchValue
+//export SearchSheet
+func SearchSheet(idx int, sheet *C.char, searchValue *C.char) C.struct_SearchSheetResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_SearchSheetResult{
+			Cells:    nil,
+			Cellslen: 0,
+			Err:      C.CString("Error: file not found"),
+		}
+	}
+
+	cells, err := f.(*excelize.File).SearchSheet(C.GoString(sheet), C.GoString(searchValue))
+	if err != nil {
+		return C.struct_SearchSheetResult{
+			Cells:    nil,
+			Cellslen: 0,
+			Err:      C.CString(err.Error()),
+		}
+	}
+
+	cArray := C.malloc(C.size_t(len(cells)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	cStructArray := (*[1 << 30]*C.char)(cArray)
+	for i, cell := range cells {
+		cStructArray[i] = C.CString(cell)
+	}
+
+	return C.struct_SearchSheetResult{
+		Cells:    (*C.char)(cArray),
+		Cellslen: C.int(len(cells)),
+		Err:      nil,
+	}
+}
+
 // UngroupSheets provides a function to ungroup worksheets.
 //
 //export UngroupSheets
