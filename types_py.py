@@ -767,3 +767,26 @@ class WorkbookProtectionOptions:
     password: str = ""
     lock_structure: bool = False
     lock_windows: bool = False
+
+@dataclass
+class RichTextRunsResult:
+    Runs: Optional[List[RichTextRun]] = None  
+    RunsLen: int = 0                         
+    Err: str = ""                            
+
+@dataclass
+class DocProperties:
+    category: str = ""
+    content_status: str = ""
+    created: str = ""
+    creator: str = ""
+    description: str = ""
+    identifier: str = ""
+    keywords: str = ""
+    last_modified_by: str = ""
+    modified: str = ""
+    revision: str = ""
+    subject: str = ""
+    title: str = ""
+    language: str = ""
+    version: str = ""

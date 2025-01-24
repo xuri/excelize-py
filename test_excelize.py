@@ -23,9 +23,55 @@ from ctypes import (
     POINTER,
 )
 import os
-
+from types_py import DocProperties
 
 class TestExcelize(unittest.TestCase):
+
+    def test_set_doc_props(self):
+        f = excelize.new_file()
+        props = DocProperties(
+            title="Test Document",
+            subject="",
+            creator="Test User",
+            keywords="",
+            description="",
+            last_modified_by="",
+            language="",
+            identifier="",
+            revision="",
+            content_status="",
+            category="",
+            version="",
+            created="2024-01-20T12:00:00Z",
+            modified=""
+        )
+        self.assertIsNone(f.set_doc_props(props))
+
+    def test_get_cell_rich_text(self):
+        f = excelize.new_file()
+        self.assertIsNone(
+            f.set_cell_rich_text(
+                "Sheet1",
+                "A1", 
+                [
+                    excelize.RichTextRun(
+                        text="Bold",
+                        font=excelize.Font(bold=True)
+                    ),
+                    excelize.RichTextRun(
+                        text=" and Italic",
+                        font=excelize.Font(italic=True)
+                    )
+                ]
+            )
+        )
+        Runs, Err = f.get_cell_rich_text("Sheet1", "A1")
+        self.assertIsNone(Err)
+        self.assertEqual(len(Runs), 2)
+        self.assertEqual(Runs[0].text, "Bold")
+        self.assertTrue(Runs[0].font.bold)
+        self.assertEqual(Runs[1].text, " and Italic")
+        self.assertTrue(Runs[1].font.italic)
 
     @patch("platform.architecture")
     def test_platform_architecture(self, mock_architecture):

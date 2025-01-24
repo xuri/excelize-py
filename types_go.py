@@ -22,7 +22,21 @@ from ctypes import (
     Structure,
     POINTER,
 )
+from ctypes import Structure, c_char_p, POINTER,c_float
 
+class _Font(Structure):
+    _fields_ = [
+        ("family", c_char_p),
+        ("size", c_float),
+        ("bold", c_bool),
+        ("italic", c_bool)
+    ]
+
+class _RichTextRun(Structure):
+    _fields_ = [
+        ("text", c_char_p),
+        ("font", POINTER(_Font))
+    ]
 
 class _Interface(Structure):
     _fields_ = [
@@ -737,3 +751,31 @@ class _GetTablesResult(Structure):
         ("Tables", POINTER(_Table)),
         ("Err", c_char_p),
     ]
+
+
+class _RichTextRunsResult(Structure):
+    _fields_ = [
+        ("Runs", POINTER(_RichTextRun)),
+        ("RunsLen", c_int),
+        ("Runslen", c_int),
+        ("Err", c_char_p)
+    ]
+
+class _DocProperties(Structure):
+    _fields_ = [
+        ("Category", c_char_p),
+        ("ContentStatus", c_char_p),
+        ("Created", c_char_p),
+        ("Creator", c_char_p),
+        ("Description", c_char_p),
+        ("Identifier", c_char_p),
+        ("Keywords", c_char_p),
+        ("LastModifiedBy", c_char_p),
+        ("Modified", c_char_p),
+        ("Revision", c_char_p),
+        ("Subject", c_char_p),
+        ("Title", c_char_p),
+        ("Language", c_char_p),
+        ("Version", c_char_p),
+    ]
+
