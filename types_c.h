@@ -754,3 +754,10 @@ struct GetTablesResult
     struct Table *Tables;
     char *Err;
 };
+
+struct StringArrayErrorResult
+{
+    int Arrlen;
+    char **Arr;
+    char *Err;
+};
