@@ -1773,6 +1773,49 @@ func SaveAs(idx int, name *C.char, opts *C.struct_Options) *C.char {
 	return C.CString(emptyString)
 }
 
+// SearchSheet provides the method to get all matching cell's coordinate in
+// a worksheet by inputing worksheet name and cell content.
+//
+//export SearchSheet
+func SearchSheet(idx int, query *C.char, regMatch *C.int) C.struct_StringArrayErrorResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_StringArrayErrorResult{Err: C.CString(errFilePtr)}
+	}
+
+	queryParts := strings.SplitN(C.GoString(query), ",", 2)
+	if len(queryParts) < 2 {
+		return C.struct_StringArrayErrorResult{Err: C.CString("Error")}
+	}
+	goSheet := queryParts[0]
+	goSearchValue := queryParts[1]
+
+	var cells []string
+	var err error
+
+	if *regMatch != 0 {
+		cells, err = searchSheetWithRegexMatch(f.(*excelize.File), goSheet, goSearchValue)
+	} else {
+		cells, err = f.(*excelize.File).SearchSheet(goSheet, goSearchValue)
+	}
+
+	if err != nil {
+		return C.struct_StringArrayErrorResult{Err: C.CString(err.Error())}
+	}
+
+	cArray := C.malloc(C.size_t(len(cells)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	cStructArray := (*[1 << 30]*C.char)(cArray)[:len(cells):len(cells)]
+	for i, cell := range cells {
+		cStructArray[i] = C.CString(cell)
+	}
+
+	return C.struct_StringArrayErrorResult{
+		Arr:    (**C.char)(cArray),
+		Arrlen: C.int(len(cells)),
+		Err:    C.CString(emptyString),
+	}
+}
+
 // SetActiveSheet provides a function to set the default active sheet of the
 // workbook by a given index. Note that the active index is different from the
 // ID returned by function GetSheetMap(). It should be greater than or equal
@@ -2410,40 +2453,6 @@ func SetWorkbookProps(idx int, opts *C.struct_WorkbookPropsOptions) *C.char {
 		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
-}
-
-//SearchSheet finds the matching cell in the specified worksheet of the Excel file by inputing searchValue
-//export SearchSheet
-func SearchSheet(idx int, sheet *C.char, searchValue *C.char) C.struct_SearchSheetResult {
-	f, ok := files.Load(idx)
-	if !ok {
-		return C.struct_SearchSheetResult{
-			Cells:    nil,
-			Cellslen: 0,
-			Err:      C.CString("Error: file not found"),
-		}
-	}
-
-	cells, err := f.(*excelize.File).SearchSheet(C.GoString(sheet), C.GoString(searchValue))
-	if err != nil {
-		return C.struct_SearchSheetResult{
-			Cells:    nil,
-			Cellslen: 0,
-			Err:      C.CString(err.Error()),
-		}
-	}
-
-	cArray := C.malloc(C.size_t(len(cells)) * C.size_t(unsafe.Sizeof(uintptr(0))))
-	cStructArray := (*[1 << 30]*C.char)(cArray)
-	for i, cell := range cells {
-		cStructArray[i] = C.CString(cell)
-	}
-
-	return C.struct_SearchSheetResult{
-		Cells:    (*C.char)(cArray),
-		Cellslen: C.int(len(cells)),
-		Err:      nil,
-	}
 }
 
 // UngroupSheets provides a function to ungroup worksheets.
