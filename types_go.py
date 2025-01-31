@@ -737,3 +737,10 @@ class _GetTablesResult(Structure):
         ("Tables", POINTER(_Table)),
         ("Err", c_char_p),
     ]
+
+class StringArrayErrorResult(Structure):
+    _fields_ = [
+        ("Arrlen", c_int),
+        ("Arr", POINTER(POINTER(c_char_p))),
+        ("Err", c_char_p),
+    ]
