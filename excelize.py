@@ -2054,6 +2054,26 @@ class File:
         )
         return None if err == "" else Exception(err)
 
+    def search_sheet(self, query: str, regex_match: bool = False) -> Tuple[List[str], Optional[Exception]]:
+        """
+        Search for cells in a given worksheet by input query.
+
+        Args:
+            query (str): A string in the format "sheet_name,search_value".
+            regex_match (bool): Whether to use regex matching.
+
+        Returns:
+            Tuple[List[str], Optional[Exception]]: A tuple containing the matched
+            cell coordinates and an exception if an error occurred, otherwise None.
+        """
+        lib.SearchSheet.restype = types_go._StringArrayErrorResult
+        query_encoded = query.encode(ENCODE)
+        regex_flag = c_int(1 if regex_match else 0)
+        res = self.lib.SearchSheet(self.file_index, query_encoded, regex_flag)
+        search_result = c_value_to_py(res, StringArrayErrorResult())
+        err = res.Err.decode(ENCODE) if res.Err else ""
+        return search_result.Arr if err == "" else [], None if err == "" else Exception(err)
+
     def set_active_sheet(self, index: int) -> Optional[Exception]:
         """
         Set the default active sheet of the workbook by a given index. Note that
