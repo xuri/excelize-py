@@ -1482,6 +1482,29 @@ class File:
         err = res.err.decode(ENCODE)
         return res.val, None if err == "" else Exception(err)
 
+    def get_cell_rich_text(
+        self, sheet: str, cell: str
+    ) -> Tuple[List[RichTextRun], Optional[Exception]]:
+        """
+        Get rich text of cell by given worksheet and cell reference.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+
+        Returns:
+            Tuple[List[RichTextRun], Optional[Exception]]: A tuple containing
+            the rich text runs and an exception if an error occurred, otherwise
+            None.
+        """
+        lib.GetCellRichText.restype = types_go._GetCellRichTextResult
+        res = lib.GetCellRichText(
+            self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
+        )
+        runs = c_value_to_py(res, GetCellRichTextResult()).runs
+        err = res.Err.decode(ENCODE)
+        return runs, None if err == "" else Exception(err)
+
     def get_cell_value(
         self, sheet: str, cell: str, *opts: Options
     ) -> Tuple[str, Optional[Exception]]:
@@ -1703,7 +1726,7 @@ class File:
         res = lib.GetTables(self.file_index, sheet.encode(ENCODE))
         tables = c_value_to_py(res, GetTablesResult()).tables
         err = res.Err.decode(ENCODE)
-        return tables, None if err == "" else Exception(err)
+        return tables if tables else [], None if err == "" else Exception(err)
 
     def insert_cols(self, sheet: str, col: str, n: int) -> Optional[Exception]:
         """
@@ -2074,8 +2097,8 @@ class File:
 
     def set_cell_bool(self, sheet: str, cell: str, value: bool) -> Optional[Exception]:
         """
-        Set bool type value of a cell by given worksheet name, cell reference and
-        cell value.
+        Set bool type value of a cell by given worksheet name, cell reference
+        and cell value.
 
         Args:
             sheet (str): The worksheet name
@@ -2670,6 +2693,46 @@ class File:
         lib.SetDefinedName.restype = c_char_p
         options = py_value_to_c(defined_name, types_go._DefinedName())
         err = lib.SetDefinedName(self.file_index, byref(options)).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def set_doc_props(self, doc_properties: DocProperties) -> Optional[Exception]:
+        """
+        Set document core properties.
+
+        Args:
+            doc_properties (DocProperties): The doc properties
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example:
+
+            .. code-block:: python
+
+            err = f.set_doc_props(
+                excelize.DocProperties(
+                    category="category",
+                    content_status="Draft",
+                    created="2019-06-04T22:00:10Z",
+                    creator="Go Excelize",
+                    description="This file created by Go Excelize",
+                    identifier="xlsx",
+                    keywords="Spreadsheet",
+                    last_modified_by="Go Author",
+                    modified="2019-06-04T22:00:10Z",
+                    revision="0",
+                    subject="Test Subject",
+                    title="Test Title",
+                    language="en-US",
+                    version="1.0.0",
+                )
+            )
+        """
+        lib.SetDocProps.restype = c_char_p
+        options = py_value_to_c(doc_properties, types_go._DocProperties())
+        err = lib.SetDocProps(self.file_index, byref(options)).decode(ENCODE)
         return None if err == "" else Exception(err)
 
     def set_header_footer(

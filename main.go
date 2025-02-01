@@ -1055,6 +1055,31 @@ func GetCellHyperLink(idx int, sheet, cell *C.char) C.struct_GetCellHyperLinkRes
 	return C.struct_GetCellHyperLinkResult{link: C._Bool(link), target: C.CString(target), err: C.CString(emptyString)}
 }
 
+// GetCellRichText provides a function to get rich text of cell by given
+// worksheet and cell reference.
+//
+//export GetCellRichText
+func GetCellRichText(idx int, sheet, cell *C.char) C.struct_GetCellRichTextResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetCellRichTextResult{Err: C.CString(errFilePtr)}
+	}
+	runs, err := f.(*excelize.File).GetCellRichText(C.GoString(sheet), C.GoString(cell))
+	if err != nil {
+		return C.struct_GetCellRichTextResult{Err: C.CString(err.Error())}
+	}
+	cArray := C.malloc(C.size_t(len(runs)) * C.size_t(unsafe.Sizeof(C.struct_RichTextRun{})))
+	cStructArray := (*[1 << 30]C.struct_RichTextRun)(cArray)[:len(runs):len(runs)]
+	for i, r := range runs {
+		cVal, err := goValueToC(reflect.ValueOf(r), reflect.ValueOf(&C.struct_RichTextRun{}))
+		if err != nil {
+			return C.struct_GetCellRichTextResult{Err: C.CString(err.Error())}
+		}
+		cStructArray[i] = cVal.Elem().Interface().(C.struct_RichTextRun)
+	}
+	return C.struct_GetCellRichTextResult{RunsLen: C.int(len(runs)), Runs: (*C.struct_RichTextRun)(cArray), Err: C.CString(emptyString)}
+}
+
 // GetCellStyle provides a function to get cell style index by given worksheet
 // name and cell reference. This function is concurrency safe.
 //
@@ -1872,7 +1897,7 @@ func SetCellHyperLink(idx int, sheet, cell, link, linkType *C.char, opts *C.stru
 // worksheet name, cell reference and cell value.
 //
 //export SetCellInt
-func SetCellInt(idx int, sheet, cell *C.char, value int) *C.char {
+func SetCellInt(idx int, sheet, cell *C.char, value int64) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
 		return C.CString(errFilePtr)
@@ -2079,6 +2104,26 @@ func SetDefinedName(idx int, definedName *C.struct_DefinedName) *C.char {
 		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).SetDefinedName(&df); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// SetDocProps provides a function to set document core properties.
+//
+//export SetDocProps
+func SetDocProps(idx int, docProperties *C.struct_DocProperties) *C.char {
+	var options excelize.DocProperties
+	goVal, err := cValueToGo(reflect.ValueOf(*docProperties), reflect.TypeOf(excelize.DocProperties{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options = goVal.Elem().Interface().(excelize.DocProperties)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetDocProps(&options); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
