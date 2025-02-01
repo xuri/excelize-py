@@ -685,6 +685,12 @@ class _BoolErrorResult(Structure):
         ("err", c_char_p),
     ]
 
+class _StringArrayErrorResult(Structure):
+    _fields_ = [
+        ("ArrLen", c_int),
+        ("Arr", POINTER(POINTER(c_char))),
+        ("Err", c_char_p),
+    ]
 
 class _CellNameToCoordinatesResult(Structure):
     _fields_ = [
@@ -735,12 +741,5 @@ class _GetTablesResult(Structure):
     _fields_ = [
         ("TablesLen", c_int),
         ("Tables", POINTER(_Table)),
-        ("Err", c_char_p),
-    ]
-
-class StringArrayErrorResult(Structure):
-    _fields_ = [
-        ("Arrlen", c_int),
-        ("Arr", POINTER(POINTER(c_char_p))),
         ("Err", c_char_p),
     ]

@@ -2054,25 +2054,50 @@ class File:
         )
         return None if err == "" else Exception(err)
 
-    def search_sheet(self, query: str, regex_match: bool = False) -> Tuple[List[str], Optional[Exception]]:
+    def search_sheet(
+        self, sheet: str, value: str, *reg: bool
+    ) -> Tuple[List[str], Optional[Exception]]:
         """
-        Search for cells in a given worksheet by input query.
+        Get cell reference by given worksheet name, cell value, and regular
+        expression. The function doesn't support searching on the calculated
+        result, formatted numbers and conditional lookup currently. If it is a
+        merged cell, it will return the cell reference of the upper left cell of
+        the merged range reference.
 
         Args:
-            query (str): A string in the format "sheet_name,search_value".
-            regex_match (bool): Whether to use regex matching.
+            sheet (str): The worksheet name
+            value (str): The cell value to search
+            *reg (bool): Specifies if search with regular expression
 
         Returns:
-            Tuple[List[str], Optional[Exception]]: A tuple containing the matched
-            cell coordinates and an exception if an error occurred, otherwise None.
+            Tuple[List[str], Optional[Exception]]: A tuple containing the
+            cell name and an exception if an error occurred, otherwise None.
+
+        Example:
+            An example of search the cell reference of the value of "100" on
+            Sheet1:
+
+            ```python
+            result, err = f.search_sheet("Sheet1", "100")
+            ```
+
+            An example of search the cell reference where the numerical value in
+            the range of "0-9" of Sheet1 is described:
+
+            ```python
+            result, err = f.search_sheet("Sheet1", "[0-9]", True)
+            ```
         """
         lib.SearchSheet.restype = types_go._StringArrayErrorResult
-        query_encoded = query.encode(ENCODE)
-        regex_flag = c_int(1 if regex_match else 0)
-        res = self.lib.SearchSheet(self.file_index, query_encoded, regex_flag)
-        search_result = c_value_to_py(res, StringArrayErrorResult())
-        err = res.Err.decode(ENCODE) if res.Err else ""
-        return search_result.Arr if err == "" else [], None if err == "" else Exception(err)
+        res = lib.SearchSheet(
+            self.file_index,
+            sheet.encode(ENCODE),
+            value.encode(ENCODE),
+            reg[0] if reg else False,
+        )
+        arr = c_value_to_py(res, StringArrayErrorResult()).arr
+        err = res.Err.decode(ENCODE)
+        return arr if arr else [], None if err == "" else Exception(err)
 
     def set_active_sheet(self, index: int) -> Optional[Exception]:
         """

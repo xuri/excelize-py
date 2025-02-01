@@ -1773,47 +1773,29 @@ func SaveAs(idx int, name *C.char, opts *C.struct_Options) *C.char {
 	return C.CString(emptyString)
 }
 
-// SearchSheet provides the method to get all matching cell's coordinate in
-// a worksheet by inputing worksheet name and cell content.
+
+// SearchSheet provides a function to get cell reference by given worksheet name,
+// cell value, and regular expression. The function doesn't support searching
+// on the calculated result, formatted numbers and conditional lookup
+// currently. If it is a merged cell, it will return the cell reference of the
+// upper left cell of the merged range reference.
 //
 //export SearchSheet
-func SearchSheet(idx int, query *C.char, regMatch *C.int) C.struct_StringArrayErrorResult {
+func SearchSheet(idx int, sheet, value *C.char, reg bool) C.struct_StringArrayErrorResult {
 	f, ok := files.Load(idx)
 	if !ok {
 		return C.struct_StringArrayErrorResult{Err: C.CString(errFilePtr)}
 	}
-
-	queryParts := strings.SplitN(C.GoString(query), ",", 2)
-	if len(queryParts) < 2 {
-		return C.struct_StringArrayErrorResult{Err: C.CString("Error")}
-	}
-	goSheet := queryParts[0]
-	goSearchValue := queryParts[1]
-
-	var cells []string
-	var err error
-
-	if *regMatch != 0 {
-		cells, err = searchSheetWithRegexMatch(f.(*excelize.File), goSheet, goSearchValue)
-	} else {
-		cells, err = f.(*excelize.File).SearchSheet(goSheet, goSearchValue)
-	}
-
+	result, err := f.(*excelize.File).SearchSheet(C.GoString(sheet), C.GoString(value), reg)
 	if err != nil {
 		return C.struct_StringArrayErrorResult{Err: C.CString(err.Error())}
 	}
-
-	cArray := C.malloc(C.size_t(len(cells)) * C.size_t(unsafe.Sizeof(uintptr(0))))
-	cStructArray := (*[1 << 30]*C.char)(cArray)[:len(cells):len(cells)]
-	for i, cell := range cells {
-		cStructArray[i] = C.CString(cell)
+	cArray := C.malloc(C.size_t(len(result)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	cArrayPtr := (*[1 << 30]*C.char)(cArray)
+	for i, v := range result {
+		cArrayPtr[i] = C.CString(v)
 	}
-
-	return C.struct_StringArrayErrorResult{
-		Arr:    (**C.char)(cArray),
-		Arrlen: C.int(len(cells)),
-		Err:    C.CString(emptyString),
-	}
+	return C.struct_StringArrayErrorResult{ArrLen: C.int(len(result)), Arr: (**C.char)(cArray), Err: C.CString(emptyString)}
 }
 
 // SetActiveSheet provides a function to set the default active sheet of the

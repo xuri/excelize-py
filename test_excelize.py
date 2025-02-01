@@ -256,6 +256,22 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual("100", val)
         self.assertIsNone(err)
 
+        result, err = f.search_sheet("Sheet1", "Hello")
+        self.assertIsNone(err)
+        self.assertEqual(result, ["A3", "A12"])
+
+        result, err = f.search_sheet("Sheet1", "H", True)
+        self.assertIsNone(err)
+        self.assertEqual(result, ["A3", "A12"])
+
+        result, err = f.search_sheet("Sheet1", "H", False)
+        self.assertIsNone(err)
+        self.assertEqual(result, [])
+
+        result, err = f.search_sheet("SheetN", "H", False)
+        self.assertEqual(str(err), "sheet SheetN does not exist")
+        self.assertEqual(result, [])
+
         self.assertIsNone(f.duplicate_row("Sheet1", 20))
         self.assertIsNone(f.duplicate_row_to("Sheet1", 20, 20))
         self.assertIsNone(f.insert_cols("Sheet1", "C", 2))
