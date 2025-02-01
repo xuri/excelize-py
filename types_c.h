@@ -10,7 +10,6 @@
 // a worksheet with huge amounts of data. This library needs Python version 3.9
 // or later.
 
-
 #include <stdbool.h>
 #include <stdlib.h>
 #include <time.h>
@@ -90,6 +89,25 @@ struct Cell
     int StyleID;
     char *Formula;
     struct Interface Value;
+};
+
+// DocProperties directly maps the document core properties.
+struct DocProperties
+{
+    char *Category;
+    char *ContentStatus;
+    char *Created;
+    char *Creator;
+    char *Description;
+    char *Identifier;
+    char *Keywords;
+    char *LastModifiedBy;
+    char *Modified;
+    char *Revision;
+    char *Subject;
+    char *Title;
+    char *Language;
+    char *Version;
 };
 
 // RowOpts define the options for the set row, it can be used directly in
@@ -743,6 +761,13 @@ struct GetRowsResult
     char *err;
 };
 
+struct GetCellRichTextResult
+{
+    int RunsLen;
+    struct RichTextRun *Runs;
+    char *Err;
+};
+
 struct GetStyleResult
 {
     struct Style style;
@@ -754,27 +779,4 @@ struct GetTablesResult
     int TablesLen;
     struct Table *Tables;
     char *Err;
-};
-
-struct RichTextRunsResult {
-    struct RichTextRun* Runs;    
-    int RunsLen;                 
-    char* Err;                  
-};
-
-struct DocProperties {
-    char *Category;
-    char *ContentStatus;
-    char *Created;
-    char *Creator;
-    char *Description;
-    char *Identifier;
-    char *Keywords;
-    char *LastModifiedBy;
-    char *Modified;
-    char *Revision;
-    char *Subject;
-    char *Title;
-    char *Language;
-    char *Version;
 };

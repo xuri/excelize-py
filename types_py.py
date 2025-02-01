@@ -213,6 +213,23 @@ class Cell:
 
 
 @dataclass
+class DocProperties:
+    category: str = ""
+    content_status: str = ""
+    created: str = ""
+    creator: str = ""
+    description: str = ""
+    identifier: str = ""
+    keywords: str = ""
+    last_modified_by: str = ""
+    modified: str = ""
+    revision: str = ""
+    subject: str = ""
+    title: str = ""
+    language: str = ""
+    version: str = ""
+
+
 class RowOpts:
     height: float = 0
     hidden: bool = False
@@ -395,6 +412,12 @@ class Panes:
 class RichTextRun:
     font: Optional[Font] = None
     text: str = ""
+
+
+@dataclass
+class GetCellRichTextResult:
+    runs: Optional[List[RichTextRun]] = None
+    err: str = ""
 
 
 @dataclass
@@ -767,26 +790,3 @@ class WorkbookProtectionOptions:
     password: str = ""
     lock_structure: bool = False
     lock_windows: bool = False
-
-@dataclass
-class RichTextRunsResult:
-    Runs: Optional[List[RichTextRun]] = None  
-    RunsLen: int = 0                         
-    Err: str = ""                            
-
-@dataclass
-class DocProperties:
-    category: str = ""
-    content_status: str = ""
-    created: str = ""
-    creator: str = ""
-    description: str = ""
-    identifier: str = ""
-    keywords: str = ""
-    last_modified_by: str = ""
-    modified: str = ""
-    revision: str = ""
-    subject: str = ""
-    title: str = ""
-    language: str = ""
-    version: str = ""

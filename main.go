@@ -20,7 +20,6 @@ import "C"
 import (
 	"bytes"
 	"errors"
-	"fmt"
 	"reflect"
 	"sync"
 	"time"
@@ -137,87 +136,6 @@ var (
 		},
 	}
 )
-
-// SetDocProps sets the document properties of the Excel file
-//
-// Parameters:
-//   - idx: file index number
-//   - props: pointer to document properties structure containing title, subject, creator etc.
-//
-// Returns:
-//   - empty string on success
-//   - error message string on failure
-//
-//export SetDocProps
-func SetDocProps(idx int, props *C.struct_DocProperties) *C.char {
-	f, ok := files.Load(idx) // load file
-	if !ok {
-		return C.CString(errFilePtr)
-	}
-
-	docProps := &excelize.DocProperties{
-		Title:          C.GoString(props.Title),
-		Subject:        C.GoString(props.Subject),
-		Creator:        C.GoString(props.Creator),
-		Keywords:       C.GoString(props.Keywords),
-		Description:    C.GoString(props.Description),
-		LastModifiedBy: C.GoString(props.LastModifiedBy),
-		Language:       C.GoString(props.Language),
-		Identifier:     C.GoString(props.Identifier),
-		Revision:       C.GoString(props.Revision),
-		ContentStatus:  C.GoString(props.ContentStatus),
-		Category:       C.GoString(props.Category),
-		Version:        C.GoString(props.Version),
-		Created:        C.GoString(props.Created),
-		Modified:       C.GoString(props.Modified),
-	}
-
-	if err := f.(*excelize.File).SetDocProps(docProps); err != nil {
-		return C.CString(err.Error())
-	}
-	return C.CString("")
-}
-
-// GetCellRichText retrieves the rich text content from a specified cell in a worksheet
-//
-// Parameters:
-//   - idx: file index number
-//   - sheet: worksheet name
-//   - cell: cell reference (e.g. "A1")
-//
-// Returns:
-//   - RichTextRunsResult structure containing:
-//   - Runs: array of rich text runs
-//   - RunsLen: length of the runs array
-//   - Err: error message if any, empty string on success
-//
-//export GetCellRichText
-func GetCellRichText(idx int, sheet *C.char, cell *C.char) C.struct_RichTextRunsResult {
-	f, ok := files.Load(idx)
-	if !ok {
-		return C.struct_RichTextRunsResult{Err: C.CString(errFilePtr)}
-	}
-	Runs, Err := f.(*excelize.File).GetCellRichText(C.GoString(sheet), C.GoString(cell))
-	if Err != nil {
-		return C.struct_RichTextRunsResult{Err: C.CString(Err.Error())}
-	}
-	cArray := C.malloc(C.size_t(len(Runs)) * C.size_t(unsafe.Sizeof(C.struct_RichTextRun{})))
-	cStructArray := (*[1 << 30]C.struct_RichTextRun)(cArray)[:len(Runs):len(Runs)]
-
-	for i, t := range Runs {
-		cVal, Err := goValueToC(reflect.ValueOf(t), reflect.ValueOf(&C.struct_RichTextRun{}))
-		if Err != nil {
-			return C.struct_RichTextRunsResult{Err: C.CString(Err.Error())}
-		}
-		cStructArray[i] = cVal.Elem().Interface().(C.struct_RichTextRun)
-	}
-	print(GetCellRichText)
-	return C.struct_RichTextRunsResult{
-		Runs:    (*C.struct_RichTextRun)(cArray),
-		RunsLen: C.int(len(Runs)),
-		Err:     C.CString(emptyString),
-	}
-}
 
 // cToGoBaseType convert JavaScript value to Go basic data type variable.
 func cToGoBaseType(cVal reflect.Value, kind reflect.Kind) (reflect.Value, error) {
@@ -1137,6 +1055,31 @@ func GetCellHyperLink(idx int, sheet, cell *C.char) C.struct_GetCellHyperLinkRes
 	return C.struct_GetCellHyperLinkResult{link: C._Bool(link), target: C.CString(target), err: C.CString(emptyString)}
 }
 
+// GetCellRichText provides a function to get rich text of cell by given
+// worksheet and cell reference.
+//
+//export GetCellRichText
+func GetCellRichText(idx int, sheet, cell *C.char) C.struct_GetCellRichTextResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetCellRichTextResult{Err: C.CString(errFilePtr)}
+	}
+	runs, err := f.(*excelize.File).GetCellRichText(C.GoString(sheet), C.GoString(cell))
+	if err != nil {
+		return C.struct_GetCellRichTextResult{Err: C.CString(err.Error())}
+	}
+	cArray := C.malloc(C.size_t(len(runs)) * C.size_t(unsafe.Sizeof(C.struct_RichTextRun{})))
+	cStructArray := (*[1 << 30]C.struct_RichTextRun)(cArray)[:len(runs):len(runs)]
+	for i, r := range runs {
+		cVal, err := goValueToC(reflect.ValueOf(r), reflect.ValueOf(&C.struct_RichTextRun{}))
+		if err != nil {
+			return C.struct_GetCellRichTextResult{Err: C.CString(err.Error())}
+		}
+		cStructArray[i] = cVal.Elem().Interface().(C.struct_RichTextRun)
+	}
+	return C.struct_GetCellRichTextResult{RunsLen: C.int(len(runs)), Runs: (*C.struct_RichTextRun)(cArray), Err: C.CString(emptyString)}
+}
+
 // GetCellStyle provides a function to get cell style index by given worksheet
 // name and cell reference. This function is concurrency safe.
 //
@@ -1350,35 +1293,24 @@ func GetStyle(idx, styleID int) C.struct_GetStyleResult {
 //
 //export GetTables
 func GetTables(idx int, sheet *C.char) C.struct_GetTablesResult {
-	//第一个索引，整数类型，文件索引，第二个参数，c语言字符串字符串指针类型，工作表名称
-	f, ok := files.Load(idx) //获得返回值f（如果存在）和ok（布尔值）
+	f, ok := files.Load(idx)
 	if !ok {
-		return C.struct_GetTablesResult{Err: C.CString(errFilePtr)} //返回错误信息，CString为转换go为c语言
+		return C.struct_GetTablesResult{Err: C.CString(errFilePtr)}
 	}
-	tables, err := f.(*excelize.File).GetTables(C.GoString(sheet)) //C.GoString(sheet)是将c语言字符串转换为go语言字符串
-	//f.(*excelize.File) 是类型断言，转化为excelize.File以便于调用go库中的GetTables
+	tables, err := f.(*excelize.File).GetTables(C.GoString(sheet))
 	if err != nil {
 		return C.struct_GetTablesResult{Err: C.CString(err.Error())}
-	} //nill代表没有错误
+	}
 	cArray := C.malloc(C.size_t(len(tables)) * C.size_t(unsafe.Sizeof(C.struct_Table{})))
-	//cArray存储指针 C.malloc内存分配函数，分配len(tables) * unsafe.Sizeof(C.struct_Table{})大小的内存
-	//C.size_t() - 将 Go 的整数转换为 C 的 size_t 类型。
 	cStructArray := (*[1 << 30]C.struct_Table)(cArray)[:len(tables):len(tables)]
-	//[:len(tables):len(tables)]为切片操作，容量：大小，go语言切片，c语言数组，这是一种桥接模式，让 Go 代码能够方便地操作 C 语言分配的内存空间。
-	//C.struct_Table 是一个 C 语言结构体类型，它在 Go 代码中通过 CGO 使用,*将 C 指针 cArray 转换为指向大数组的 Go 指针
-	//[1 << 30] 创建一个非常大的数组大小（2^30）
 	for i, t := range tables {
 		cVal, err := goValueToC(reflect.ValueOf(t), reflect.ValueOf(&C.struct_Table{}))
-		//反射允许动态访问和修改结构体字段的值，reflect.ValueOf(t)将go语言的t转换为反射值
 		if err != nil {
-			return C.struct_GetTablesResult{Err: C.CString(err.Error())} //因为前面定义了，所以所有返回值都得是 C.struct_GetTablesResult结构体
+			return C.struct_GetTablesResult{Err: C.CString(err.Error())}
 		}
 		cStructArray[i] = cVal.Elem().Interface().(C.struct_Table)
-		//反射值 -> 实际值 -> interface{} -> C结构体 -> 存入数组，cVal.Elem()反射值到实际值
 	}
 	return C.struct_GetTablesResult{TablesLen: C.int(len(tables)), Tables: (*C.struct_Table)(cArray), Err: C.CString(emptyString)}
-	//返回表的长度，表的指针，错误信息
-	//Tables：(*C.struct_Table)(cArray)将 C 内存指针转换为 C.struct_Table 数组指针指向存储表格数据的内存区域
 }
 
 // InsertCols provides a function to insert new columns before the given column
@@ -1965,7 +1897,7 @@ func SetCellHyperLink(idx int, sheet, cell, link, linkType *C.char, opts *C.stru
 // worksheet name, cell reference and cell value.
 //
 //export SetCellInt
-func SetCellInt(idx int, sheet, cell *C.char, value int) *C.char {
+func SetCellInt(idx int, sheet, cell *C.char, value int64) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
 		return C.CString(errFilePtr)
@@ -1980,13 +1912,13 @@ func SetCellInt(idx int, sheet, cell *C.char, value int) *C.char {
 // worksheet name, cell reference and rich text runs.
 //
 //export SetCellRichText
-func SetCellRichText(idx int, sheet, cell *C.char, Runs *C.struct_RichTextRun, length int) *C.char {
+func SetCellRichText(idx int, sheet, cell *C.char, runs *C.struct_RichTextRun, length int) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
 		return C.CString(emptyString)
 	}
 	textRuns := make([]excelize.RichTextRun, length)
-	for i, val := range unsafe.Slice(Runs, length) {
+	for i, val := range unsafe.Slice(runs, length) {
 		goVal, err := cValueToGo(reflect.ValueOf(val), reflect.TypeOf(excelize.RichTextRun{}))
 		if err != nil {
 			return C.CString(err.Error())
@@ -2172,6 +2104,26 @@ func SetDefinedName(idx int, definedName *C.struct_DefinedName) *C.char {
 		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).SetDefinedName(&df); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// SetDocProps provides a function to set document core properties.
+//
+//export SetDocProps
+func SetDocProps(idx int, docProperties *C.struct_DocProperties) *C.char {
+	var options excelize.DocProperties
+	goVal, err := cValueToGo(reflect.ValueOf(*docProperties), reflect.TypeOf(excelize.DocProperties{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options = goVal.Elem().Interface().(excelize.DocProperties)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetDocProps(&options); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
@@ -2550,5 +2502,4 @@ func UpdateLinkedValue(idx int) *C.char {
 }
 
 func main() {
-	fmt.Println("Hello, World!")
 }

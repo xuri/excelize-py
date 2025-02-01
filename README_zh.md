@@ -129,7 +129,9 @@ chart = excelize.Chart(
     ],
     title=[excelize.RichTextRun(text="Fruit 3D Clustered Column Chart")],
 )
-f.add_chart("Sheet1", "E1", chart)
+err = f.add_chart("Sheet1", "E1", chart)
+if err:
+    print(err)
 # 根据指定路径保存文件
 err = f.save_as("Book1.xlsx")
 if err:
