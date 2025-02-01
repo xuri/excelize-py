@@ -709,6 +709,13 @@ struct BoolErrorResult
     char *err;
 };
 
+struct StringArrayErrorResult
+{
+    int ArrLen;
+    char **Arr;
+    char *Err;
+};
+
 struct GetCellHyperLinkResult
 {
     bool link;

@@ -2054,6 +2054,51 @@ class File:
         )
         return None if err == "" else Exception(err)
 
+    def search_sheet(
+        self, sheet: str, value: str, *reg: bool
+    ) -> Tuple[List[str], Optional[Exception]]:
+        """
+        Get cell reference by given worksheet name, cell value, and regular
+        expression. The function doesn't support searching on the calculated
+        result, formatted numbers and conditional lookup currently. If it is a
+        merged cell, it will return the cell reference of the upper left cell of
+        the merged range reference.
+
+        Args:
+            sheet (str): The worksheet name
+            value (str): The cell value to search
+            *reg (bool): Specifies if search with regular expression
+
+        Returns:
+            Tuple[List[str], Optional[Exception]]: A tuple containing the
+            cell name and an exception if an error occurred, otherwise None.
+
+        Example:
+            An example of search the cell reference of the value of "100" on
+            Sheet1:
+
+            ```python
+            result, err = f.search_sheet("Sheet1", "100")
+            ```
+
+            An example of search the cell reference where the numerical value in
+            the range of "0-9" of Sheet1 is described:
+
+            ```python
+            result, err = f.search_sheet("Sheet1", "[0-9]", True)
+            ```
+        """
+        lib.SearchSheet.restype = types_go._StringArrayErrorResult
+        res = lib.SearchSheet(
+            self.file_index,
+            sheet.encode(ENCODE),
+            value.encode(ENCODE),
+            reg[0] if reg else False,
+        )
+        arr = c_value_to_py(res, StringArrayErrorResult()).arr
+        err = res.Err.decode(ENCODE)
+        return arr if arr else [], None if err == "" else Exception(err)
+
     def set_active_sheet(self, index: int) -> Optional[Exception]:
         """
         Set the default active sheet of the workbook by a given index. Note that

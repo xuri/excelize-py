@@ -767,3 +767,9 @@ class WorkbookProtectionOptions:
     password: str = ""
     lock_structure: bool = False
     lock_windows: bool = False
+
+
+@dataclass
+class StringArrayErrorResult:
+    arr: Optional[List[str]] = None
+    err: str = ""
