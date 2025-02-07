@@ -1503,7 +1503,7 @@ class File:
         )
         runs = c_value_to_py(res, GetCellRichTextResult()).runs
         err = res.Err.decode(ENCODE)
-        return runs, None if err == "" else Exception(err)
+        return runs if runs else [], None if err == "" else Exception(err)
 
     def get_cell_value(
         self, sheet: str, cell: str, *opts: Options

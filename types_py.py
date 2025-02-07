@@ -262,7 +262,7 @@ class Font:
     strike: bool = False
     color: str = ""
     color_indexed: int = 0
-    color_theme: Optional[int] = None
+    color_theme: Optional[int] = 0
     color_tint: float = 0
     vert_align: str = ""
 
