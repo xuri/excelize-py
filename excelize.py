@@ -179,7 +179,6 @@ def c_value_to_py(ctypes_instance, py_instance):
                 if value:
                     if any(is_py_primitive_type(arg) for arg in py_field_args):
                         # Pointer of the Go basic data type, for example: *string
-                        value = getattr(ctypes_instance, c_field_name)
                         setattr(
                             py_instance,
                             py_field_name,

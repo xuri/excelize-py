@@ -368,6 +368,8 @@ func goValueToC(goVal, cVal reflect.Value) (reflect.Value, error) {
 					ptrVal := reflect.NewAt(v.Type(), cValPtr).Elem()
 					ptrVal.Set(v)
 					c.FieldByName(field.Name).Set(ptrVal.Addr())
+				} else {
+					c.FieldByName(field.Name).Set(reflect.Zero(cField.Type))
 				}
 			}
 		case reflect.Struct:
