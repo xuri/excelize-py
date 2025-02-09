@@ -91,6 +91,25 @@ struct Cell
     struct Interface Value;
 };
 
+// DocProperties directly maps the document core properties.
+struct DocProperties
+{
+    char *Category;
+    char *ContentStatus;
+    char *Created;
+    char *Creator;
+    char *Description;
+    char *Identifier;
+    char *Keywords;
+    char *LastModifiedBy;
+    char *Modified;
+    char *Revision;
+    char *Subject;
+    char *Title;
+    char *Language;
+    char *Version;
+};
+
 // RowOpts define the options for the set row, it can be used directly in
 // StreamWriter.SetRow to specify the style and properties of the row.
 struct RowOpts
@@ -747,6 +766,13 @@ struct GetRowsResult
     int RowLen;
     struct Row *Row;
     char *err;
+};
+
+struct GetCellRichTextResult
+{
+    int RunsLen;
+    struct RichTextRun *Runs;
+    char *Err;
 };
 
 struct GetStyleResult

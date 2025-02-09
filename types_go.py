@@ -68,6 +68,25 @@ class _Cell(Structure):
     ]
 
 
+class _DocProperties(Structure):
+    _fields_ = [
+        ("Category", c_char_p),
+        ("ContentStatus", c_char_p),
+        ("Created", c_char_p),
+        ("Creator", c_char_p),
+        ("Description", c_char_p),
+        ("Identifier", c_char_p),
+        ("Keywords", c_char_p),
+        ("LastModifiedBy", c_char_p),
+        ("Modified", c_char_p),
+        ("Revision", c_char_p),
+        ("Subject", c_char_p),
+        ("Title", c_char_p),
+        ("Language", c_char_p),
+        ("Version", c_char_p),
+    ]
+
+
 class _RowOpts(Structure):
     _fields_ = [
         ("Height", c_double),
@@ -727,6 +746,14 @@ class _GetRowsResult(Structure):
         ("RowLen", c_int),
         ("Row", POINTER(_Row)),
         ("err", c_char_p),
+    ]
+
+
+class _GetCellRichTextResult(Structure):
+    _fields_ = [
+        ("RunsLen", c_int),
+        ("Runs", POINTER(_RichTextRun)),
+        ("Err", c_char_p),
     ]
 
 
