@@ -1536,6 +1536,35 @@ class File:
         err = res.err.decode(ENCODE)
         return res.val.decode(ENCODE), None if err == "" else Exception(err)
 
+    def get_col_outline_level(
+        self, sheet: str, col: str
+    ) -> Tuple[int, Optional[Exception]]:
+        """
+        Get outline level of a single column by given worksheet name and column
+        name.
+        
+        Args:
+            sheet (str): The worksheet name
+            col (str): The column name
+
+        Returns:
+            Tuple[int, Optional[Exception]]: A tuple containing the column
+            outline level and an exception if an error occurred, otherwise None.
+
+        Example:
+            For example, get outline level of column D in Sheet1:
+
+            .. code-block:: python
+
+        	level, err = f.get_col_outline_level("Sheet1", "D")
+        """
+        lib.GetColOutlineLevel.restype = types_go._IntErrorResult
+        res = lib.GetColOutlineLevel(
+            self.file_index, sheet.encode(ENCODE), col.encode(ENCODE)
+        )
+        err = res.err.decode(ENCODE)
+        return res.val, None if err == "" else Exception(err)
+
     def get_col_style(self, sheet: str, col: str) -> Tuple[int, Optional[Exception]]:
         """
         Get column style ID by given worksheet name and column name.

@@ -1126,6 +1126,22 @@ func GetCellValue(idx int, sheet, cell *C.char, opts *C.struct_Options) C.struct
 	return C.struct_StringErrorResult{val: C.CString(val), err: C.CString(emptyString)}
 }
 
+// GetColOutlineLevel provides a function to get outline level of a single
+// column by given worksheet name and column name.
+//
+//export GetColOutlineLevel
+func GetColOutlineLevel(idx int, sheet, col *C.char) C.struct_IntErrorResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_IntErrorResult{val: C.int(0), err: C.CString(errFilePtr)}
+	}
+	val, err := f.(*excelize.File).GetColOutlineLevel(C.GoString(sheet), C.GoString(col))
+	if err != nil {
+		return C.struct_IntErrorResult{val: C.int(int32(val)), err: C.CString(err.Error())}
+	}
+	return C.struct_IntErrorResult{val: C.int(int32(val)), err: C.CString(emptyString)}
+}
+
 // GetColStyle provides a function to get column style ID by given worksheet
 // name and column name. This function is concurrency safe.
 //
