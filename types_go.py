@@ -770,3 +770,10 @@ class _GetTablesResult(Structure):
         ("Tables", POINTER(_Table)),
         ("Err", c_char_p),
     ]
+
+
+class _GetWorkbookPropsResult(Structure):
+    _fields_ = [
+        ("opts", _WorkbookPropsOptions),
+        ("err", c_char_p),
+    ]

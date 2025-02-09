@@ -275,6 +275,7 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.duplicate_row("Sheet1", 20))
         self.assertIsNone(f.duplicate_row_to("Sheet1", 20, 20))
         self.assertIsNone(f.insert_cols("Sheet1", "C", 2))
+        self.assertIsNone(f.insert_rows("Sheet1", 20, 2))
         self.assertIsNone(f.merge_cell("Sheet1", "A1", "B2"))
         self.assertIsNone(f.unmerge_cell("Sheet1", "A1", "B2"))
 
@@ -1219,6 +1220,9 @@ class TestExcelize(unittest.TestCase):
             date1904=True, filter_privacy=True, code_name="code"
         )
         self.assertIsNone(f.set_workbook_props(expected))
+        opts, err = f.get_workbook_props()
+        self.assertEqual(opts, expected)
+        self.assertIsNone(err)
         self.assertIsNone(f.save_as(os.path.join("test", "TestWorkbookProps.xlsx")))
         self.assertIsNone(f.close())
 

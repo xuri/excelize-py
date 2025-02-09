@@ -1315,6 +1315,25 @@ func GetTables(idx int, sheet *C.char) C.struct_GetTablesResult {
 	return C.struct_GetTablesResult{TablesLen: C.int(len(tables)), Tables: (*C.struct_Table)(cArray), Err: C.CString(emptyString)}
 }
 
+// GetWorkbookPropsprovides a function to retrieve the properties of a workbook.
+//
+//export GetWorkbookProps
+func GetWorkbookProps(idx int) C.struct_GetWorkbookPropsResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetWorkbookPropsResult{err: C.CString(errFilePtr)}
+	}
+	opts, err := f.(*excelize.File).GetWorkbookProps()
+	if err != nil {
+		return C.struct_GetWorkbookPropsResult{err: C.CString(err.Error())}
+	}
+	cVal, err := goValueToC(reflect.ValueOf(opts), reflect.ValueOf(&C.struct_WorkbookPropsOptions{}))
+	if err != nil {
+		return C.struct_GetWorkbookPropsResult{err: C.CString(err.Error())}
+	}
+	return C.struct_GetWorkbookPropsResult{opts: cVal.Elem().Interface().(C.struct_WorkbookPropsOptions), err: C.CString(emptyString)}
+}
+
 // InsertCols provides a function to insert new columns before the given column
 // name and number of columns.
 //
@@ -1325,6 +1344,21 @@ func InsertCols(idx int, sheet, col *C.char, n int) *C.char {
 		return C.CString(emptyString)
 	}
 	if err := f.(*excelize.File).InsertCols(C.GoString(sheet), C.GoString(col), n); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// InsertRows provides a function to insert new rows before the specified row number
+// in a given worksheet.
+//
+//export InsertRows
+func InsertRows(idx int, sheet *C.char, row, n int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(emptyString)
+	}
+	if err := f.(*excelize.File).InsertRows(C.GoString(sheet), row, n); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
@@ -1799,7 +1833,6 @@ func SaveAs(idx int, name *C.char, opts *C.struct_Options) *C.char {
 	}
 	return C.CString(emptyString)
 }
-
 
 // SearchSheet provides a function to get cell reference by given worksheet name,
 // cell value, and regular expression. The function doesn't support searching

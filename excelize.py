@@ -1727,6 +1727,21 @@ class File:
         err = res.Err.decode(ENCODE)
         return tables if tables else [], None if err == "" else Exception(err)
 
+    def get_workbook_props(self) -> Tuple[WorkbookPropsOptions, Optional[Exception]]:
+        """
+        Get the properties of the workbook.
+
+        Returns:
+            Tuple[WorkbookPropsOptions, Optional[Exception]]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+        """
+        lib.GetWorkbookProps.restype = types_go._GetWorkbookPropsResult
+        res = lib.GetWorkbookProps(self.file_index)
+        err = res.err.decode(ENCODE)
+        return c_value_to_py(res.opts, WorkbookPropsOptions()) if err == "" else None, (
+            None if err == "" else Exception(err)
+        )
+    
     def insert_cols(self, sheet: str, col: str, n: int) -> Optional[Exception]:
         """
         Insert new columns before the given column name and number of columns.
@@ -1756,6 +1771,39 @@ class File:
             self.file_index,
             sheet.encode(ENCODE),
             col.encode(ENCODE),
+            c_int(n),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+    
+    def insert_rows(self, sheet: str, row: int, n: int) -> Optional[Exception]:
+        """
+        Insert new rows before the specified row number in a given worksheet.
+        Use this method with caution, which will affect changes in references
+        such as formulas, charts, and so on. If there is any referenced value of
+        the worksheet, it will cause a file error when you open it. The excelize
+        only partially updates these references currently.
+
+        Args:
+            sheet (str): The worksheet name
+            row (int): The row number before which new rows will be inserted
+            n (int): The number of rows to insert
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example, create two rows before row 3 in Sheet1:
+
+            .. code-block:: python
+
+            err = f.insert_row("Sheet1", 3, 2)
+        """
+        lib.InsertRows.restype = c_char_p
+        err = lib.InsertRows(
+            self.file_index,
+            sheet.encode(ENCODE),
+            c_int(row),
             c_int(n),
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
