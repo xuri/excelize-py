@@ -1315,7 +1315,7 @@ func GetTables(idx int, sheet *C.char) C.struct_GetTablesResult {
 	return C.struct_GetTablesResult{TablesLen: C.int(len(tables)), Tables: (*C.struct_Table)(cArray), Err: C.CString(emptyString)}
 }
 
-// GetWorkbookPropsprovides a function to retrieve the properties of a workbook.
+// GetWorkbookProps provides a function to gets workbook properties.
 //
 //export GetWorkbookProps
 func GetWorkbookProps(idx int) C.struct_GetWorkbookPropsResult {
@@ -1349,8 +1349,8 @@ func InsertCols(idx int, sheet, col *C.char, n int) *C.char {
 	return C.CString(emptyString)
 }
 
-// InsertRows provides a function to insert new rows before the specified row number
-// in a given worksheet.
+// InsertRows provides a function to insert new rows after the given Excel row
+// number starting from 1 and number of rows.
 //
 //export InsertRows
 func InsertRows(idx int, sheet *C.char, row, n int) *C.char {
