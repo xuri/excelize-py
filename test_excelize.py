@@ -288,6 +288,9 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(err)
 
         self.assertIsNone(f.set_col_outline_level("Sheet1", "D", 2))
+        level, err = f.get_col_outline_level("Sheet1", "D")
+        self.assertEqual(level, 2)
+        self.assertIsNone(err)
         self.assertIsNone(f.set_row_outline("Sheet1", 2, 1))
 
         self.assertIsNone(f.set_sheet_background("Sheet2", "chart.png"))
