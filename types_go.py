@@ -704,12 +704,14 @@ class _BoolErrorResult(Structure):
         ("err", c_char_p),
     ]
 
+
 class _StringArrayErrorResult(Structure):
     _fields_ = [
         ("ArrLen", c_int),
         ("Arr", POINTER(POINTER(c_char))),
         ("Err", c_char_p),
     ]
+
 
 class _CellNameToCoordinatesResult(Structure):
     _fields_ = [
@@ -769,4 +771,11 @@ class _GetTablesResult(Structure):
         ("TablesLen", c_int),
         ("Tables", POINTER(_Table)),
         ("Err", c_char_p),
+    ]
+
+
+class _GetWorkbookPropsResult(Structure):
+    _fields_ = [
+        ("opts", _WorkbookPropsOptions),
+        ("err", c_char_p),
     ]

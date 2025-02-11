@@ -1756,6 +1756,22 @@ class File:
         err = res.Err.decode(ENCODE)
         return tables if tables else [], None if err == "" else Exception(err)
 
+    def get_workbook_props(self) -> Tuple[WorkbookPropsOptions, Optional[Exception]]:
+        """
+        Get all tables in a worksheet by given worksheet name.
+
+        Returns:
+            Tuple[List[WorkbookPropsOptions], Optional[Exception]]: A tuple
+            containing the workbook property options and an exception if an
+            error occurred, otherwise None.
+        """
+        lib.GetWorkbookProps.restype = types_go._GetWorkbookPropsResult
+        res = lib.GetWorkbookProps(self.file_index)
+        err = res.err.decode(ENCODE)
+        return c_value_to_py(res.opts, WorkbookPropsOptions()) if err == "" else None, (
+            None if err == "" else Exception(err)
+        )
+
     def insert_cols(self, sheet: str, col: str, n: int) -> Optional[Exception]:
         """
         Insert new columns before the given column name and number of columns.
@@ -1785,6 +1801,39 @@ class File:
             self.file_index,
             sheet.encode(ENCODE),
             col.encode(ENCODE),
+            c_int(n),
+        ).decode(ENCODE)
+        return None if err == "" else Exception(err)
+
+    def insert_rows(self, sheet: str, row: int, n: int) -> Optional[Exception]:
+        """
+        Insert new rows after the given Excel row number starting from 1 and
+        number of rows. Use this method with caution, which will affect changes
+        in references such as formulas, charts, and so on. If there is any
+        referenced value of the worksheet, it will cause a file error when you
+        open it. The excelize only partially updates these references currently.
+
+        Args:
+            sheet (str): The worksheet name
+            row (int): The row number
+            n (int): The rows
+
+        Returns:
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
+
+        Example:
+            For example,  create two rows before row 3 in Sheet1:
+
+            .. code-block:: python
+
+            err = f.insert_rows("Sheet1", 3, 2)
+        """
+        lib.InsertRows.restype = c_char_p
+        err = lib.InsertRows(
+            self.file_index,
+            sheet.encode(ENCODE),
+            c_int(row),
             c_int(n),
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
@@ -3273,7 +3322,7 @@ class File:
         Sets workbook properties.
 
         Args:
-            opts (WorkbookPropsOptions): TThe workbook property options
+            opts (WorkbookPropsOptions): The workbook property options
 
         Returns:
             Optional[Exception]: Returns None if no error occurred,

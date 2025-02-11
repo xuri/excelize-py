@@ -787,3 +787,9 @@ struct GetTablesResult
     struct Table *Tables;
     char *Err;
 };
+
+struct GetWorkbookPropsResult
+{
+    struct WorkbookPropsOptions opts;
+    char *err;
+};
