@@ -6,7 +6,7 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [1.23.x]
+        go-version: [1.24.x]
         os: [ubuntu-24.04, macos-latest, windows-latest]
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         targetplatform: [x64]
@@ -73,7 +73,7 @@ jobs:
       - name: Install Go
         uses: actions/setup-go@v5
         with:
-          go-version: 1.23.x
+          go-version: 1.24.x
           cache: false
 
       - name: Install Python
@@ -96,9 +96,9 @@ jobs:
           /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
           brew tap messense/macos-cross-toolchains
           brew install FiloSottile/musl-cross/musl-cross i686-unknown-linux-gnu mingw-w64
-          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20241203/llvm-mingw-20241203-ucrt-macos-universal.tar.xz
-          tar -xzf llvm-mingw-20241203-ucrt-macos-universal.tar.xz
-          export PATH="$(pwd)/llvm-mingw-20241203-ucrt-macos-universal/bin:$PATH"
+          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20250114/llvm-mingw-20250114-ucrt-macos-universal.tar.xz
+          tar -xzf llvm-mingw-20250114-ucrt-macos-universal.tar.xz
+          export PATH="$(pwd)/llvm-mingw-20250114-ucrt-macos-universal/bin:$PATH"
           CC=i686-linux-gnu-gcc GOOS=linux GOARCH=386 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.386.linux.so main.go
           CC=x86_64-linux-musl-gcc GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.amd64.linux.so main.go
           CC=aarch64-linux-musl-gcc GOOS=linux GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.arm64.linux.so main.go

@@ -10,7 +10,6 @@ provided streaming API for generating or reading data from a worksheet with huge
 amounts of data. This library needs Python version 3.9 or later.
 """
 
-import excelize
 import unittest
 from dataclasses import dataclass
 from unittest.mock import patch
@@ -23,9 +22,16 @@ from ctypes import (
     POINTER,
 )
 import os
+import excelize
 
 
 class TestExcelize(unittest.TestCase):
+    """
+    TestExcelize tests excelize library.
+
+    Args:
+        unittest (unittest.TestCase): unittest class.
+    """
 
     @patch("platform.architecture")
     def test_platform_architecture(self, mock_architecture):
@@ -1033,7 +1039,7 @@ class TestExcelize(unittest.TestCase):
 
     def test_conditional_format(self):
         f = excelize.new_file()
-        format, err = f.new_conditional_style(
+        fmt, err = f.new_conditional_style(
             excelize.Style(
                 font=excelize.Font(color="9A0511"),
                 fill=excelize.Fill(type="pattern", color=["FEC7CE"], pattern=1),
@@ -1048,7 +1054,7 @@ class TestExcelize(unittest.TestCase):
                     excelize.ConditionalFormatOptions(
                         type="cell",
                         criteria="between",
-                        format=format,
+                        format=fmt,
                         min_value="6",
                         max_value="8",
                     )

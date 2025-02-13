@@ -14,8 +14,6 @@ from dataclasses import fields
 from datetime import datetime, date, time
 from enum import Enum
 from typing import Tuple, get_args, get_origin, List, Optional, Union
-import types_go
-from types_py import *
 from ctypes import (
     byref,
     c_bool,
@@ -33,9 +31,15 @@ from ctypes import (
 )
 import os
 import platform
+import sys
+import types_go
+from types_py import *
 
 
-def load_lib():
+def load_lib() -> Optional[str]:
+    """
+    Load the shared library based on the current platform and architecture.
+    """
     system = platform.system().lower()
     arch = platform.architecture()[0]
     machine = platform.machine().lower()
@@ -79,7 +83,7 @@ def load_lib():
             return f"libexcelize.{arch_name}.{system}{ext_map[system]}"
 
     print("This platform or architecture is not supported.")
-    exit(1)
+    sys.exit(1)
 
 
 lib = CDLL(os.path.join(os.path.dirname(__file__), load_lib()))
@@ -265,7 +269,7 @@ def get_c_field_type(struct, field_name):
     Returns:
         type: The type of the specified field if found, otherwise None.
     """
-    for field in struct._fields_:
+    for field in getattr(struct, "_fields_", None):
         if field[0] == field_name:
             return field[1]
 
@@ -319,7 +323,9 @@ def py_value_to_c(py_instance, ctypes_instance):
             if get_origin(arg_type) is not list and arg_type is not bytes:
                 # Pointer of the Go data type, for example: *excelize.Options or *string
                 value = getattr(py_instance, py_field_name)
-                c_type = get_c_field_type(ctypes_instance, c_field_name)._type_
+                c_type = getattr(
+                    get_c_field_type(ctypes_instance, c_field_name), "_type_", None
+                )
                 if value is not None:
                     if any(is_py_primitive_type(arg) for arg in py_field_args):
                         # Pointer of the Go basic data type, for example: *string
@@ -339,17 +345,21 @@ def py_value_to_c(py_instance, ctypes_instance):
                 # The Go data type array, for example:
                 # []*excelize.Options, []excelize.Options, []string, []*string
                 if arg_type is bytes:  # []byte
-                    c_type = get_c_field_type(ctypes_instance, c_field_name)._type_
-                    value = getattr(py_instance, py_field_name)
-                    ctypes_instance.__setattr__(
-                        c_field_name, cast(value, POINTER(c_ubyte))
+                    c_type = getattr(
+                        get_c_field_type(ctypes_instance, c_field_name), "_type_", None
                     )
-                    ctypes_instance.__setattr__(c_field_name + "Len", c_int(len(value)))
+                    value = getattr(py_instance, py_field_name)
+                    setattr(
+                        ctypes_instance, c_field_name, cast(value, POINTER(c_ubyte))
+                    )
+                    setattr(ctypes_instance, c_field_name + "Len", c_int(len(value)))
                     continue
                 py_field_type = get_args(arg_type)[0]
                 if type(None) not in get_args(py_field_type):
                     # The Go data type array, for example: []excelize.Options or []string
-                    c_type = get_c_field_type(ctypes_instance, c_field_name)._type_
+                    c_type = getattr(
+                        get_c_field_type(ctypes_instance, c_field_name), "_type_", None
+                    )
                     py_list = getattr(py_instance, py_field_name)
                     if py_list:
                         l = len(py_list)
@@ -358,7 +368,8 @@ def py_value_to_c(py_instance, ctypes_instance):
                             # The Go basic data type array, for example: []string
                             if str is py_field_type:
                                 c_array_type = POINTER(c_char) * l
-                                ctypes_instance.__setattr__(
+                                setattr(
+                                    ctypes_instance,
                                     c_field_name,
                                     c_array_type(
                                         *[
@@ -369,24 +380,26 @@ def py_value_to_c(py_instance, ctypes_instance):
                                 )
                             else:
                                 for i in range(l):
-                                    c_array.__setitem__(
-                                        i, py_to_base_ctype(py_list[i], c_type)
-                                    )
-                                ctypes_instance.__setattr__(c_field_name, c_array)
+                                    c_array[i] = py_to_base_ctype(py_list[i], c_type)
+                                setattr(ctypes_instance, c_field_name, c_array)
                         else:
                             # The Go struct array, for example: []excelize.Options
                             for i in range(l):
-                                c_array.__setitem__(
-                                    i, py_value_to_c(py_list[i], c_type())
-                                )
-                            ctypes_instance.__setattr__(c_field_name, c_array)
-                        ctypes_instance.__setattr__(c_field_name + "Len", c_int(l))
+                                c_array[i] = py_value_to_c(py_list[i], c_type())
+                            setattr(ctypes_instance, c_field_name, c_array)
+                        setattr(ctypes_instance, c_field_name + "Len", c_int(l))
 
                 else:
                     # Pointer array of the Go data type, for example: []*excelize.Options or []*string
-                    c_type = get_c_field_type(
-                        ctypes_instance, c_field_name
-                    )._type_._type_
+                    c_type = getattr(
+                        getattr(
+                            get_c_field_type(ctypes_instance, c_field_name),
+                            "_type_",
+                            None,
+                        ),
+                        "_type_",
+                        None,
+                    )
                     py_list = getattr(py_instance, py_field_name)
                     if py_list:
                         l = len(py_list)
@@ -394,19 +407,17 @@ def py_value_to_c(py_instance, ctypes_instance):
                         if is_py_primitive_type(get_args(py_field_type)[0]):
                             # Pointer array of the Go basic data type, for example: []*string
                             for i in range(l):
-                                c_array.__setitem__(
-                                    i,
-                                    pointer(py_to_base_ctype(py_list[i], c_type)),
+                                c_array[i] = pointer(
+                                    py_to_base_ctype(py_list[i], c_type)
                                 )
                         else:
                             #  Pointer array of the Go struct, for example: []*excelize.Options
                             for i in range(l):
-                                c_array.__setitem__(
-                                    i,
-                                    pointer(py_value_to_c(py_list[i], c_type())),
+                                c_array[i] = pointer(
+                                    py_value_to_c(py_list[i], c_type())
                                 )
-                        ctypes_instance.__setattr__(c_field_name + "Len", c_int(l))
-                        ctypes_instance.__setattr__(c_field_name, c_array)
+                        setattr(ctypes_instance, c_field_name + "Len", c_int(l))
+                        setattr(ctypes_instance, c_field_name, c_array)
     return ctypes_instance
 
 
@@ -439,6 +450,11 @@ def py_value_to_c_interface(py_value):
 
 
 class StreamWriter:
+    """
+    StreamWriter is a streaming writer for writing large amounts of data to a
+    worksheet.
+    """
+
     sw_index: int
 
     def __init__(self, sw_index: int):
@@ -609,6 +625,10 @@ class StreamWriter:
 
 
 class File:
+    """
+    File is a representation of an workbook.
+    """
+
     file_index: int
 
     def __init__(self, file_index: int):
@@ -1542,7 +1562,7 @@ class File:
         """
         Get outline level of a single column by given worksheet name and column
         name.
-        
+
         Args:
             sheet (str): The worksheet name
             col (str): The column name
@@ -1556,7 +1576,7 @@ class File:
 
             .. code-block:: python
 
-        	level, err = f.get_col_outline_level("Sheet1", "D")
+            level, err = f.get_col_outline_level("Sheet1", "D")
         """
         lib.GetColOutlineLevel.restype = types_go._IntErrorResult
         res = lib.GetColOutlineLevel(
