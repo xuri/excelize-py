@@ -1740,6 +1740,23 @@ class File:
         err = res.err.decode(ENCODE)
         return res.val, None if err == "" else Exception(err)
 
+    def get_sheet_name(self, sheet: int) -> str:
+        """
+        Get the sheet name of the workbook by the given sheet index. 
+        If the given sheet index is invalid or the sheet doesn't exist, 
+        it will return an empty string.
+
+        Args:
+            sheet (int): The worksheet index
+
+        Returns:
+            str: The sheet name if the index is valid, otherwise an empty string.
+        """
+        lib.GetSheetName.restype = types_go._StringErrorResult
+        res = lib.GetSheetName(self.file_index, c_int(sheet))
+        err = res.err.decode(ENCODE)
+        return res.val.decode(ENCODE) if err == "" else ""
+
     def get_style(self, style_id: int) -> Tuple[Optional[Style], Optional[Exception]]:
         """
         Get style definition by given style index.
