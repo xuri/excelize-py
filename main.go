@@ -1354,17 +1354,16 @@ func GetWorkbookProps(idx int) C.struct_GetWorkbookPropsResult {
 // name. Group worksheets must contain an active worksheet.
 //
 //export GroupSheets
-func GroupSheets(idx int, sheet_names **C.char, length int) *C.char {
+func GroupSheets(idx int, sheets **C.char, length int) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
 		return C.CString(errFilePtr)
 	}
-	sheets := make([]string, 0, length)
-	names := unsafe.Slice(sheet_names, length)
-	for _, name := range names {
-		sheets = append(sheets, C.GoString(name))
+	array := make([]string, length)
+	for i, val := range unsafe.Slice(sheets, length) {
+		array[i] = C.GoString(val)
 	}
-	if err := f.(*excelize.File).GroupSheets(sheets); err != nil {
+	if err := f.(*excelize.File).GroupSheets(array); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
@@ -1385,21 +1384,6 @@ func InsertCols(idx int, sheet, col *C.char, n int) *C.char {
 	return C.CString(emptyString)
 }
 
-// InsertRows provides a function to insert new rows after the given Excel row
-// number starting from 1 and number of rows.
-//
-//export InsertRows
-func InsertRows(idx int, sheet *C.char, row, n int) *C.char {
-	f, ok := files.Load(idx)
-	if !ok {
-		return C.CString(emptyString)
-	}
-	if err := f.(*excelize.File).InsertRows(C.GoString(sheet), row, n); err != nil {
-		return C.CString(err.Error())
-	}
-	return C.CString(emptyString)
-}
-
 // InsertPageBreak create a page break to determine where the printed page
 // ends and where begins the next one by given worksheet name and cell
 // reference, so the content before the page break will be printed on one page
@@ -1412,6 +1396,21 @@ func InsertPageBreak(idx int, sheet, cell *C.char) *C.char {
 		return C.CString(emptyString)
 	}
 	if err := f.(*excelize.File).InsertPageBreak(C.GoString(sheet), C.GoString(cell)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// InsertRows provides a function to insert new rows after the given Excel row
+// number starting from 1 and number of rows.
+//
+//export InsertRows
+func InsertRows(idx int, sheet *C.char, row, n int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(emptyString)
+	}
+	if err := f.(*excelize.File).InsertRows(C.GoString(sheet), row, n); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)

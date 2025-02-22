@@ -285,21 +285,6 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.merge_cell("Sheet1", "A1", "B2"))
         self.assertIsNone(f.unmerge_cell("Sheet1", "A1", "B2"))
 
-        self.assertIsNone(f.insert_page_break("Sheet1", "A1"))
-        self.assertIsNone(f.insert_page_break("Sheet1", "B2"))
-        self.assertEqual(
-            str(f.insert_page_break("Sheet1", "A")),
-            'cannot convert cell "A" to coordinates: invalid cell name "A"'
-        )
-        self.assertEqual(
-            str(f.insert_page_break("SheetN", "C3")),
-            "sheet SheetN does not exist"
-        )
-        self.assertEqual(
-            str(f.insert_page_break("Sheet:1", "C3")),
-            "the sheet can not contain any of the characters :\\/?*[or]"
-        )
-
         idx, err = f.new_sheet("Sheet2")
         self.assertEqual(idx, 1)
         self.assertIsNone(err)
@@ -404,7 +389,6 @@ class TestExcelize(unittest.TestCase):
         )
         self.assertIsNone(f.move_sheet("Sheet2", "Sheet1"))
         self.assertIsNone(f.remove_col("Sheet1", "Z"))
-        self.assertIsNone(f.remove_page_break("Sheet1", "A1"))
         self.assertIsNone(f.remove_row("Sheet1", 100))
         self.assertIsNone(f.ungroup_sheets())
         self.assertIsNone(f.update_linked_value())
@@ -430,21 +414,38 @@ class TestExcelize(unittest.TestCase):
             self.assertIsNone(err)
 
         self.assertEqual(
-            str(f.group_sheets(["Sheet1", "SheetN"])),
-            "sheet SheetN does not exist"
+            str(f.group_sheets(["Sheet1", "SheetN"])), "sheet SheetN does not exist"
         )
         self.assertEqual(
             str(f.group_sheets(["Sheet2", "Sheet3"])),
-            "group worksheet must contain an active worksheet"
+            "group worksheet must contain an active worksheet",
         )
         self.assertEqual(
             str(f.group_sheets(["Sheet:1", "Sheet1"])),
-            "the sheet can not contain any of the characters :\\/?*[or]"
+            "the sheet can not contain any of the characters :\\/?*[or]",
         )
         self.assertIsNone(f.group_sheets(["Sheet1", "Sheet2"]))
 
         self.assertIsNone(f.save_as(os.path.join("test", "TestGroupSheets.xlsx")))
         self.assertIsNone(f.close())
+
+    def test_page_break(self):
+        f = excelize.new_file()
+        self.assertIsNone(f.insert_page_break("Sheet1", "A1"))
+        self.assertIsNone(f.insert_page_break("Sheet1", "B2"))
+        self.assertEqual(
+            str(f.insert_page_break("Sheet1", "A")),
+            'cannot convert cell "A" to coordinates: invalid cell name "A"',
+        )
+        self.assertEqual(
+            str(f.insert_page_break("SheetN", "C3")), "sheet SheetN does not exist"
+        )
+        self.assertEqual(
+            str(f.insert_page_break("Sheet:1", "C3")),
+            "the sheet can not contain any of the characters :\\/?*[or]",
+        )
+        self.assertIsNone(f.remove_page_break("Sheet1", "A1"))
+        self.assertIsNone(f.save_as(os.path.join("test", "TestPageBreak.xlsx")))
 
     def test_add_chart(self):
         f = excelize.new_file()

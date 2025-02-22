@@ -1792,28 +1792,23 @@ class File:
             None if err == "" else Exception(err)
         )
 
-    def group_sheets(self, sheets: list[str]) -> Optional[Exception]:
+    def group_sheets(self, sheets: List[str]) -> Optional[Exception]:
         """
-        Group worksheets.
+        Group worksheets by given worksheets name. Group worksheets must contain
+        an active worksheet.
 
         Args:
-        sheets (List[str]): The worksheet names to be grouped.
+            sheets (List[str]): The worksheet names to be grouped.
 
         Returns:
             Optional[Exception]: Returns None if no error occurred,
             otherwise returns an Exception with the message.
         """
         lib.GroupSheets.restype = c_char_p
-        lib.GroupSheets.argtypes = [c_int, POINTER(POINTER(c_char)), c_int]
-        c_strings = [create_string_buffer(s.encode(ENCODE)) for s in sheets]
-        sheet_array = (POINTER(c_char) * len(c_strings))()
-        for i, s in enumerate(c_strings):
-            sheet_array[i] = cast(s, POINTER(c_char))
-        err = lib.GroupSheets(
-            self.file_index,
-            sheet_array,
-            len(sheets)
-        ).decode(ENCODE)
+        array = (c_char_p * len(sheets))()
+        for i, value in enumerate(sheets):
+            array[i] = value.encode(ENCODE)
+        err = lib.GroupSheets(self.file_index, array, c_int(len(sheets))).decode(ENCODE)
         return None if err == "" else Exception(err)
 
     def insert_cols(self, sheet: str, col: str, n: int) -> Optional[Exception]:
@@ -1851,10 +1846,15 @@ class File:
 
     def insert_page_break(self, sheet: str, cell: str) -> Optional[Exception]:
         """
-        Insert Page Break.
+        Create a page break to determine where the printed page ends and where
+        begins the next one by given worksheet name and cell reference, so the
+        content before the page break will be printed on one page and after the
+        page break on another.
+
         Args:
             sheet (str): The worksheet name
-            cell (str): The column name
+            cell (str): The cell reference
+
         Returns:
             Optional[Exception]: Returns None if no error occurred,
             otherwise returns an Exception with the message.
