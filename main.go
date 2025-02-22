@@ -1350,6 +1350,25 @@ func GetWorkbookProps(idx int) C.struct_GetWorkbookPropsResult {
 	return C.struct_GetWorkbookPropsResult{opts: cVal.Elem().Interface().(C.struct_WorkbookPropsOptions), err: C.CString(emptyString)}
 }
 
+// GroupSheets provides a function to group worksheets by given worksheets
+// name. Group worksheets must contain an active worksheet.
+//
+//export GroupSheets
+func GroupSheets(idx int, sheets **C.char, length int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	array := make([]string, length)
+	for i, val := range unsafe.Slice(sheets, length) {
+		array[i] = C.GoString(val)
+	}
+	if err := f.(*excelize.File).GroupSheets(array); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
 // InsertCols provides a function to insert new columns before the given column
 // name and number of columns.
 //
@@ -1360,6 +1379,23 @@ func InsertCols(idx int, sheet, col *C.char, n int) *C.char {
 		return C.CString(emptyString)
 	}
 	if err := f.(*excelize.File).InsertCols(C.GoString(sheet), C.GoString(col), n); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// InsertPageBreak create a page break to determine where the printed page
+// ends and where begins the next one by given worksheet name and cell
+// reference, so the content before the page break will be printed on one page
+// and after the page break on another.
+//
+//export InsertPageBreak
+func InsertPageBreak(idx int, sheet, cell *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(emptyString)
+	}
+	if err := f.(*excelize.File).InsertPageBreak(C.GoString(sheet), C.GoString(cell)); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
