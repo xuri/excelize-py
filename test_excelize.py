@@ -293,6 +293,7 @@ class TestExcelize(unittest.TestCase):
         index, err = f.get_sheet_index("Sheet2")
         self.assertEqual(idx, index)
         self.assertIsNone(err)
+        self.assertEqual(f.get_sheet_name(index), "Sheet2")
 
         self.assertIsNone(f.set_col_outline_level("Sheet1", "D", 2))
         level, err = f.get_col_outline_level("Sheet1", "D")

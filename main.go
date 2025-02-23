@@ -1287,6 +1287,18 @@ func GetSheetIndex(idx int, sheet *C.char) C.struct_IntErrorResult {
 	return C.struct_IntErrorResult{val: C.int(idx), err: C.CString(emptyString)}
 }
 
+// GetSheetName provides a function to get the sheet name by the given worksheet index.
+// If the given worksheet index is invalid, it will return an error.
+//
+//export GetSheetName
+func GetSheetName(idx int, sheetIndex int) C.struct_StringErrorResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_StringErrorResult{val: C.CString(emptyString), err: C.CString(errFilePtr)}
+	}
+	return C.struct_StringErrorResult{val: C.CString(f.(*excelize.File).GetSheetName(sheetIndex)), err: C.CString(emptyString)}
+}
+
 // GetStyle provides a function to get style definition by given style index.
 //
 //export GetStyle
