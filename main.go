@@ -1071,13 +1071,12 @@ func GetCellRichText(idx int, sheet, cell *C.char) C.struct_GetCellRichTextResul
 		return C.struct_GetCellRichTextResult{Err: C.CString(err.Error())}
 	}
 	cArray := C.malloc(C.size_t(len(runs)) * C.size_t(unsafe.Sizeof(C.struct_RichTextRun{})))
-	cStructArray := (*[1 << 30]C.struct_RichTextRun)(cArray)[:len(runs):len(runs)]
 	for i, r := range runs {
 		cVal, err := goValueToC(reflect.ValueOf(r), reflect.ValueOf(&C.struct_RichTextRun{}))
 		if err != nil {
 			return C.struct_GetCellRichTextResult{Err: C.CString(err.Error())}
 		}
-		cStructArray[i] = cVal.Elem().Interface().(C.struct_RichTextRun)
+		*(*C.struct_RichTextRun)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(C.struct_RichTextRun{}))) = cVal.Elem().Interface().(C.struct_RichTextRun)
 	}
 	return C.struct_GetCellRichTextResult{RunsLen: C.int(len(runs)), Runs: (*C.struct_RichTextRun)(cArray), Err: C.CString(emptyString)}
 }
@@ -1332,13 +1331,12 @@ func GetTables(idx int, sheet *C.char) C.struct_GetTablesResult {
 		return C.struct_GetTablesResult{Err: C.CString(err.Error())}
 	}
 	cArray := C.malloc(C.size_t(len(tables)) * C.size_t(unsafe.Sizeof(C.struct_Table{})))
-	cStructArray := (*[1 << 30]C.struct_Table)(cArray)[:len(tables):len(tables)]
 	for i, t := range tables {
 		cVal, err := goValueToC(reflect.ValueOf(t), reflect.ValueOf(&C.struct_Table{}))
 		if err != nil {
 			return C.struct_GetTablesResult{Err: C.CString(err.Error())}
 		}
-		cStructArray[i] = cVal.Elem().Interface().(C.struct_Table)
+		*(*C.struct_Table)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(C.struct_Table{}))) = cVal.Elem().Interface().(C.struct_Table)
 	}
 	return C.struct_GetTablesResult{TablesLen: C.int(len(tables)), Tables: (*C.struct_Table)(cArray), Err: C.CString(emptyString)}
 }
@@ -1915,9 +1913,8 @@ func SearchSheet(idx int, sheet, value *C.char, reg bool) C.struct_StringArrayEr
 		return C.struct_StringArrayErrorResult{Err: C.CString(err.Error())}
 	}
 	cArray := C.malloc(C.size_t(len(result)) * C.size_t(unsafe.Sizeof(uintptr(0))))
-	cArrayPtr := (*[1 << 30]*C.char)(cArray)
 	for i, v := range result {
-		cArrayPtr[i] = C.CString(v)
+		*(*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(uintptr(0)))) = unsafe.Pointer(C.CString(v))
 	}
 	return C.struct_StringArrayErrorResult{ArrLen: C.int(len(result)), Arr: (**C.char)(cArray), Err: C.CString(emptyString)}
 }
