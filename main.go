@@ -1386,7 +1386,7 @@ func GroupSheets(idx int, sheets **C.char, length int) *C.char {
 func InsertCols(idx int, sheet, col *C.char, n int) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString(emptyString)
+		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).InsertCols(C.GoString(sheet), C.GoString(col), n); err != nil {
 		return C.CString(err.Error())
@@ -1403,7 +1403,7 @@ func InsertCols(idx int, sheet, col *C.char, n int) *C.char {
 func InsertPageBreak(idx int, sheet, cell *C.char) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString(emptyString)
+		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).InsertPageBreak(C.GoString(sheet), C.GoString(cell)); err != nil {
 		return C.CString(err.Error())
@@ -1418,7 +1418,7 @@ func InsertPageBreak(idx int, sheet, cell *C.char) *C.char {
 func InsertRows(idx int, sheet *C.char, row, n int) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString(emptyString)
+		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).InsertRows(C.GoString(sheet), row, n); err != nil {
 		return C.CString(err.Error())
@@ -1434,7 +1434,7 @@ func InsertRows(idx int, sheet *C.char, row, n int) *C.char {
 func MergeCell(idx int, sheet, topLeftCell, bottomRightCell *C.char) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString(emptyString)
+		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).MergeCell(C.GoString(sheet), C.GoString(topLeftCell), C.GoString(bottomRightCell)); err != nil {
 		return C.CString(err.Error())
@@ -1452,7 +1452,7 @@ func MergeCell(idx int, sheet, topLeftCell, bottomRightCell *C.char) *C.char {
 func MoveSheet(idx int, source, target *C.char) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString(emptyString)
+		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).MoveSheet(C.GoString(source), C.GoString(target)); err != nil {
 		return C.CString(err.Error())
@@ -1876,7 +1876,7 @@ func Save(idx int, opts *C.struct_Options) *C.char {
 func SaveAs(idx int, name *C.char, opts *C.struct_Options) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString(emptyString)
+		return C.CString(errFilePtr)
 	}
 	if opts != nil {
 		var options excelize.Options
@@ -1961,7 +1961,7 @@ func SetCellBool(idx int, sheet, cell *C.char, value bool) *C.char {
 func SetCellFormula(idx int, sheet, cell, formula *C.char, opts *C.struct_FormulaOpts) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString(emptyString)
+		return C.CString(errFilePtr)
 	}
 	if opts != nil {
 		var options excelize.FormulaOpts
@@ -1994,7 +1994,7 @@ func SetCellFormula(idx int, sheet, cell, formula *C.char, opts *C.struct_Formul
 func SetCellHyperLink(idx int, sheet, cell, link, linkType *C.char, opts *C.struct_HyperlinkOpts) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString(emptyString)
+		return C.CString(errFilePtr)
 	}
 	if opts != nil {
 		var options excelize.HyperlinkOpts
@@ -2036,7 +2036,7 @@ func SetCellInt(idx int, sheet, cell *C.char, value int64) *C.char {
 func SetCellRichText(idx int, sheet, cell *C.char, runs *C.struct_RichTextRun, length int) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString(emptyString)
+		return C.CString(errFilePtr)
 	}
 	textRuns := make([]excelize.RichTextRun, length)
 	for i, val := range unsafe.Slice(runs, length) {
@@ -2178,7 +2178,7 @@ func SetColWidth(idx int, sheet, startCol, endCol *C.char, width float64) *C.cha
 func SetConditionalFormat(idx int, sheet, rangeRef *C.char, opts *C.struct_ConditionalFormatOptions, length int) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString(emptyString)
+		return C.CString(errFilePtr)
 	}
 	options := make([]excelize.ConditionalFormatOptions, length)
 	for i, val := range unsafe.Slice(opts, length) {
@@ -2598,7 +2598,7 @@ func UngroupSheets(idx int) *C.char {
 func UnmergeCell(idx int, sheet, topLeftCell, bottomRightCell *C.char) *C.char {
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.CString(emptyString)
+		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).UnmergeCell(C.GoString(sheet), C.GoString(topLeftCell), C.GoString(bottomRightCell)); err != nil {
 		return C.CString(err.Error())

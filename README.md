@@ -36,22 +36,22 @@ Here is a minimal example usage that will create spreadsheet file.
 import excelize
 
 f = excelize.new_file()
-# Create a new sheet.
-index, err = f.new_sheet("Sheet2")
-if err:
+try:
+    # Create a new sheet.
+    index = f.new_sheet("Sheet2")
+    # Set value of a cell.
+    f.set_cell_value("Sheet2", "A2", "Hello world.")
+    f.set_cell_value("Sheet1", "B2", 100)
+    # Set active sheet of the workbook.
+    f.set_active_sheet(index)
+    # Save spreadsheet by the given path.
+    f.save_as("Book1.xlsx")
+except RuntimeError as err:
     print(err)
-# Set value of a cell.
-f.set_cell_value("Sheet2", "A2", "Hello world.")
-f.set_cell_value("Sheet1", "B2", 100)
-# Set active sheet of the workbook.
-f.set_active_sheet(index)
-# Save spreadsheet by the given path.
-err = f.save_as("Book1.xlsx")
-if err:
-    print(err)
-err = f.close()
-if err:
-    print(err)
+finally:
+    err = f.close()
+    if err:
+        print(err)
 ```
 
 ### Reading spreadsheet
@@ -61,27 +61,28 @@ The following constitutes the bare to read a spreadsheet document.
 ```python
 import excelize
 
-f, err = excelize.open_file("Book1.xlsx")
-if err:
+try:
+    f = excelize.open_file("Book1.xlsx")
+except RuntimeError as err:
     print(err)
     exit()
-# Get value from cell by given worksheet name and cell reference.
-cell, err = f.get_cell_value("Sheet1", "B2")
-if err:
+try:
+    # Get value from cell by given worksheet name and cell reference.
+    cell = f.get_cell_value("Sheet1", "B2")
+    print(cell)
+    # Get all the rows in the Sheet1.
+    rows = f.get_rows("Sheet1")
+    for row in rows:
+        for cell in row:
+            print(f"{cell}\t", end="")
+        print()
+except RuntimeError as err:
     print(err)
-print(cell)
-# Get all the rows in the Sheet1.
-rows, err = f.get_rows("Sheet1")
-if err:
-    print(err)
-for row in rows:
-    for cell in row:
-        print(f"{cell}\t", end="")
-    print()
-# Close the spreadsheet.
-err = f.close()
-if err:
-    print(err)
+finally:
+    # Close the spreadsheet.
+    err = f.close()
+    if err:
+        print(err)
 ```
 
 ### Add chart to spreadsheet file
@@ -100,45 +101,40 @@ data = [
     ["Normal", 5, 2, 4],
     ["Large", 6, 7, 8],
 ]
-for idx, row in enumerate(data):
-    cell, err = excelize.coordinates_to_cell_name(1, idx + 1, False)
+try:
+    for idx, row in enumerate(data):
+        cell = excelize.coordinates_to_cell_name(1, idx + 1, False)
+        f.set_sheet_row("Sheet1", cell, row)
+    chart = excelize.Chart(
+        type=excelize.ChartType.Col3DClustered,
+        series=[
+            excelize.ChartSeries(
+                name="Sheet1!$A$2",
+                categories="Sheet1!$B$1:$D$1",
+                values="Sheet1!$B$2:$D$2",
+            ),
+            excelize.ChartSeries(
+                name="Sheet1!$A$3",
+                categories="Sheet1!$B$1:$D$1",
+                values="Sheet1!$B$3:$D$3",
+            ),
+            excelize.ChartSeries(
+                name="Sheet1!$A$4",
+                categories="Sheet1!$B$1:$D$1",
+                values="Sheet1!$B$4:$D$4",
+            ),
+        ],
+        title=[excelize.RichTextRun(text="Fruit 3D Clustered Column Chart")],
+    )
+    f.add_chart("Sheet1", "E1", chart)
+    # Save spreadsheet by the given path.
+    f.save_as("Book1.xlsx")
+except RuntimeError as err:
+    print(err)
+finally:
+    err = f.close()
     if err:
         print(err)
-    err = f.set_sheet_row("Sheet1", cell, row)
-    if err:
-        print(err)
-
-chart = excelize.Chart(
-    type=excelize.ChartType.Col3DClustered,
-    series=[
-        excelize.ChartSeries(
-            name="Sheet1!$A$2",
-            categories="Sheet1!$B$1:$D$1",
-            values="Sheet1!$B$2:$D$2",
-        ),
-        excelize.ChartSeries(
-            name="Sheet1!$A$3",
-            categories="Sheet1!$B$1:$D$1",
-            values="Sheet1!$B$3:$D$3",
-        ),
-        excelize.ChartSeries(
-            name="Sheet1!$A$4",
-            categories="Sheet1!$B$1:$D$1",
-            values="Sheet1!$B$4:$D$4",
-        ),
-    ],
-    title=[excelize.RichTextRun(text="Fruit 3D Clustered Column Chart")],
-)
-err = f.add_chart("Sheet1", "E1", chart)
-if err:
-    print(err)
-# Save spreadsheet by the given path.
-err = f.save_as("Book1.xlsx")
-if err:
-    print(err)
-err = f.close()
-if err:
-    print(err)
 ```
 
 ### Add picture to spreadsheet file
@@ -146,39 +142,36 @@ if err:
 ```python
 import excelize
 
-f, err = excelize.open_file("Book1.xlsx")
-if err:
+try:
+    f = excelize.open_file("Book1.xlsx")
+except RuntimeError as err:
     print(err)
     exit()
-# Insert a picture.
-err = f.add_picture("Sheet1", "A2", "image.png", None)
-if err:
+try:
+    # Insert a picture.
+    f.add_picture("Sheet1", "A2", "image.png", None)
+    # Insert a picture to worksheet with scaling.
+    f.add_picture("Sheet1", "D2", "image.jpg", excelize.GraphicOptions(
+        scale_x=0.5,
+        scale_y=0.5,
+    ))
+    # Insert a picture offset in the cell with printing support.
+    f.add_picture("Sheet1", "H2", "image.gif", excelize.GraphicOptions(
+        print_object=True,
+        lock_aspect_ratio=False,
+        offset_x=15,
+        offset_y=10,
+        locked=False,
+    ))
+    # Save the spreadsheet with the origin path.
+    f.save()
+except RuntimeError as err:
     print(err)
-# Insert a picture to worksheet with scaling.
-err = f.add_picture("Sheet1", "D2", "image.jpg", excelize.GraphicOptions(
-    scale_x=0.5,
-    scale_y=0.5,
-))
-if err:
-    print(err)
-# Insert a picture offset in the cell with printing support.
-err = f.add_picture("Sheet1", "H2", "image.gif", excelize.GraphicOptions(
-    print_object=True,
-    lock_aspect_ratio=False,
-    offset_x=15,
-    offset_y=10,
-    locked=False,
-))
-if err:
-    print(err)
-# Save the spreadsheet with the origin path.
-err = f.save()
-if err:
-    print(err)
-# Close the spreadsheet.
-err = f.close()
-if err:
-    print(err)
+finally:
+    # Close the spreadsheet.
+    err = f.close()
+    if err:
+        print(err)
 ```
 
 ## Contributing

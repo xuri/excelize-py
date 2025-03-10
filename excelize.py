@@ -390,7 +390,8 @@ def py_value_to_c(py_instance, ctypes_instance):
                         setattr(ctypes_instance, c_field_name + "Len", c_int(l))
 
                 else:
-                    # Pointer array of the Go data type, for example: []*excelize.Options or []*string
+                    # Pointer array of the Go data type, for example:
+                    # []*excelize.Options or []*string
                     c_type = getattr(
                         getattr(
                             get_c_field_type(ctypes_instance, c_field_name),
@@ -655,7 +656,7 @@ class File:
         err = lib.Save(self.file_index, options).decode(ENCODE)
         return None if err == "" else Exception(err)
 
-    def save_as(self, filename: str, *opts: Options) -> Optional[Exception]:
+    def save_as(self, filename: str, *opts: Options) -> None:
         """
         Create or update to a spreadsheet at the provided path.
 
@@ -664,8 +665,8 @@ class File:
             *opts (Options): Optional parameters for saving the file.
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.SaveAs.restype = c_char_p
         options = (
@@ -676,11 +677,10 @@ class File:
         err = lib.SaveAs(self.file_index, filename.encode(ENCODE), options).decode(
             ENCODE
         )
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def add_chart(
-        self, sheet: str, cell: str, chart: Chart, **combo: Chart
-    ) -> Optional[Exception]:
+    def add_chart(self, sheet: str, cell: str, chart: Chart, **combo: Chart) -> None:
         """
         Add chart in a sheet by given chart format set (such as offset, scale,
         aspect ratio setting and print settings) and properties set.
@@ -692,8 +692,8 @@ class File:
             **combo (Chart): Optional parameters for combo chart
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.AddChart.restype = c_char_p
         opts = [chart] + list(combo.values())
@@ -707,7 +707,8 @@ class File:
             byref(charts),
             len(charts),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def add_chart_sheet(
         self, sheet: str, chart: Chart, **combo: Chart
@@ -785,7 +786,7 @@ class File:
 
     def add_picture(
         self, sheet: str, cell: str, name: str, opts: Optional[GraphicOptions]
-    ) -> Optional[Exception]:
+    ) -> None:
         """
         Add picture in a sheet by given picture format set (such as offset,
         scale, aspect ratio setting and print settings) and file path, supported
@@ -799,8 +800,8 @@ class File:
             *opts (GraphicOptions): The image options
 
         Returns:
-            Optional[GraphicOptions]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.AddPicture.restype = c_char_p
         options = (
@@ -815,7 +816,8 @@ class File:
             name.encode(ENCODE),
             options,
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def add_picture_from_bytes(
         self, sheet: str, cell: str, picture: Picture
@@ -877,25 +879,16 @@ class File:
             year = [2017, 2018, 2019]
             types = ["Meat", "Dairy", "Beverages", "Produce"]
             region = ["East", "West", "North", "South"]
-            err = f.set_sheet_row("Sheet1", "A1", ["Month", "Year", "Type", "Sales", "Region"])
-            if err:
-                print(err)
-            for row in range(2, 32):
-                err = f.set_cell_value("Sheet1", f"A{row}", month[random.randrange(12)])
-                if err:
-                    print(err)
-                err = f.set_cell_value("Sheet1", f"B{row}", year[random.randrange(3)])
-                if err:
-                    print(err)
-                err = f.set_cell_value("Sheet1", f"C{row}", types[random.randrange(4)])
-                if err:
-                    print(err)
-                err = f.set_cell_value("Sheet1", f"D{row}", random.randrange(5000))
-                if err:
-                    print(err)
-                err = f.set_cell_value("Sheet1", f"E{row}", region[random.randrange(4)])
-                if err:
-                    print(err)
+            try:
+                f.set_sheet_row("Sheet1", "A1", ["Month", "Year", "Type", "Sales", "Region"])
+                for row in range(2, 32):
+                    f.set_cell_value("Sheet1", f"A{row}", month[random.randrange(12)])
+                    f.set_cell_value("Sheet1", f"B{row}", year[random.randrange(3)])
+                    f.set_cell_value("Sheet1", f"C{row}", types[random.randrange(4)])
+                    f.set_cell_value("Sheet1", f"D{row}", random.randrange(5000))
+                    f.set_cell_value("Sheet1", f"E{row}", region[random.randrange(4)])
+            except RuntimeError as e:
+                print(e)
 
             err = f.add_pivot_table(
                 excelize.PivotTableOptions(
@@ -922,12 +915,14 @@ class File:
             )
             if err:
                 print(err)
-            err = f.save_as("Book1.xlsx")
-            if err:
-                print(err)
-            err = f.close()
-            if err:
-                print(err)
+            try:
+                f.save_as("Book1.xlsx")
+            except RuntimeError as e:
+                print(e)
+            finally:
+                err = f.close()
+                if err:
+                    print(err)
         """
         lib.AddPivotTable.restype = c_char_p
         err = lib.AddPivotTable(
@@ -989,12 +984,14 @@ class File:
             )
             if err:
                 print(err)
-            err = f.save_as("Book1.xlsx")
-            if err:
-                print(err)
-            err = f.close()
-            if err:
-                print(err)
+            try:
+                f.save_as("Book1.xlsx")
+            except RuntimeError as e:
+                print(e)
+            finally:
+                err = f.close()
+                if err:
+                    print(err)
         """
         lib.AddShape.restype = c_char_p
         options = py_value_to_c(opts, types_go._Shape())
@@ -1524,9 +1521,7 @@ class File:
         err = res.Err.decode(ENCODE)
         return runs if runs else [], None if err == "" else Exception(err)
 
-    def get_cell_value(
-        self, sheet: str, cell: str, *opts: Options
-    ) -> Tuple[str, Optional[Exception]]:
+    def get_cell_value(self, sheet: str, cell: str, *opts: Options) -> str:
         """
         Get formatted value from cell by given worksheet name and cell reference
         in spreadsheet. The return value is converted to the 'string' data type.
@@ -1541,8 +1536,8 @@ class File:
             *opts (Options): Optional parameters for get cell value
 
         Returns:
-            Tuple[str, Optional[Exception]]: A tuple containing the cell value
-            as a string and an exception if an error occurred, otherwise None.
+            str: Return the cell value as a string if no error occurred,
+            otherwise raise a RuntimeError with the message.
         """
         lib.GetCellValue.restype = types_go._StringErrorResult
         options = (
@@ -1554,7 +1549,9 @@ class File:
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE), options
         )
         err = res.err.decode(ENCODE)
-        return res.val.decode(ENCODE), None if err == "" else Exception(err)
+        if not err:
+            return res.val.decode(ENCODE)
+        raise RuntimeError(err)
 
     def get_col_outline_level(
         self, sheet: str, col: str
@@ -1666,9 +1663,7 @@ class File:
         err = res.err.decode(ENCODE)
         return res.val, None if err == "" else Exception(err)
 
-    def get_rows(
-        self, sheet: str, *opts: Options
-    ) -> Tuple[List[List[str]], Optional[Exception]]:
+    def get_rows(self, sheet: str, *opts: Options) -> List[List[str]]:
         """
         Return all the rows in a sheet by given worksheet name, returned as a
         two-dimensional array, where the value of the cell is converted to the
@@ -1683,9 +1678,15 @@ class File:
             *opts (Options): Optional parameters for get rows
 
         Returns:
-            Tuple[List[List[str]], Optional[Exception]]: A tuple containing the
-            cell value as a string and an exception if an error occurred,
-            otherwise None.
+            List[List[str]]: Return all the rows in a sheet by given worksheet
+            name, returned as a two-dimensional array if no error occurred,
+            otherwise raise a RuntimeError with the message. Where the value of
+            the cell is converted to the string type. If the cell format can be
+            applied to the value of the cell, the applied value will be used,
+            otherwise the original value will be used. GetRows fetched the rows
+            with value or formula cells, the continually blank cells in the tail
+            of each row will be skipped, so the length of each row may be
+            inconsistent.
         """
         lib.GetRows.restype = types_go._GetRowsResult
         rows = []
@@ -1702,8 +1703,9 @@ class File:
             for row in result:
                 if row.cell:
                     rows.append([cell for cell in row.cell])
-
-        return rows, None if err == "" else Exception(err)
+        if not err:
+            return rows
+        raise RuntimeError(err)
 
     def get_sheet_dimension(self, sheet: str) -> Tuple[str, Optional[Exception]]:
         """
@@ -1742,8 +1744,8 @@ class File:
 
     def get_sheet_name(self, sheet: int) -> str:
         """
-        Get the sheet name of the workbook by the given sheet index. 
-        If the given sheet index is invalid or the sheet doesn't exist, 
+        Get the sheet name of the workbook by the given sheet index.
+        If the given sheet index is invalid or the sheet doesn't exist,
         it will return an empty string.
 
         Args:
@@ -1991,7 +1993,7 @@ class File:
         err = res.err.decode(ENCODE)
         return res.val, None if err == "" else Exception(err)
 
-    def new_sheet(self, sheet: str) -> Tuple[int, Optional[Exception]]:
+    def new_sheet(self, sheet: str) -> int:
         """
         Create a new sheet by given a worksheet name and returns the index of
         the sheets in the workbook after it appended. Note that when creating a
@@ -2001,13 +2003,15 @@ class File:
             sheet (str): The worksheet name
 
         Returns:
-            Tuple[int, Optional[Exception]]: A tuple containing the index of the
-            new sheet and an Exception if an error occurred, otherwise None.
+            int: Return the index of the new sheet if no error occurred,
+            otherwise raise a RuntimeError with the message.
         """
         lib.NewSheet.restype = types_go._IntErrorResult
         res = lib.NewSheet(self.file_index, sheet.encode(ENCODE))
         err = res.err.decode(ENCODE)
-        return res.val, None if err == "" else Exception(err)
+        if not err:
+            return res.val
+        raise RuntimeError(err)
 
     def new_stream_writer(
         self, sheet: str
@@ -2045,21 +2049,24 @@ class File:
                 print(err)
             for r in range(2, 102401):
                 row = [random.randrange(640000) for _ in range(1, 51)]
-                cell, err = excelize.coordinates_to_cell_name(1, r, False)
-                if err:
-                    print(err)
+                try:
+                    cell = excelize.coordinates_to_cell_name(1, r, False)
+                except RuntimeError as e:
+                    print(e)
                 err = sw.set_row(cell, row)
                 if err:
                     print(err)
             err = sw.flush()
             if err:
                 print(err)
-            err = f.save_as("Book1.xlsx")
-            if err:
-                print(err)
-            err = f.close()
-            if err:
-                print(err)
+            try:
+                f.save_as("Book1.xlsx")
+            except RuntimeError as e:
+                print(e)
+            finally:
+                err = f.close()
+                if err:
+                    print(err)
         """
         lib.NewStreamWriter.restype = types_go._IntErrorResult
         res = lib.NewStreamWriter(self.file_index, sheet.encode(ENCODE))
@@ -2278,7 +2285,7 @@ class File:
         err = res.Err.decode(ENCODE)
         return arr if arr else [], None if err == "" else Exception(err)
 
-    def set_active_sheet(self, index: int) -> Optional[Exception]:
+    def set_active_sheet(self, index: int) -> None:
         """
         Set the default active sheet of the workbook by a given index. Note that
         the active index is different from the ID returned by function
@@ -2289,12 +2296,13 @@ class File:
             index (int): The sheet index
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         err, lib.SetActiveSheet.restype = None, c_char_p
         err = lib.SetActiveSheet(self.file_index, index).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def set_cell_bool(self, sheet: str, cell: str, value: bool) -> Optional[Exception]:
         """
@@ -2478,9 +2486,10 @@ class File:
             .. code-block:: python
 
             f = excelize.new_file()
-            err = f.set_row_height("Sheet1", 1, 35)
-            if err:
-                print(err)
+            try:
+                f.set_row_height("Sheet1", 1, 35)
+            except RuntimeError as e:
+                print(e)
             err = f.set_col_width("Sheet1", "A", "A", 44)
             if err:
                 print(err)
@@ -2576,12 +2585,14 @@ class File:
             err = f.set_cell_style("Sheet1", "A1", "A1", style)
             if err:
                 print(err)
-            err = f.save_as("Book1.xlsx")
-            if err:
-                print(err)
-            err = f.close()
-            if err:
-                print(err)
+            try:
+                f.save_as("Book1.xlsx")
+            except RuntimeError as e:
+                print(e)
+            finally:
+                err = f.close()
+                if err:
+                    print(err)
         """
         lib.SetCellRichText.restype = c_char_p
         vals = (types_go._RichTextRun * len(runs))()
@@ -2663,7 +2674,7 @@ class File:
         sheet: str,
         cell: str,
         value: Union[None, int, str, bool, datetime, date],
-    ) -> Optional[Exception]:
+    ) -> None:
         """
         Set the value of a cell. The specified coordinates should not be in the
         first row of the table, a complex number can be set with string text.
@@ -2682,8 +2693,8 @@ class File:
             to be write
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.SetCellValue.restype = c_char_p
         err = lib.SetCellValue(
@@ -2692,7 +2703,8 @@ class File:
             cell.encode(ENCODE),
             byref(py_value_to_c_interface(value)),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def set_col_outline_level(
         self, sheet: str, col: str, level: int
@@ -3038,9 +3050,7 @@ class File:
         ).decode(ENCODE)
         return None if err == "" else Exception(err)
 
-    def set_row_height(
-        self, sheet: str, row: int, height: float
-    ) -> Optional[Exception]:
+    def set_row_height(self, sheet: str, row: int, height: float) -> None:
         """
         Set the height of a single row. If the value of height is 0, will hide
         the specified row, if the value of height is -1, will unset the custom
@@ -3052,21 +3062,25 @@ class File:
             height (float): The row height
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example, set the height of the first row in Sheet1:
 
             .. code-block:: python
 
-            err = f.set_row_height("Sheet1", 1, 50)
+            try:
+                f.set_row_height("Sheet1", 1, 50)
+            except RuntimeError as e:
+                print(e)
         """
         lib.SetRowHeight.restype = c_char_p
         err = lib.SetRowHeight(
             self.file_index, sheet.encode(ENCODE), c_int(row), c_double(height)
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def set_row_outline(self, sheet: str, row: int, level: int) -> Optional[Exception]:
         """
@@ -3318,7 +3332,7 @@ class File:
         sheet: str,
         cell: str,
         values: List[Union[None, int, str, bool, datetime, date]],
-    ) -> Optional[Exception]:
+    ) -> None:
         """
         Writes cells to row by given worksheet name, starting cell reference and
         cell values list.
@@ -3330,8 +3344,8 @@ class File:
             values
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.SetSheetRow.restype = c_char_p
         vals = (types_go._Interface * len(values))()
@@ -3344,7 +3358,8 @@ class File:
             byref(vals),
             len(vals),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def set_sheet_view(
         self, sheet: str, view_index: int, opts: ViewOptions
@@ -3526,9 +3541,7 @@ def column_number_to_name(num: int) -> Tuple[str, Optional[Exception]]:
     return res.val.decode(ENCODE), None if err == "" else Exception(err)
 
 
-def coordinates_to_cell_name(
-    col: int, row: int, *abs: bool
-) -> Tuple[str, Optional[Exception]]:
+def coordinates_to_cell_name(col: int, row: int, *is_absolute: bool) -> str:
     """
     Converts [X, Y] coordinates to alpha-numeric cell name or returns an error.
 
@@ -3540,16 +3553,18 @@ def coordinates_to_cell_name(
         references (e.g., $A$1).
 
     Returns:
-        Tuple[str, Optional[Exception]]: A tuple containing the cell name as a
-        string and an Exception if an error occurred, otherwise None.
+        str: Return the cell name as a string if no error occurred, otherwise
+        raise a RuntimeError with the message.
     """
     lib.CoordinatesToCellName.restype = types_go._StringErrorResult
     options = False
-    if len(abs) > 0:
-        options = abs[0]
+    if len(is_absolute) > 0:
+        options = is_absolute[0]
     res = lib.CoordinatesToCellName(col, row, options)
     err = res.err.decode(ENCODE)
-    return res.val.decode(ENCODE), None if err == "" else Exception(err)
+    if not err:
+        return res.val.decode(ENCODE)
+    raise RuntimeError(err)
 
 
 def new_file() -> File:
@@ -3562,9 +3577,7 @@ def new_file() -> File:
     return File(lib.NewFile())
 
 
-def open_file(
-    filename: str, *opts: Options
-) -> Tuple[Optional[File], Optional[Exception]]:
+def open_file(filename: str, *opts: Options) -> File:
     """
     OpenFile take the name of a spreadsheet file and returns a populated
     spreadsheet file struct for it.
@@ -3574,17 +3587,17 @@ def open_file(
         *opts (Options): Optional parameters for opening the file.
 
     Returns:
-        Tuple[Optional[File], Optional[Exception]]: A tuple containing a File
-        object if successful, or None and an Exception if an error occurred.
+        File: Return a File object if if no error occurred, otherwise raise a
+        RuntimeError with the message.
     """
     lib.OpenFile.restype, options = types_go._IntErrorResult, None
     if len(opts) > 0:
         options = byref(py_value_to_c(opts[0], types_go._Options()))
     res = lib.OpenFile(filename.encode(ENCODE), options)
     err = res.err.decode(ENCODE)
-    if err == "":
-        return File(res.val), None
-    return None, Exception(err)
+    if not err:
+        return File(res.val)
+    raise RuntimeError(err)
 
 
 def open_reader(

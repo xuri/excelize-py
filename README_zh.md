@@ -36,22 +36,22 @@ pip install excelize
 import excelize
 
 f = excelize.new_file()
-# 新建一张工作表
-index, err = f.new_sheet("Sheet2")
-if err:
+try:
+    # 新建一张工作表
+    index = f.new_sheet("Sheet2")
+    # 设置单元格的值
+    f.set_cell_value("Sheet2", "A2", "Hello world.")
+    f.set_cell_value("Sheet1", "B2", 100)
+    # 设置工作簿的默认工作表
+    f.set_active_sheet(index)
+    # 根据指定路径保存文件
+    f.save_as("Book1.xlsx")
+except RuntimeError as err:
     print(err)
-# 设置单元格的值
-f.set_cell_value("Sheet2", "A2", "Hello world.")
-f.set_cell_value("Sheet1", "B2", 100)
-# 设置工作簿的默认工作表
-f.set_active_sheet(index)
-# 根据指定路径保存文件
-err = f.save_as("Book1.xlsx")
-if err:
-    print(err)
-err = f.close()
-if err:
-    print(err)
+finally:
+    err = f.close()
+    if err:
+        print(err)
 ```
 
 ### 读取 Excel 文档
@@ -61,27 +61,28 @@ if err:
 ```python
 import excelize
 
-f, err = excelize.open_file("Book1.xlsx")
-if err:
+try:
+    f = excelize.open_file("Book1.xlsx")
+except RuntimeError as err:
     print(err)
     exit()
-# 获取工作表中指定单元格的值
-cell, err = f.get_cell_value("Sheet1", "B2")
-if err:
+try:
+    # 获取工作表中指定单元格的值
+    cell = f.get_cell_value("Sheet1", "B2")
+    print(cell)
+    # 获取 Sheet1 上所有单元格
+    rows = f.get_rows("Sheet1")
+    for row in rows:
+        for cell in row:
+            print(f"{cell}\t", end="")
+        print()
+except RuntimeError as err:
     print(err)
-print(cell)
-# 获取 Sheet1 上所有单元格
-rows, err = f.get_rows("Sheet1")
-if err:
-    print(err)
-for row in rows:
-    for cell in row:
-        print(f"{cell}\t", end="")
-    print()
-# 关闭工作簿
-err = f.close()
-if err:
-    print(err)
+finally:
+    # 关闭工作簿
+    err = f.close()
+    if err:
+        print(err)
 ```
 
 ### 在 Excel 文档中创建图表
@@ -100,45 +101,40 @@ data = [
     ["Normal", 5, 2, 4],
     ["Large", 6, 7, 8],
 ]
-for idx, row in enumerate(data):
-    cell, err = excelize.coordinates_to_cell_name(1, idx + 1, False)
+try:
+    for idx, row in enumerate(data):
+        cell = excelize.coordinates_to_cell_name(1, idx + 1, False)
+        f.set_sheet_row("Sheet1", cell, row)
+    chart = excelize.Chart(
+        type=excelize.ChartType.Col3DClustered,
+        series=[
+            excelize.ChartSeries(
+                name="Sheet1!$A$2",
+                categories="Sheet1!$B$1:$D$1",
+                values="Sheet1!$B$2:$D$2",
+            ),
+            excelize.ChartSeries(
+                name="Sheet1!$A$3",
+                categories="Sheet1!$B$1:$D$1",
+                values="Sheet1!$B$3:$D$3",
+            ),
+            excelize.ChartSeries(
+                name="Sheet1!$A$4",
+                categories="Sheet1!$B$1:$D$1",
+                values="Sheet1!$B$4:$D$4",
+            ),
+        ],
+        title=[excelize.RichTextRun(text="Fruit 3D Clustered Column Chart")],
+    )
+    f.add_chart("Sheet1", "E1", chart)
+    # 根据指定路径保存文件
+    f.save_as("Book1.xlsx")
+except RuntimeError as err:
+    print(err)
+finally:
+    err = f.close()
     if err:
         print(err)
-    err = f.set_sheet_row("Sheet1", cell, row)
-    if err:
-        print(err)
-
-chart = excelize.Chart(
-    type=excelize.ChartType.Col3DClustered,
-    series=[
-        excelize.ChartSeries(
-            name="Sheet1!$A$2",
-            categories="Sheet1!$B$1:$D$1",
-            values="Sheet1!$B$2:$D$2",
-        ),
-        excelize.ChartSeries(
-            name="Sheet1!$A$3",
-            categories="Sheet1!$B$1:$D$1",
-            values="Sheet1!$B$3:$D$3",
-        ),
-        excelize.ChartSeries(
-            name="Sheet1!$A$4",
-            categories="Sheet1!$B$1:$D$1",
-            values="Sheet1!$B$4:$D$4",
-        ),
-    ],
-    title=[excelize.RichTextRun(text="Fruit 3D Clustered Column Chart")],
-)
-err = f.add_chart("Sheet1", "E1", chart)
-if err:
-    print(err)
-# 根据指定路径保存文件
-err = f.save_as("Book1.xlsx")
-if err:
-    print(err)
-err = f.close()
-if err:
-    print(err)
 ```
 
 ### 向 Excel 文档中插入图片
@@ -146,39 +142,36 @@ if err:
 ```python
 import excelize
 
-f, err = excelize.open_file("Book1.xlsx")
-if err:
+try:
+    f = excelize.open_file("Book1.xlsx")
+except RuntimeError as err:
     print(err)
     exit()
-# 插入图片
-err = f.add_picture("Sheet1", "A2", "image.png", None)
-if err:
+try:
+    # 插入图片
+    f.add_picture("Sheet1", "A2", "image.png", None)
+    # 在工作表中插入图片，并设置图片的缩放比例
+    f.add_picture("Sheet1", "D2", "image.jpg", excelize.GraphicOptions(
+        scale_x=0.5,
+        scale_y=0.5,
+    ))
+    # 在工作表中插入图片，并设置图片的打印属性
+    f.add_picture("Sheet1", "H2", "image.gif", excelize.GraphicOptions(
+        print_object=True,
+        lock_aspect_ratio=False,
+        offset_x=15,
+        offset_y=10,
+        locked=False,
+    ))
+    # 保存工作簿
+    f.save()
+except RuntimeError as err:
     print(err)
-# 在工作表中插入图片，并设置图片的缩放比例
-err = f.add_picture("Sheet1", "D2", "image.jpg", excelize.GraphicOptions(
-    scale_x=0.5,
-    scale_y=0.5,
-))
-if err:
-    print(err)
-# 在工作表中插入图片，并设置图片的打印属性
-err = f.add_picture("Sheet1", "H2", "image.gif", excelize.GraphicOptions(
-    print_object=True,
-    lock_aspect_ratio=False,
-    offset_x=15,
-    offset_y=10,
-    locked=False,
-))
-if err:
-    print(err)
-# 保存工作簿
-err = f.save()
-if err:
-    print(err)
-# 关闭工作簿
-err = f.close()
-if err:
-    print(err)
+finally:
+    # 关闭工作簿
+    err = f.close()
+    if err:
+        print(err)
 ```
 
 ## 社区合作
