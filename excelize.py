@@ -349,10 +349,13 @@ def py_value_to_c(py_instance, ctypes_instance):
                         get_c_field_type(ctypes_instance, c_field_name), "_type_", None
                     )
                     value = getattr(py_instance, py_field_name)
-                    setattr(
-                        ctypes_instance, c_field_name, cast(value, POINTER(c_ubyte))
-                    )
-                    setattr(ctypes_instance, c_field_name + "Len", c_int(len(value)))
+                    if value is not None:
+                        setattr(
+                            ctypes_instance, c_field_name, cast(value, POINTER(c_ubyte))
+                        )
+                        setattr(
+                            ctypes_instance, c_field_name + "Len", c_int(len(value))
+                        )
                     continue
                 py_field_type = get_args(arg_type)[0]
                 if type(None) not in get_args(py_field_type):
@@ -635,7 +638,7 @@ class File:
     def __init__(self, file_index: int):
         self.file_index = file_index
 
-    def save(self, *opts: Options) -> Optional[Exception]:
+    def save(self, *opts: Options) -> None:
         """
         Override the spreadsheet with origin path.
 
@@ -643,8 +646,8 @@ class File:
             *opts (Options): Optional parameters for saving the file.
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         err, lib.Save.restype = None, c_char_p
         options = POINTER(types_go._Options)()
@@ -654,7 +657,8 @@ class File:
             else POINTER(types_go._Options)()
         )
         err = lib.Save(self.file_index, options).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def save_as(self, filename: str, *opts: Options) -> None:
         """
@@ -710,9 +714,7 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
-    def add_chart_sheet(
-        self, sheet: str, chart: Chart, **combo: Chart
-    ) -> Optional[Exception]:
+    def add_chart_sheet(self, sheet: str, chart: Chart, **combo: Chart) -> None:
         """
         Create a chartsheet by given chart format set (such as offset, scale,
         aspect ratio setting and print settings) and properties set. In Excel a
@@ -724,8 +726,8 @@ class File:
             **combo (Chart): Optional parameters for combo chart
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.AddChartSheet.restype = c_char_p
         opts = [chart] + list(combo.values())
@@ -738,9 +740,10 @@ class File:
             byref(charts),
             len(charts),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def add_comment(self, sheet: str, opts: Comment) -> Optional[Exception]:
+    def add_comment(self, sheet: str, opts: Comment) -> None:
         """
         Add comments in a sheet by giving the worksheet name, cell reference,
         and format set (such as author and text). Note that the maximum author
@@ -751,17 +754,18 @@ class File:
             opts (Comment): The comment options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.AddComment.restype = c_char_p
         options = py_value_to_c(opts, types_go._Comment())
         err = lib.AddComment(
             self.file_index, sheet.encode(ENCODE), byref(options)
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def add_form_control(self, sheet: str, opts: FormControl) -> Optional[Exception]:
+    def add_form_control(self, sheet: str, opts: FormControl) -> None:
         """
         Add form control button in a worksheet by given worksheet name and form
         control options. Supported form control type: button, check box, group
@@ -774,15 +778,16 @@ class File:
             opts (FormControl): The form control options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.AddFormControl.restype = c_char_p
         options = py_value_to_c(opts, types_go._FormControl())
         err = lib.AddFormControl(
             self.file_index, sheet.encode(ENCODE), byref(options)
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def add_picture(
         self, sheet: str, cell: str, name: str, opts: Optional[GraphicOptions]
@@ -819,9 +824,7 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
-    def add_picture_from_bytes(
-        self, sheet: str, cell: str, picture: Picture
-    ) -> Optional[Exception]:
+    def add_picture_from_bytes(self, sheet: str, cell: str, picture: Picture) -> None:
         """
         Add picture in a sheet by given picture format set (such as offset,
         scale, aspect ratio setting and print settings), file base name,
@@ -837,8 +840,8 @@ class File:
             picture (Picture): The picture options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.AddPictureFromBytes.restype = c_char_p
         err = lib.AddPictureFromBytes(
@@ -847,9 +850,10 @@ class File:
             cell.encode(ENCODE),
             byref(py_value_to_c(picture, types_go._Picture())),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def add_pivot_table(self, opts: Optional[PivotTableOptions]) -> Optional[Exception]:
+    def add_pivot_table(self, opts: Optional[PivotTableOptions]) -> None:
         """
         Add pivot table by given pivot table options. Note that the same fields
         can not in Columns, Rows and Filter fields at the same time.
@@ -858,8 +862,8 @@ class File:
             opts (PivotTableOptions): The pivot table options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example, create a pivot table on the range reference
@@ -887,35 +891,30 @@ class File:
                     f.set_cell_value("Sheet1", f"C{row}", types[random.randrange(4)])
                     f.set_cell_value("Sheet1", f"D{row}", random.randrange(5000))
                     f.set_cell_value("Sheet1", f"E{row}", region[random.randrange(4)])
-            except RuntimeError as e:
-                print(e)
 
-            err = f.add_pivot_table(
-                excelize.PivotTableOptions(
-                    data_range="Sheet1!A1:E31",
-                    pivot_table_range="Sheet1!G2:M34",
-                    rows=[
-                        excelize.PivotTableField(data="Month", default_subtotal=True),
-                        excelize.PivotTableField(data="Year"),
-                    ],
-                    filter=[excelize.PivotTableField(data="Region")],
-                    columns=[
-                        excelize.PivotTableField(data="Type", default_subtotal=True),
-                    ],
-                    data=[
-                        excelize.PivotTableField(data="Sales", name="Summarize", subtotal="Sum"),
-                    ],
-                    row_grand_totals=True,
-                    col_grand_totals=True,
-                    show_drill=True,
-                    show_row_headers=True,
-                    show_col_headers=True,
-                    show_last_column=True,
+                f.add_pivot_table(
+                    excelize.PivotTableOptions(
+                        data_range="Sheet1!A1:E31",
+                        pivot_table_range="Sheet1!G2:M34",
+                        rows=[
+                            excelize.PivotTableField(data="Month", default_subtotal=True),
+                            excelize.PivotTableField(data="Year"),
+                        ],
+                        filter=[excelize.PivotTableField(data="Region")],
+                        columns=[
+                            excelize.PivotTableField(data="Type", default_subtotal=True),
+                        ],
+                        data=[
+                            excelize.PivotTableField(data="Sales", name="Summarize", subtotal="Sum"),
+                        ],
+                        row_grand_totals=True,
+                        col_grand_totals=True,
+                        show_drill=True,
+                        show_row_headers=True,
+                        show_col_headers=True,
+                        show_last_column=True,
+                    )
                 )
-            )
-            if err:
-                print(err)
-            try:
                 f.save_as("Book1.xlsx")
             except RuntimeError as e:
                 print(e)
@@ -929,9 +928,10 @@ class File:
             self.file_index,
             byref(py_value_to_c(opts, types_go._PivotTableOptions())),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def add_shape(self, sheet: str, opts: Shape) -> Optional[Exception]:
+    def add_shape(self, sheet: str, opts: Shape) -> None:
         """
         Add shape in a sheet by given worksheet name and shape format set (such
         as offset, scale, aspect ratio setting and print settings).
@@ -941,8 +941,8 @@ class File:
             opts (Shape): The shape options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example, add text box (rect shape) in Sheet1:
@@ -952,39 +952,37 @@ class File:
             import excelize
 
             f = excelize.new_file()
-            err = f.add_shape(
-                "Sheet1",
-                excelize.Shape(
-                    cell="G6",
-                    type="rect",
-                    line=excelize.ShapeLine(
-                        color="4286F4",
-                        width=1.2,
-                    ),
-                    fill=excelize.Fill(
-                        color=["8EB9FF"],
-                        pattern=1,
-                    ),
-                    paragraph=[
-                        excelize.RichTextRun(
-                            text="Rectangle Shape",
-                            font=excelize.Font(
-                                bold=True,
-                                italic=True,
-                                family="Times New Roman",
-                                size=19,
-                                color="777777",
-                                underline="sng",
-                            ),
-                        )
-                    ],
-                    width=80,
-                    height=40,
-                ),
-            )
-            if err:
-                print(err)
             try:
+                f.add_shape(
+                    "Sheet1",
+                    excelize.Shape(
+                        cell="G6",
+                        type="rect",
+                        line=excelize.ShapeLine(
+                            color="4286F4",
+                            width=1.2,
+                        ),
+                        fill=excelize.Fill(
+                            color=["8EB9FF"],
+                            pattern=1,
+                        ),
+                        paragraph=[
+                            excelize.RichTextRun(
+                                text="Rectangle Shape",
+                                font=excelize.Font(
+                                    bold=True,
+                                    italic=True,
+                                    family="Times New Roman",
+                                    size=19,
+                                    color="777777",
+                                    underline="sng",
+                                ),
+                            )
+                        ],
+                        width=80,
+                        height=40,
+                    ),
+                )
                 f.save_as("Book1.xlsx")
             except RuntimeError as e:
                 print(e)
@@ -998,9 +996,10 @@ class File:
         err = lib.AddShape(
             self.file_index, sheet.encode(ENCODE), byref(options)
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def add_slicer(self, sheet: str, opts: SlicerOptions) -> Optional[Exception]:
+    def add_slicer(self, sheet: str, opts: SlicerOptions) -> None:
         """
         Inserts a slicer by giving the worksheet name and slicer settings.
 
@@ -1009,8 +1008,8 @@ class File:
             opts (SlicerOptions): The slicer options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example, insert a slicer on the Sheet1!E1 with field Column1 for
@@ -1018,7 +1017,7 @@ class File:
 
             .. code-block:: python
 
-            err = f.add_slicer(
+            f.add_slicer(
                 "Sheet1",
                 excelize.SlicerOptions(
                     name="Column1",
@@ -1036,9 +1035,10 @@ class File:
         err = lib.AddSlicer(
             self.file_index, sheet.encode(ENCODE), byref(options)
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def add_sparkline(self, sheet: str, opts: SparklineOptions) -> Optional[Exception]:
+    def add_sparkline(self, sheet: str, opts: SparklineOptions) -> None:
         """
         add sparklines to the worksheet by given formatting options. Sparklines
         are small charts that fit in a single cell and are used to show trends
@@ -1051,8 +1051,8 @@ class File:
             opts (SparklineOptions): The sparklines options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example, add a grouped sparkline. Changes are applied to all
@@ -1060,7 +1060,7 @@ class File:
 
             .. code-block:: python
 
-            err = f.add_sparkline(
+            f.add_sparkline(
                 "Sheet1",
                 excelize.SparklineOptions(
                     location=["A1", "A2", "A3"],
@@ -1074,9 +1074,10 @@ class File:
         err = lib.AddSparkline(
             self.file_index, sheet.encode(ENCODE), byref(options)
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def add_table(self, sheet: str, table: Table) -> Optional[Exception]:
+    def add_table(self, sheet: str, table: Table) -> None:
         """
         Add table in a worksheet by given worksheet name, range reference and
         format set.
@@ -1091,8 +1092,8 @@ class File:
             table (Table): The table options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example, create a table of A1:D5 on Sheet1:
@@ -1106,9 +1107,10 @@ class File:
         err = lib.AddTable(
             self.file_index, sheet.encode(ENCODE), byref(options)
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def add_vba_project(self, file: bytes) -> Optional[Exception]:
+    def add_vba_project(self, file: bytes) -> None:
         """
         Add vbaProject.bin file which contains functions and/or macros. The file
         extension should be XLSM or XLTM.
@@ -1117,8 +1119,8 @@ class File:
             file (bytes): The contents buffer of the file
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.AddVBAProject.restype = c_char_p
         err = lib.AddVBAProject(
@@ -1126,14 +1128,15 @@ class File:
             cast(file, POINTER(c_ubyte)),
             len(file),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def auto_filter(
         self,
         sheet: str,
         range_ref: str,
         opts: List[AutoFilterOptions],
-    ) -> Optional[Exception]:
+    ) -> None:
         """
         Add auto filter in a worksheet by given worksheet name, range reference
         and settings. An auto filter in Excel is a way of filtering a 2D range
@@ -1153,8 +1156,8 @@ class File:
             opts (List[AutoFilterOptions]): The auto filter options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.AutoFilter.restype = c_char_p
         options = (types_go._AutoFilterOptions * len(opts))()
@@ -1167,11 +1170,10 @@ class File:
             byref(options),
             len(options),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def calc_cell_value(
-        self, sheet: str, cell: str, *opts: Options
-    ) -> Tuple[str, Optional[Exception]]:
+    def calc_cell_value(self, sheet: str, cell: str, *opts: Options) -> str:
         """
         Get calculated cell value. This feature is currently in working
         processing. Iterative calculation, implicit intersection, explicit
@@ -1184,9 +1186,8 @@ class File:
             *opts (Options): Optional parameters for get cell value
 
         Returns:
-            Tuple[str, Optional[Exception]]: A tuple containing the calculation
-            result as a string and an exception if an error occurred, otherwise
-            None.
+            str: Return the calculation result as a string if no
+            error occurred, otherwise raise a RuntimeError with the message.
         """
         lib.CalcCellValue.restype = types_go._StringErrorResult
         options = (
@@ -1198,7 +1199,9 @@ class File:
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE), options
         )
         err = res.err.decode(ENCODE)
-        return res.val.decode(ENCODE), None if err == "" else Exception(err)
+        if not err:
+            return res.val.decode(ENCODE)
+        raise RuntimeError(err)
 
     def close(self) -> Optional[Exception]:
         """
@@ -1212,7 +1215,7 @@ class File:
         err = lib.Close(self.file_index).decode(ENCODE)
         return None if err == "" else Exception(err)
 
-    def copy_sheet(self, src: int, to: int) -> Optional[Exception]:
+    def copy_sheet(self, src: int, to: int) -> None:
         """
         Duplicate a worksheet by gave source and target worksheet index. Note
         that currently doesn't support duplicate workbooks that contain tables,
@@ -1223,14 +1226,15 @@ class File:
             to (int): Target sheet index
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         err, lib.CopySheet.restype = None, c_char_p
         err = lib.CopySheet(self.file_index, src, to).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def delete_chart(self, sheet: str, cell: str) -> Optional[Exception]:
+    def delete_chart(self, sheet: str, cell: str) -> None:
         """
         Delete chart in spreadsheet by given worksheet name and cell reference.
 
@@ -1239,16 +1243,17 @@ class File:
             cell (str): The cell reference
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         err, lib.DeleteChart.restype = None, c_char_p
         err = lib.DeleteChart(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def delete_comment(self, sheet: str, cell: str) -> Optional[Exception]:
+    def delete_comment(self, sheet: str, cell: str) -> None:
         """
         Delete comment in a worksheet by given worksheet name and cell reference.
 
@@ -1257,16 +1262,17 @@ class File:
             cell (str): The cell reference
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         err, lib.DeleteComment.restype = None, c_char_p
         err = lib.DeleteComment(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def delete_defined_name(self, defined_name: DefinedName) -> Optional[Exception]:
+    def delete_defined_name(self, defined_name: DefinedName) -> None:
         """
         Delete the defined names of the workbook or worksheet. If not specified
         scope, the default scope is workbook.
@@ -1275,15 +1281,15 @@ class File:
             defined_name (DefinedName): The defined name options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example:
 
             .. code-block:: python
 
-            err = f.delete_defined_name(excelize.DefinedName(
+            f.delete_defined_name(excelize.DefinedName(
                 name="Amount",
                 scope="Sheet2",
             ))
@@ -1291,9 +1297,10 @@ class File:
         lib.DeleteDefinedName.restype = c_char_p
         options = py_value_to_c(defined_name, types_go._DefinedName())
         err = lib.DeleteDefinedName(self.file_index, byref(options)).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def delete_picture(self, sheet: str, cell: str) -> Optional[Exception]:
+    def delete_picture(self, sheet: str, cell: str) -> None:
         """
         Delete all pictures in a cell by given worksheet name and cell reference.
 
@@ -1302,16 +1309,17 @@ class File:
             cell (str): The cell reference
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         err, lib.DeletePicture.restype = None, c_char_p
         err = lib.DeletePicture(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def delete_sheet(self, sheet: str) -> Optional[Exception]:
+    def delete_sheet(self, sheet: str) -> None:
         """
         Delete worksheet in a workbook by given worksheet name. Use this method
         with caution, which will affect changes in references such as formulas,
@@ -1323,14 +1331,15 @@ class File:
             sheet (str): The worksheet name
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         err, lib.DeleteSheet.restype = None, c_char_p
         err = lib.DeleteSheet(self.file_index, sheet.encode(ENCODE)).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def delete_slicer(self, name: str) -> Optional[Exception]:
+    def delete_slicer(self, name: str) -> None:
         """
         Delete a slicer by a given slicer name.
 
@@ -1338,14 +1347,15 @@ class File:
             name (str): The slicer name
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         err, lib.DeleteSlicer.restype = None, c_char_p
         err = lib.DeleteSlicer(self.file_index, name.encode(ENCODE)).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def duplicate_row(self, sheet: str, row: int) -> Optional[Exception]:
+    def duplicate_row(self, sheet: str, row: int) -> None:
         """
         Inserts a copy of specified row (by its Excel row number) below. Use
         this method with caution, which will affect changes in references such
@@ -1358,16 +1368,17 @@ class File:
             row (int): The row number
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         err, lib.DuplicateRow.restype = None, c_char_p
         err = lib.DuplicateRow(self.file_index, sheet.encode(ENCODE), row).decode(
             ENCODE
         )
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def duplicate_row_to(self, sheet: str, row: int, row2: int) -> Optional[Exception]:
+    def duplicate_row_to(self, sheet: str, row: int, row2: int) -> None:
         """
         Inserts a copy of specified row by it Excel number to specified row
         position moving down exists rows after target position. Use this method
@@ -1382,14 +1393,15 @@ class File:
             row2 (int): The row number
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: None return if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         err, lib.DuplicateRowTo.restype = None, c_char_p
         err = lib.DuplicateRowTo(
             self.file_index, sheet.encode(ENCODE), row, row2
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def get_active_sheet_index(self) -> int:
         """
