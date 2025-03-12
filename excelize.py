@@ -230,7 +230,8 @@ def c_value_to_py(ctypes_instance, py_instance):
                                 )
                         setattr(py_instance, py_field_name, py_list)
                 else:
-                    # Pointer array of the Go data type, for example: []*excelize.Options or []*string
+                    # Pointer array of the Go data type, for example:
+                    # []*excelize.Options or []*string
                     py_list = []
                     l = getattr(ctypes_instance, c_field_name + "Len")
                     c_array = getattr(ctypes_instance, c_field_name)
@@ -484,9 +485,12 @@ class StreamWriter:
         Example:
             For example, create a table of A1:D5 on Sheet1:
 
-            .. code-block:: python
-
-            err = sw.add_table(excelize.Table(range="A1:D5"))
+            ```python
+            try:
+                sw.add_table(excelize.Table(range="A1:D5"))
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.StreamAddTable.restype = c_char_p
         options = py_value_to_c(table, types_go._Table())
@@ -556,9 +560,12 @@ class StreamWriter:
         Example:
             For example set the width column B:C as 20:
 
-            .. code-block:: python
-
-            err = sw.set_col_width(2, 3, 20)
+            ```python
+            try:
+                sw.set_col_width(2, 3, 20)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.StreamSetColWidth.restype = c_char_p
         err = lib.StreamSetColWidth(
@@ -588,7 +595,7 @@ class StreamWriter:
         self,
         cell: str,
         values: List[Union[None, int, str, bool, datetime, date]],
-    ) -> Optional[Exception]:
+    ) -> None:
         """
         Writes an array to stream rows by giving starting cell reference and a
         pointer to an array of values. Note that you must call the 'flush'
@@ -600,8 +607,8 @@ class StreamWriter:
             values
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.StreamSetRow.restype = c_char_p
         vals = (types_go._Interface * len(values))()
@@ -613,19 +620,21 @@ class StreamWriter:
             byref(vals),
             len(vals),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def flush(self) -> Optional[Exception]:
+    def flush(self) -> None:
         """
         Ending the streaming writing process.
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.StreamFlush.restype = c_char_p
         err = lib.StreamFlush(self.sw_index).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
 
 class File:
@@ -646,7 +655,7 @@ class File:
             *opts (Options): Optional parameters for saving the file.
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         err, lib.Save.restype = None, c_char_p
@@ -669,7 +678,7 @@ class File:
             *opts (Options): Optional parameters for saving the file.
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         lib.SaveAs.restype = c_char_p
@@ -696,7 +705,7 @@ class File:
             **combo (Chart): Optional parameters for combo chart
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         lib.AddChart.restype = c_char_p
@@ -726,7 +735,7 @@ class File:
             **combo (Chart): Optional parameters for combo chart
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         lib.AddChartSheet.restype = c_char_p
@@ -754,7 +763,7 @@ class File:
             opts (Comment): The comment options
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         lib.AddComment.restype = c_char_p
@@ -778,7 +787,7 @@ class File:
             opts (FormControl): The form control options
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         lib.AddFormControl.restype = c_char_p
@@ -805,7 +814,7 @@ class File:
             *opts (GraphicOptions): The image options
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         lib.AddPicture.restype = c_char_p
@@ -840,7 +849,7 @@ class File:
             picture (Picture): The picture options
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         lib.AddPictureFromBytes.restype = c_char_p
@@ -862,7 +871,7 @@ class File:
             opts (PivotTableOptions): The pivot table options
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
 
         Example:
@@ -870,8 +879,7 @@ class File:
             Sheet1!G2:M34 with the range reference Sheet1!A1:E31 as the data
             source, summarize by sum for sales:
 
-            .. code-block:: python
-
+            ```python
             import excelize
             import random
 
@@ -916,12 +924,13 @@ class File:
                     )
                 )
                 f.save_as("Book1.xlsx")
-            except RuntimeError as e:
-                print(e)
+            except RuntimeError as err:
+                print(err)
             finally:
                 err = f.close()
                 if err:
                     print(err)
+            ```
         """
         lib.AddPivotTable.restype = c_char_p
         err = lib.AddPivotTable(
@@ -941,14 +950,13 @@ class File:
             opts (Shape): The shape options
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
 
         Example:
             For example, add text box (rect shape) in Sheet1:
 
-            .. code-block:: python
-
+            ```python
             import excelize
 
             f = excelize.new_file()
@@ -984,12 +992,13 @@ class File:
                     ),
                 )
                 f.save_as("Book1.xlsx")
-            except RuntimeError as e:
-                print(e)
+            except RuntimeError as err:
+                print(err)
             finally:
                 err = f.close()
                 if err:
                     print(err)
+            ```
         """
         lib.AddShape.restype = c_char_p
         options = py_value_to_c(opts, types_go._Shape())
@@ -1008,27 +1017,30 @@ class File:
             opts (SlicerOptions): The slicer options
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
 
         Example:
             For example, insert a slicer on the Sheet1!E1 with field Column1 for
             the table named Table1:
 
-            .. code-block:: python
-
-            f.add_slicer(
-                "Sheet1",
-                excelize.SlicerOptions(
-                    name="Column1",
-                    cell="E1",
-                    table_sheet="Sheet1",
-                    table_name="Table1",
-                    caption="Column1",
-                    width=200,
-                    height=200,
-                ),
-            )
+            ```python
+            try:
+                f.add_slicer(
+                    "Sheet1",
+                    excelize.SlicerOptions(
+                        name="Column1",
+                        cell="E1",
+                        table_sheet="Sheet1",
+                        table_name="Table1",
+                        caption="Column1",
+                        width=200,
+                        height=200,
+                    ),
+                )
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.AddSlicer.restype = c_char_p
         options = py_value_to_c(opts, types_go._SlicerOptions())
@@ -1051,23 +1063,26 @@ class File:
             opts (SparklineOptions): The sparklines options
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
 
         Example:
             For example, add a grouped sparkline. Changes are applied to all
             three:
 
-            .. code-block:: python
-
-            f.add_sparkline(
-                "Sheet1",
-                excelize.SparklineOptions(
-                    location=["A1", "A2", "A3"],
-                    range=["Sheet2!A1:J1", "Sheet2!A2:J2", "Sheet2!A3:J3"],
-                    markers=True,
-                ),
-            )
+            ```python
+            try:
+                f.add_sparkline(
+                    "Sheet1",
+                    excelize.SparklineOptions(
+                        location=["A1", "A2", "A3"],
+                        range=["Sheet2!A1:J1", "Sheet2!A2:J2", "Sheet2!A3:J3"],
+                        markers=True,
+                    ),
+                )
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.AddSparkline.restype = c_char_p
         options = py_value_to_c(opts, types_go._SparklineOptions())
@@ -1092,15 +1107,18 @@ class File:
             table (Table): The table options
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
 
         Example:
             For example, create a table of A1:D5 on Sheet1:
 
-            .. code-block:: python
-
-            err = f.add_table("Sheet1", excelize.Table(range="A1:D5"))
+            ```python
+            try:
+                f.add_table("Sheet1", excelize.Table(range="A1:D5"))
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.AddTable.restype = c_char_p
         options = py_value_to_c(table, types_go._Table())
@@ -1119,7 +1137,7 @@ class File:
             file (bytes): The contents buffer of the file
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         lib.AddVBAProject.restype = c_char_p
@@ -1156,7 +1174,7 @@ class File:
             opts (List[AutoFilterOptions]): The auto filter options
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         lib.AutoFilter.restype = c_char_p
@@ -1226,7 +1244,7 @@ class File:
             to (int): Target sheet index
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         err, lib.CopySheet.restype = None, c_char_p
@@ -1243,7 +1261,7 @@ class File:
             cell (str): The cell reference
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         err, lib.DeleteChart.restype = None, c_char_p
@@ -1262,7 +1280,7 @@ class File:
             cell (str): The cell reference
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         err, lib.DeleteComment.restype = None, c_char_p
@@ -1281,18 +1299,21 @@ class File:
             defined_name (DefinedName): The defined name options
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
 
         Example:
             For example:
 
-            .. code-block:: python
-
-            f.delete_defined_name(excelize.DefinedName(
-                name="Amount",
-                scope="Sheet2",
-            ))
+            ```python
+            try:
+                f.delete_defined_name(excelize.DefinedName(
+                    name="Amount",
+                    scope="Sheet2",
+                ))
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.DeleteDefinedName.restype = c_char_p
         options = py_value_to_c(defined_name, types_go._DefinedName())
@@ -1309,7 +1330,7 @@ class File:
             cell (str): The cell reference
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         err, lib.DeletePicture.restype = None, c_char_p
@@ -1331,7 +1352,7 @@ class File:
             sheet (str): The worksheet name
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         err, lib.DeleteSheet.restype = None, c_char_p
@@ -1347,7 +1368,7 @@ class File:
             name (str): The slicer name
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         err, lib.DeleteSlicer.restype = None, c_char_p
@@ -1368,7 +1389,7 @@ class File:
             row (int): The row number
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         err, lib.DuplicateRow.restype = None, c_char_p
@@ -1393,7 +1414,7 @@ class File:
             row2 (int): The row number
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         err, lib.DuplicateRowTo.restype = None, c_char_p
@@ -1417,25 +1438,22 @@ class File:
 
     def get_app_props(
         self,
-    ) -> Tuple[Optional[AppProperties], Optional[Exception]]:
+    ) -> Optional[AppProperties]:
         """
         Get document application properties.
 
         Returns:
-            Tuple[Optional[AppProperties], Optional[Exception]]: A tuple
-            containing the app properties if found, otherwise None, and an
-            Exception object if an error occurred, otherwise None.
+            Optional[AppProperties]: Return the the app properties if no
+            error occurred, otherwise raise a RuntimeError with the message.
         """
         lib.GetAppProps.restype = types_go._GetAppPropsResult
         res = lib.GetAppProps(self.file_index)
         err = res.err.decode(ENCODE)
-        return (c_value_to_py(res.opts, AppProperties()) if err == "" else None), (
-            None if err == "" else Exception(err)
-        )
+        if not err:
+            return c_value_to_py(res.opts, AppProperties())
+        raise RuntimeError(err)
 
-    def get_cell_formula(
-        self, sheet: str, cell: str
-    ) -> Tuple[str, Optional[Exception]]:
+    def get_cell_formula(self, sheet: str, cell: str) -> str:
         """
         Get formula from cell by given worksheet name and cell reference in
         spreadsheet.
@@ -1445,19 +1463,19 @@ class File:
             cell (str): The cell reference
 
         Returns:
-            Tuple[str, Optional[Exception]]: A tuple containing the cell formula
-            string and an exception if an error occurred, otherwise None.
+            str: Return the cell formula string and an exception if no
+            error occurred, otherwise raise a RuntimeError with the message.
         """
         lib.GetCellFormula.restype = types_go._StringErrorResult
         res = lib.GetCellFormula(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
         )
         err = res.err.decode(ENCODE)
-        return res.val.decode(ENCODE), None if err == "" else Exception(err)
+        if not err:
+            return res.val.decode(ENCODE)
+        raise RuntimeError(err)
 
-    def get_cell_hyperlink(
-        self, sheet: str, cell: str
-    ) -> Tuple[bool, str, Optional[Exception]]:
+    def get_cell_hyperlink(self, sheet: str, cell: str) -> Tuple[bool, str]:
         """
         Gets a cell hyperlink based on the given worksheet name and cell
         reference. If the cell has a hyperlink, it will return `True` and the
@@ -1468,30 +1486,34 @@ class File:
             cell (str): The cell reference
 
         Returns:
-            Tuple[bool, str, Optional[Exception]]: A tuple containing if the
-            cell has a hyperlink, the link address, and an exception if an error
-            occurred, otherwise None.
+            Tuple[bool, str]: Return a tuple containing if the cell has a
+            hyperlink and the link address if no error occurred, otherwise raise
+            a RuntimeError with the message.
 
         Example:
             For example, get a hyperlink to a `H6` cell on a worksheet named
             `Sheet1`:
 
-            .. code-block:: python
-
-            link, target, err = f.get_cell_hyperlink("Sheet1", "H6")
+            ```python
+            try:
+                link, target = f.get_cell_hyperlink("Sheet1", "H6")
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.GetCellHyperLink.restype = types_go._GetCellHyperLinkResult
         res = lib.GetCellHyperLink(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
         )
         err = res.err.decode(ENCODE)
-        return (
-            res.link,
-            res.target.decode(ENCODE),
-            None if err == "" else Exception(err),
-        )
+        if not err:
+            return (
+                res.link,
+                res.target.decode(ENCODE),
+            )
+        raise RuntimeError(err)
 
-    def get_cell_style(self, sheet: str, cell: str) -> Tuple[int, Optional[Exception]]:
+    def get_cell_style(self, sheet: str, cell: str) -> int:
         """
         Get cell style index by given worksheet name and cell reference.
 
@@ -1500,19 +1522,19 @@ class File:
             cell (str): The cell reference
 
         Returns:
-            Tuple[int, Optional[Exception]]: A tuple containing the cell style,
-            and an Exception object if an error occurred, otherwise None.
+            int:  Return the cell style ID if no error occurred, otherwise raise
+            a RuntimeError with the message.
         """
         lib.GetCellStyle.restype = types_go._IntErrorResult
         res = lib.GetCellStyle(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
         )
         err = res.err.decode(ENCODE)
-        return res.val, None if err == "" else Exception(err)
+        if not err:
+            return res.val
+        raise RuntimeError(err)
 
-    def get_cell_rich_text(
-        self, sheet: str, cell: str
-    ) -> Tuple[List[RichTextRun], Optional[Exception]]:
+    def get_cell_rich_text(self, sheet: str, cell: str) -> List[RichTextRun]:
         """
         Get rich text of cell by given worksheet and cell reference.
 
@@ -1521,9 +1543,8 @@ class File:
             cell (str): The cell reference
 
         Returns:
-            Tuple[List[RichTextRun], Optional[Exception]]: A tuple containing
-            the rich text runs and an exception if an error occurred, otherwise
-            None.
+            List[RichTextRun]: Return rich text runs if no error occurred,
+            otherwise raise a RuntimeError with the message.
         """
         lib.GetCellRichText.restype = types_go._GetCellRichTextResult
         res = lib.GetCellRichText(
@@ -1531,7 +1552,9 @@ class File:
         )
         runs = c_value_to_py(res, GetCellRichTextResult()).runs
         err = res.Err.decode(ENCODE)
-        return runs if runs else [], None if err == "" else Exception(err)
+        if not err:
+            return runs if runs else []
+        raise RuntimeError(err)
 
     def get_cell_value(self, sheet: str, cell: str, *opts: Options) -> str:
         """
@@ -1565,9 +1588,7 @@ class File:
             return res.val.decode(ENCODE)
         raise RuntimeError(err)
 
-    def get_col_outline_level(
-        self, sheet: str, col: str
-    ) -> Tuple[int, Optional[Exception]]:
+    def get_col_outline_level(self, sheet: str, col: str) -> int:
         """
         Get outline level of a single column by given worksheet name and column
         name.
@@ -1577,24 +1598,29 @@ class File:
             col (str): The column name
 
         Returns:
-            Tuple[int, Optional[Exception]]: A tuple containing the column
-            outline level and an exception if an error occurred, otherwise None.
+            int: Return the column outline level if no error occurred, otherwise
+            raise a RuntimeError with the message.
 
         Example:
             For example, get outline level of column D in Sheet1:
 
-            .. code-block:: python
-
-            level, err = f.get_col_outline_level("Sheet1", "D")
+            ```python
+            try:
+                level = f.get_col_outline_level("Sheet1", "D")
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.GetColOutlineLevel.restype = types_go._IntErrorResult
         res = lib.GetColOutlineLevel(
             self.file_index, sheet.encode(ENCODE), col.encode(ENCODE)
         )
         err = res.err.decode(ENCODE)
-        return res.val, None if err == "" else Exception(err)
+        if not err:
+            return res.val
+        raise RuntimeError(err)
 
-    def get_col_style(self, sheet: str, col: str) -> Tuple[int, Optional[Exception]]:
+    def get_col_style(self, sheet: str, col: str) -> int:
         """
         Get column style ID by given worksheet name and column name.
 
@@ -1603,15 +1629,17 @@ class File:
             col (str): The column name
 
         Returns:
-            Tuple[int, Optional[Exception]]: A tuple containing the column style
-            ID and an exception if an error occurred, otherwise None.
+            int: Return the column style ID if no error occurred, otherwise
+            raise a RuntimeError with the message.
         """
         lib.GetColStyle.restype = types_go._IntErrorResult
         res = lib.GetColStyle(self.file_index, sheet.encode(ENCODE), col.encode(ENCODE))
         err = res.err.decode(ENCODE)
-        return res.val, None if err == "" else Exception(err)
+        if not err:
+            return res.val
+        raise RuntimeError(err)
 
-    def get_col_visible(self, sheet: str, col: str) -> Tuple[bool, Optional[Exception]]:
+    def get_col_visible(self, sheet: str, col: str) -> bool:
         """
         Get visible of a single column by given worksheet name and column name.
 
@@ -1620,38 +1648,45 @@ class File:
             col (str): The column name
 
         Returns:
-            Tuple[bool, Optional[Exception]]: A tuple containing the column
-            visible and an exception if an error occurred, otherwise None.
+            bool: Return the column visible if no error occurred, otherwise
+            raise a RuntimeError with the message.
 
         Example:
             For example, get visible state of column D in Sheet1:
 
-            .. code-block:: python
-
-            visible, err = f.get_col_visible("Sheet1", "D")
+            ```python
+            try:
+                visible = f.get_col_visible("Sheet1", "D")
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.GetColVisible.restype = types_go._BoolErrorResult
         res = lib.GetColVisible(
             self.file_index, sheet.encode(ENCODE), col.encode(ENCODE)
         )
         err = res.err.decode(ENCODE)
-        return res.val, None if err == "" else Exception(err)
+        if not err:
+            return res.val
+        raise RuntimeError(err)
 
-    def get_default_font(self) -> Tuple[str, Optional[Exception]]:
+    def get_default_font(self) -> str:
         """
         Get the default font name currently set in the workbook. The spreadsheet
         generated by excelize default font is Calibri.
 
         Returns:
-            Tuple[str, Optional[Exception]]: A tuple containing the font name as
-            a string and an exception if an error occurred, otherwise None.
+            str: Return the font name if no error occurred, otherwise raise
+            a RuntimeError with the message.
         """
         lib.GetDefaultFont.restype = types_go._StringErrorResult
         res = lib.GetDefaultFont(self.file_index)
         err = res.err.decode(ENCODE)
-        return res.val.decode(ENCODE), None if err == "" else Exception(err)
+        if not err:
+            return res.val.decode(ENCODE)
+        raise RuntimeError(err)
 
-    def get_row_visible(self, sheet: str, row: int) -> Tuple[bool, Optional[Exception]]:
+    def get_row_visible(self, sheet: str, row: int) -> bool:
         """
         Get visible of a single row by given worksheet name and Excel row number.
 
@@ -1660,20 +1695,25 @@ class File:
             col (str): The column name
 
         Returns:
-            Tuple[bool, Optional[Exception]]: A tuple containing the column
-            visible and an exception if an error occurred, otherwise None.
+            bool: Return the column visible if no error occurred, otherwise
+            raise a RuntimeError with the message.
 
         Example:
             For example, get visible state of row 2 in Sheet1:
 
-            .. code-block:: python
-
-            visible, err = f.get_row_visible("Sheet1", 2)
+            ```python
+            try:
+                visible = f.get_row_visible("Sheet1", 2)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.GetRowVisible.restype = types_go._BoolErrorResult
         res = lib.GetRowVisible(self.file_index, sheet.encode(ENCODE), c_int(row))
         err = res.err.decode(ENCODE)
-        return res.val, None if err == "" else Exception(err)
+        if not err:
+            return res.val
+        raise RuntimeError(err)
 
     def get_rows(self, sheet: str, *opts: Options) -> List[List[str]]:
         """
@@ -1719,7 +1759,7 @@ class File:
             return rows
         raise RuntimeError(err)
 
-    def get_sheet_dimension(self, sheet: str) -> Tuple[str, Optional[Exception]]:
+    def get_sheet_dimension(self, sheet: str) -> str:
         """
         Get style definition by given style index.
 
@@ -1727,16 +1767,17 @@ class File:
             sheet (str): The worksheet name
 
         Returns:
-            Tuple[str, Optional[Exception]]: A tuple containing the sheet
-            dimension, and an Exception object if an error occurred, otherwise
-            None.
+            str: Return the sheet dimension if no error occurred, otherwise
+            raise a RuntimeError with the message.
         """
         lib.GetSheetDimension.restype = types_go._StringErrorResult
         res = lib.GetSheetDimension(self.file_index, sheet.encode(ENCODE))
         err = res.err.decode(ENCODE)
-        return res.val.decode(ENCODE), None if err == "" else Exception(err)
+        if not err:
+            return res.val.decode(ENCODE)
+        raise RuntimeError(err)
 
-    def get_sheet_index(self, sheet: str) -> Tuple[int, Optional[Exception]]:
+    def get_sheet_index(self, sheet: str) -> int:
         """
         Get a sheet index of the workbook by the given sheet name. If the given
         sheet name is invalid or sheet doesn't exist, it will return an integer
@@ -1746,13 +1787,15 @@ class File:
             sheet (str): The worksheet name
 
         Returns:
-            Tuple[int, Optional[Exception]]: A tuple containing the sheet index,
-            and an Exception object if an error occurred, otherwise None.
+            int: Return the sheet index if no error occurred, otherwise raise
+            a RuntimeError with the message.
         """
         lib.GetSheetIndex.restype = types_go._IntErrorResult
         res = lib.GetSheetIndex(self.file_index, sheet.encode(ENCODE))
         err = res.err.decode(ENCODE)
-        return res.val, None if err == "" else Exception(err)
+        if not err:
+            return res.val
+        raise RuntimeError(err)
 
     def get_sheet_name(self, sheet: int) -> str:
         """
@@ -1764,14 +1807,17 @@ class File:
             sheet (int): The worksheet index
 
         Returns:
-            str: The sheet name if the index is valid, otherwise an empty string.
+            str: Return the sheet name if the index is valid and if no
+            error occurred, otherwise raise a RuntimeError with the message.
         """
         lib.GetSheetName.restype = types_go._StringErrorResult
         res = lib.GetSheetName(self.file_index, c_int(sheet))
         err = res.err.decode(ENCODE)
-        return res.val.decode(ENCODE) if err == "" else ""
+        if not err:
+            return res.val.decode(ENCODE)
+        raise RuntimeError(err)
 
-    def get_style(self, style_id: int) -> Tuple[Optional[Style], Optional[Exception]]:
+    def get_style(self, style_id: int) -> Optional[Style]:
         """
         Get style definition by given style index.
 
@@ -1779,18 +1825,17 @@ class File:
             style_id (int): The style ID
 
         Returns:
-            Tuple[Optional[Style], Optional[Exception]]: A tuple containing the
-            Style object if found, otherwise None, and an Exception object if an
-            error occurred, otherwise None.
+            Optional[Style]: Return the style object if no error occurred,
+            otherwise raise a RuntimeError with the message.
         """
         lib.GetStyle.restype = types_go._GetStyleResult
         res = lib.GetStyle(self.file_index, c_int(style_id))
         err = res.err.decode(ENCODE)
-        if err == "":
-            return c_value_to_py(res.style, Style()), None
-        return None, Exception(err)
+        if not err:
+            return c_value_to_py(res.style, Style())
+        raise RuntimeError(err)
 
-    def get_tables(self, sheet: str) -> Tuple[List[Table], Optional[Exception]]:
+    def get_tables(self, sheet: str) -> List[Table]:
         """
         Get all tables in a worksheet by given worksheet name.
 
@@ -1798,32 +1843,33 @@ class File:
             sheet (str): The worksheet name
 
         Returns:
-            Tuple[List[Table], Optional[Exception]]: A tuple containing the
-            tables and an exception if an error occurred, otherwise None.
+            List[Table]: Return the table list if no error occurred, otherwise
+            raise a RuntimeError with the message.
         """
         lib.GetTables.restype = types_go._GetTablesResult
         res = lib.GetTables(self.file_index, sheet.encode(ENCODE))
         tables = c_value_to_py(res, GetTablesResult()).tables
         err = res.Err.decode(ENCODE)
-        return tables if tables else [], None if err == "" else Exception(err)
+        if not err:
+            return tables if tables else []
+        raise RuntimeError(err)
 
-    def get_workbook_props(self) -> Tuple[WorkbookPropsOptions, Optional[Exception]]:
+    def get_workbook_props(self) -> WorkbookPropsOptions:
         """
         Get all tables in a worksheet by given worksheet name.
 
         Returns:
-            Tuple[List[WorkbookPropsOptions], Optional[Exception]]: A tuple
-            containing the workbook property options and an exception if an
-            error occurred, otherwise None.
+            WorkbookPropsOptions: Return the workbook property options if no
+            error occurred, otherwise raise a RuntimeError with the message.
         """
         lib.GetWorkbookProps.restype = types_go._GetWorkbookPropsResult
         res = lib.GetWorkbookProps(self.file_index)
         err = res.err.decode(ENCODE)
-        return c_value_to_py(res.opts, WorkbookPropsOptions()) if err == "" else None, (
-            None if err == "" else Exception(err)
-        )
+        if not err:
+            return c_value_to_py(res.opts, WorkbookPropsOptions())
+        raise RuntimeError(err)
 
-    def group_sheets(self, sheets: List[str]) -> Optional[Exception]:
+    def group_sheets(self, sheets: List[str]) -> None:
         """
         Group worksheets by given worksheets name. Group worksheets must contain
         an active worksheet.
@@ -1832,17 +1878,18 @@ class File:
             sheets (List[str]): The worksheet names to be grouped.
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.GroupSheets.restype = c_char_p
         array = (c_char_p * len(sheets))()
         for i, value in enumerate(sheets):
             array[i] = value.encode(ENCODE)
         err = lib.GroupSheets(self.file_index, array, c_int(len(sheets))).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def insert_cols(self, sheet: str, col: str, n: int) -> Optional[Exception]:
+    def insert_cols(self, sheet: str, col: str, n: int) -> None:
         """
         Insert new columns before the given column name and number of columns.
         Use this method with caution, which will affect changes in references
@@ -1856,15 +1903,18 @@ class File:
             n (int): The columns
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example, create two columns before column C in Sheet1:
 
-            .. code-block:: python
-
-            err = f.insert_cols("Sheet1", "C", 2)
+            ```python
+            try:
+                f.insert_cols("Sheet1", "C", 2)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.InsertCols.restype = c_char_p
         err = lib.InsertCols(
@@ -1873,9 +1923,10 @@ class File:
             col.encode(ENCODE),
             c_int(n),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def insert_page_break(self, sheet: str, cell: str) -> Optional[Exception]:
+    def insert_page_break(self, sheet: str, cell: str) -> None:
         """
         Create a page break to determine where the printed page ends and where
         begins the next one by given worksheet name and cell reference, so the
@@ -1887,8 +1938,8 @@ class File:
             cell (str): The cell reference
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.InsertPageBreak.restype = c_char_p
         err = lib.InsertPageBreak(
@@ -1896,9 +1947,10 @@ class File:
             sheet.encode(ENCODE),
             cell.encode(ENCODE),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def insert_rows(self, sheet: str, row: int, n: int) -> Optional[Exception]:
+    def insert_rows(self, sheet: str, row: int, n: int) -> None:
         """
         Insert new rows after the given Excel row number starting from 1 and
         number of rows. Use this method with caution, which will affect changes
@@ -1912,15 +1964,18 @@ class File:
             n (int): The rows
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
-            For example,  create two rows before row 3 in Sheet1:
+            For example, create two rows before row 3 in Sheet1:
 
-            .. code-block:: python
-
-            err = f.insert_rows("Sheet1", 3, 2)
+            ```python
+            try:
+                f.insert_rows("Sheet1", 3, 2)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.InsertRows.restype = c_char_p
         err = lib.InsertRows(
@@ -1929,11 +1984,12 @@ class File:
             c_int(row),
             c_int(n),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def merge_cell(
         self, sheet: str, top_left_cell: str, bottom_right_cell: str
-    ) -> Optional[Exception]:
+    ) -> None:
         """
         Merge cells by given range reference and sheet name. Merging cells only
         keeps the upper-left cell value, and discards the other values.
@@ -1944,8 +2000,8 @@ class File:
             bottom_right_cell (str): The right-bottom cell reference
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.MergeCell.restype = c_char_p
         err = lib.MergeCell(
@@ -1954,9 +2010,10 @@ class File:
             top_left_cell.encode(ENCODE),
             bottom_right_cell.encode(ENCODE),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def move_sheet(self, source: str, target: str) -> Optional[Exception]:
+    def move_sheet(self, source: str, target: str) -> None:
         """
         Moves a sheet to a specified position in the workbook. The function
         moves the source sheet before the target sheet. After moving, other
@@ -1969,15 +2026,18 @@ class File:
             target (str): The target worksheet name
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example, move Sheet2 before Sheet1:
 
-            .. code-block:: python
-
-            err = f.move_sheet("Sheet2", "Sheet1")
+            ```python
+            try:
+                f.move_sheet("Sheet2", "Sheet1")
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.MoveSheet.restype = c_char_p
         err = lib.MoveSheet(
@@ -1985,9 +2045,10 @@ class File:
             source.encode(ENCODE),
             target.encode(ENCODE),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def new_conditional_style(self, style: Style) -> Tuple[int, Optional[Exception]]:
+    def new_conditional_style(self, style: Style) -> int:
         """
         Create style for conditional format by given style format. The
         parameters are the same with the new_style function.
@@ -1996,14 +2057,16 @@ class File:
             style (Style): The style options
 
         Returns:
-            Tuple[int, Optional[Exception]]: A tuple containing the style index
-            and an exception if any error occurs.
+            int: Return the style index if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.NewConditionalStyle.restype = types_go._IntErrorResult
         options = py_value_to_c(style, types_go._Style())
         res = lib.NewConditionalStyle(self.file_index, byref(options))
         err = res.err.decode(ENCODE)
-        return res.val, None if err == "" else Exception(err)
+        if not err:
+            return res.val
+        raise RuntimeError(err)
 
     def new_sheet(self, sheet: str) -> int:
         """
@@ -2025,9 +2088,7 @@ class File:
             return res.val
         raise RuntimeError(err)
 
-    def new_stream_writer(
-        self, sheet: str
-    ) -> Tuple[Optional[StreamWriter], Optional[Exception]]:
+    def new_stream_writer(self, sheet: str) -> StreamWriter:
         """
         Returns stream writer struct by given worksheet name used for writing
         data on a new existing empty worksheet with large amounts of data. Note
@@ -2043,49 +2104,39 @@ class File:
             sheet (str): The worksheet name
 
         Returns:
-            Tuple[Optional[StreamWriter], Optional[Exception]]: A tuple
-            containing stream writer object if successful, or None and an
-            Exception if an error occurred.
+            StreamWriter: Return the stream writer object if no error occurred,
+            otherwise raise a RuntimeError with the message.
 
         Example:
             For example, set data for worksheet of size 102400 rows x 50 columns
             with numbers:
 
-            .. code-block:: python
-
+            ```python
             import excelize, random
 
             f = excelize.new_file()
-            sw, err = f.new_stream_writer("Sheet1")
-            if err:
-                print(err)
-            for r in range(2, 102401):
-                row = [random.randrange(640000) for _ in range(1, 51)]
-                try:
-                    cell = excelize.coordinates_to_cell_name(1, r, False)
-                except RuntimeError as e:
-                    print(e)
-                err = sw.set_row(cell, row)
-                if err:
-                    print(err)
-            err = sw.flush()
-            if err:
-                print(err)
             try:
+                sw = f.new_stream_writer("Sheet1")
+                for r in range(2, 102401):
+                    row = [random.randrange(640000) for _ in range(1, 51)]
+                    cell = excelize.coordinates_to_cell_name(1, r, False)
+                    sw.set_row(cell, row)
+                sw.flush()
                 f.save_as("Book1.xlsx")
-            except RuntimeError as e:
-                print(e)
+            except RuntimeError as err:
+                print(err)
             finally:
                 err = f.close()
                 if err:
                     print(err)
+            ```
         """
         lib.NewStreamWriter.restype = types_go._IntErrorResult
         res = lib.NewStreamWriter(self.file_index, sheet.encode(ENCODE))
         err = res.err.decode(ENCODE)
-        if err == "":
-            return StreamWriter(res.val), None
-        return None, Exception(err)
+        if not err:
+            return StreamWriter(res.val)
+        raise RuntimeError(err)
 
     def new_style(self, style: Style) -> Tuple[int, Optional[Exception]]:
         """
@@ -2128,15 +2179,18 @@ class File:
         Example:
             For example, protect Sheet1 with protection settings:
 
-            .. code-block:: python
-
-            err = f.protect_sheet("Sheet1", excelize.SheetProtectionOptions(
-                algorithm_name="SHA-512",
-                password="password",
-                select_locked_cells=True,
-                select_unlocked_cells=True,
-                edit_scenarios=True,
-            ))
+            ```python
+            try:
+                f.protect_sheet("Sheet1", excelize.SheetProtectionOptions(
+                    algorithm_name="SHA-512",
+                    password="password",
+                    select_locked_cells=True,
+                    select_unlocked_cells=True,
+                    edit_scenarios=True,
+                ))
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.ProtectSheet.restype = c_char_p
         options = py_value_to_c(opts, types_go._SheetProtectionOptions())
@@ -2164,12 +2218,15 @@ class File:
         Example:
             For example, protect workbook with protection settings:
 
-            .. code-block:: python
-
-            err = f.protect_workbook(excelize.WorkbookProtectionOptions(
-                password="password",
-                lock_structure=True,
-            ))
+            ```python
+            try:
+                f.protect_workbook(excelize.WorkbookProtectionOptions(
+                    password="password",
+                    lock_structure=True,
+                ))
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.ProtectWorkbook.restype = c_char_p
         options = py_value_to_c(opts, types_go._WorkbookProtectionOptions())
@@ -2195,9 +2252,12 @@ class File:
         Example:
             For example, remove column C in Sheet1:
 
-            .. code-block:: python
-
-            err = f.remove_col("Sheet1", "C")
+            ```python
+            try:
+                f.remove_col("Sheet1", "C")
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.RemoveCol.restype = c_char_p
         err = lib.RemoveCol(
@@ -2242,9 +2302,12 @@ class File:
         Example:
             For example, remove row 3 in Sheet1:
 
-            .. code-block:: python
-
-            err = f.remove_row("Sheet1", 3)
+            ```python
+            try:
+                f.remove_row("Sheet1", 3)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.RemoveRow.restype = c_char_p
         err = lib.RemoveRow(self.file_index, sheet.encode(ENCODE), c_int(row)).decode(
@@ -2276,14 +2339,20 @@ class File:
             Sheet1:
 
             ```python
-            result, err = f.search_sheet("Sheet1", "100")
+            try:
+                result = f.search_sheet("Sheet1", "100")
+            except RuntimeError as err:
+                print(err)
             ```
 
             An example of search the cell reference where the numerical value in
             the range of "0-9" of Sheet1 is described:
 
             ```python
-            result, err = f.search_sheet("Sheet1", "[0-9]", True)
+            try:
+                result = f.search_sheet("Sheet1", "[0-9]", True)
+            except RuntimeError as err:
+                print(err)
             ```
         """
         lib.SearchSheet.restype = types_go._StringArrayErrorResult
@@ -2308,7 +2377,7 @@ class File:
             index (int): The sheet index
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         err, lib.SetActiveSheet.restype = None, c_char_p
@@ -2405,27 +2474,26 @@ class File:
         Example:
             The below is example for external link.
 
-            .. code-block:: python
-
+            ```python
             display = "https://github.com/xuri/excelize"
-            err = f.set_cell_hyperlink(
-                "Sheet1",
-                "A3",
-                display,
-                "External",
-                excelize.HyperlinkOpts(display=display, tooltip="Excelize on GitHub"),
-            )
-            if err:
-                print(err)
-            # Set underline and font color style for the cell.
-            style, err = f.new_style(
-                excelize.Style(
-                    font=excelize.Font(color="1265BE", underline="single")
+            try:
+                f.set_cell_hyperlink(
+                    "Sheet1",
+                    "A3",
+                    display,
+                    "External",
+                    excelize.HyperlinkOpts(display=display, tooltip="Excelize on GitHub"),
                 )
-            )
-            if err:
+                # Set underline and font color style for the cell.
+                style = f.new_style(
+                    excelize.Style(
+                        font=excelize.Font(color="1265BE", underline="single")
+                    )
+                )
+                f.set_cell_style("Sheet1", "A3", "A3", style)
+            except RuntimeError as err:
                 print(err)
-            err = f.set_cell_style("Sheet1", "A3", "A3", style)
+            ```
         """
         err, lib.SetCellHyperLink.restype = None, c_char_p
         options = (
@@ -2495,116 +2563,105 @@ class File:
             For example, set rich text on the A1 cell of the worksheet named
             Sheet1:
 
-            .. code-block:: python
-
+            ```python
             f = excelize.new_file()
             try:
                 f.set_row_height("Sheet1", 1, 35)
-            except RuntimeError as e:
-                print(e)
-            err = f.set_col_width("Sheet1", "A", "A", 44)
-            if err:
-                print(err)
-            err = f.set_cell_rich_text(
-                "Sheet1",
-                "A1",
-                [
-                    excelize.RichTextRun(
-                        text="bold",
-                        font=excelize.Font(
-                            bold=True,
-                            color="2354e8",
-                            family="Times New Roman",
+                f.set_col_width("Sheet1", "A", "A", 44)
+                f.set_cell_rich_text(
+                    "Sheet1",
+                    "A1",
+                    [
+                        excelize.RichTextRun(
+                            text="bold",
+                            font=excelize.Font(
+                                bold=True,
+                                color="2354E8",
+                                family="Times New Roman",
+                            ),
                         ),
-                    ),
-                    excelize.RichTextRun(
-                        text=" and ",
-                        font=excelize.Font(
-                            family="Times New Roman",
+                        excelize.RichTextRun(
+                            text=" and ",
+                            font=excelize.Font(
+                                family="Times New Roman",
+                            ),
                         ),
-                    ),
-                    excelize.RichTextRun(
-                        text="italic ",
-                        font=excelize.Font(
-                            bold=True,
-                            color="e83723",
-                            italic=True,
-                            family="Times New Roman",
+                        excelize.RichTextRun(
+                            text="italic ",
+                            font=excelize.Font(
+                                bold=True,
+                                color="E83723",
+                                italic=True,
+                                family="Times New Roman",
+                            ),
                         ),
-                    ),
-                    excelize.RichTextRun(
-                        text="text with color and font-family,",
-                        font=excelize.Font(
-                            bold=True,
-                            color="2354e8",
-                            family="Times New Roman",
+                        excelize.RichTextRun(
+                            text="text with color and font-family,",
+                            font=excelize.Font(
+                                bold=True,
+                                color="2354E8",
+                                family="Times New Roman",
+                            ),
                         ),
-                    ),
-                    excelize.RichTextRun(
-                        text="\r\nlarge text with ",
-                        font=excelize.Font(
-                            size=14,
-                            color="ad23e8",
+                        excelize.RichTextRun(
+                            text="\r\nlarge text with ",
+                            font=excelize.Font(
+                                size=14,
+                                color="AD23E8",
+                            ),
                         ),
-                    ),
-                    excelize.RichTextRun(
-                        text="strike",
-                        font=excelize.Font(
-                            color="e89923",
-                            strike=True,
+                        excelize.RichTextRun(
+                            text="strike",
+                            font=excelize.Font(
+                                color="E89923",
+                                strike=True,
+                            ),
                         ),
-                    ),
-                    excelize.RichTextRun(
-                        text=" superscript",
-                        font=excelize.Font(
-                            color="dbc21f",
-                            vert_align="superscript",
+                        excelize.RichTextRun(
+                            text=" superscript",
+                            font=excelize.Font(
+                                color="DBC21F",
+                                vert_align="superscript",
+                            ),
                         ),
-                    ),
-                    excelize.RichTextRun(
-                        text=" and ",
-                        font=excelize.Font(
-                            size=14,
-                            color="ad23e8",
-                            vert_align="baseline",
+                        excelize.RichTextRun(
+                            text=" and ",
+                            font=excelize.Font(
+                                size=14,
+                                color="AD23E8",
+                                vert_align="baseline",
+                            ),
                         ),
-                    ),
-                    excelize.RichTextRun(
-                        text="underline",
-                        font=excelize.Font(
-                            color="23e833",
-                            vert_align="single",
+                        excelize.RichTextRun(
+                            text="underline",
+                            font=excelize.Font(
+                                color="23E833",
+                                vert_align="single",
+                            ),
                         ),
-                    ),
-                    excelize.RichTextRun(
-                        text=" subscript.",
-                        font=excelize.Font(
-                            color="017505",
-                            vert_align="subscript",
+                        excelize.RichTextRun(
+                            text=" subscript.",
+                            font=excelize.Font(
+                                color="017505",
+                                vert_align="subscript",
+                            ),
                         ),
-                    ),
-                ],
-            )
-            if err:
-                print(err)
-            style, err = f.new_style(
-                excelize.Style(
-                    alignment=excelize.Alignment(wrap_text=True),
+                    ],
                 )
-            )
-            if err:
-                print(err)
-            err = f.set_cell_style("Sheet1", "A1", "A1", style)
-            if err:
-                print(err)
-            try:
+                style = f.new_style(
+                    excelize.Style(
+                        alignment=excelize.Alignment(wrap_text=True),
+                    )
+                )
+                f.set_cell_style("Sheet1", "A1", "A1", style)
                 f.save_as("Book1.xlsx")
-            except RuntimeError as e:
-                print(e)
+            except RuntimeError as err:
+                print(err)
             finally:
                 err = f.close()
                 if err:
                     print(err)
+            ```
         """
         lib.SetCellRichText.restype = c_char_p
         vals = (types_go._RichTextRun * len(runs))()
@@ -2705,7 +2762,7 @@ class File:
             to be write
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         lib.SetCellValue.restype = c_char_p
@@ -2737,9 +2794,12 @@ class File:
         Example:
             For example, set outline level of column D in Sheet1 to 2:
 
-            .. code-block:: python
-
-            err = f.set_col_outline_level("Sheet1", "D", 2)
+            ```python
+            try:
+                f.set_col_outline_level("Sheet1", "D", 2)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.SetColOutlineLevel.restype = c_char_p
         err = lib.SetColOutlineLevel(
@@ -2768,9 +2828,12 @@ class File:
         Example:
             For example set style of column H on Sheet1:
 
-            .. code-block:: python
-
-            err = f.set_col_style("Sheet1", "H", style)
+            ```python
+            try:
+                f.set_col_style("Sheet1", "H", style)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.SetColStyle.restype = c_char_p
         err = lib.SetColStyle(
@@ -2797,9 +2860,12 @@ class File:
         Example:
             For example hide column D on Sheet1:
 
-            .. code-block:: python
-
-            err = f.set_col_visible("Sheet1", "D", False)
+            ```python
+            try:
+                f.set_col_visible("Sheet1", "D", False)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.SetColVisible.restype = c_char_p
         err = lib.SetColVisible(
@@ -2826,9 +2892,12 @@ class File:
         Example:
             For example set column width for column A to H on Sheet1:
 
-            .. code-block:: python
-
-            err = f.set_col_width("Sheet1", "A", "H", 20)
+            ```python
+            try:
+                f.set_col_width("Sheet1", "A", "H", 20)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.SetColWidth.restype = c_char_p
         err = lib.SetColWidth(
@@ -2906,14 +2975,17 @@ class File:
         Example:
             For example, create a table of A1:D5 on Sheet1:
 
-            .. code-block:: python
-
-            err = f.set_defined_name(excelize.DefinedName(
-                name="Amount",
-                refers_to="Sheet1!$A$2:$D$5",
-                comment="defined name comment",
-                scope="Sheet2",
-            ))
+            ```python
+            try:
+                f.set_defined_name(excelize.DefinedName(
+                    name="Amount",
+                    refers_to="Sheet1!$A$2:$D$5",
+                    comment="defined name comment",
+                    scope="Sheet2",
+                ))
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.SetDefinedName.restype = c_char_p
         options = py_value_to_c(defined_name, types_go._DefinedName())
@@ -2934,26 +3006,29 @@ class File:
         Example:
             For example:
 
-            .. code-block:: python
-
-            err = f.set_doc_props(
-                excelize.DocProperties(
-                    category="category",
-                    content_status="Draft",
-                    created="2019-06-04T22:00:10Z",
-                    creator="Go Excelize",
-                    description="This file created by Go Excelize",
-                    identifier="xlsx",
-                    keywords="Spreadsheet",
-                    last_modified_by="Go Author",
-                    modified="2019-06-04T22:00:10Z",
-                    revision="0",
-                    subject="Test Subject",
-                    title="Test Title",
-                    language="en-US",
-                    version="1.0.0",
+            ```python
+            try:
+                f.set_doc_props(
+                    excelize.DocProperties(
+                        category="category",
+                        content_status="Draft",
+                        created="2019-06-04T22:00:10Z",
+                        creator="Go Excelize",
+                        description="This file created by Go Excelize",
+                        identifier="xlsx",
+                        keywords="Spreadsheet",
+                        last_modified_by="Go Author",
+                        modified="2019-06-04T22:00:10Z",
+                        revision="0",
+                        subject="Test Subject",
+                        title="Test Title",
+                        language="en-US",
+                        version="1.0.0",
+                    )
                 )
-            )
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.SetDocProps.restype = c_char_p
         options = py_value_to_c(doc_properties, types_go._DocProperties())
@@ -2978,20 +3053,23 @@ class File:
         Example:
             For example:
 
-            .. code-block:: python
-
-            err = f.set_header_footer(
-                "Sheet1",
-                excelize.HeaderFooterOptions(
-                    different_first=True,
-                    different_odd_even=True,
-                    odd_header="&R&P",
-                    odd_footer="&C&F",
-                    even_header="&L&P",
-                    even_footer="&L&D&R&T",
-                    first_header="&CCenter &\"-,Bold\"Bold&\"-,Regular\"HeaderU+000A&D",
-                ),
-            )
+            ```python
+            try:
+                f.set_header_footer(
+                    "Sheet1",
+                    excelize.HeaderFooterOptions(
+                        different_first=True,
+                        different_odd_even=True,
+                        odd_header="&R&P",
+                        odd_footer="&C&F",
+                        even_header="&L&P",
+                        even_footer="&L&D&R&T",
+                        first_header="&CCenter &\"-,Bold\"Bold&\"-,Regular\"HeaderU+000A&D",
+                    ),
+                )
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.SetHeaderFooter.restype = c_char_p
         options = py_value_to_c(opts, types_go._HeaderFooterOptions())
@@ -3074,18 +3152,18 @@ class File:
             height (float): The row height
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
 
         Example:
             For example, set the height of the first row in Sheet1:
 
-            .. code-block:: python
-
+            ```python
             try:
                 f.set_row_height("Sheet1", 1, 50)
-            except RuntimeError as e:
-                print(e)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.SetRowHeight.restype = c_char_p
         err = lib.SetRowHeight(
@@ -3111,9 +3189,12 @@ class File:
         Example:
             For example, outline row 2 in Sheet1 to level 1:
 
-            .. code-block:: python
-
-            err = f.set_row_outline("Sheet1", 2, 1)
+            ```python
+            try:
+                f.set_row_outline("Sheet1", 2, 1)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.SetRowOutlineLevel.restype = c_char_p
         err = lib.SetRowOutlineLevel(
@@ -3142,9 +3223,12 @@ class File:
         Example:
             For example set style of row 1 on Sheet1:
 
-            .. code-block:: python
-
-            err = f.set_row_style("Sheet1", 1, 1, style_id)
+            ```python
+            try:
+                f.set_row_style("Sheet1", 1, 1, style_id)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.SetRowStyle.restype = c_char_p
         err = lib.SetRowStyle(
@@ -3175,9 +3259,12 @@ class File:
         Example:
             For example, hide row 2 in Sheet1:
 
-            .. code-block:: python
-
-            err = f.set_row_visible("Sheet1", 2, False)
+            ```python
+            try:
+                f.set_row_visible("Sheet1", 2, False)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.SetRowVisible.restype = c_char_p
         err = lib.SetRowVisible(
@@ -3356,7 +3443,7 @@ class File:
             values
 
         Returns:
-            None: None return if no error occurred, otherwise raise a
+            None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
         lib.SetSheetRow.restype = c_char_p
@@ -3469,9 +3556,12 @@ class File:
         Example:
             Unmerge range reference D3:E9 on Sheet1:
 
-            .. code-block:: python
-
-            err = f.unmerge_cell("Sheet1", "D3", "E9")
+            ```python
+            try:
+                f.unmerge_cell("Sheet1", "D3", "E9")
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.UnmergeCell.restype = c_char_p
         err = lib.UnmergeCell(
