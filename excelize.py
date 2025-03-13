@@ -465,7 +465,7 @@ class StreamWriter:
     def __init__(self, sw_index: int):
         self.sw_index = sw_index
 
-    def add_table(self, table: Table) -> Optional[Exception]:
+    def add_table(self, table: Table) -> None:
         """
         Creates an Excel table for the stream writer using the given cell range
         and format set.
@@ -479,8 +479,8 @@ class StreamWriter:
             table (Table): The table options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example, create a table of A1:D5 on Sheet1:
@@ -495,9 +495,10 @@ class StreamWriter:
         lib.StreamAddTable.restype = c_char_p
         options = py_value_to_c(table, types_go._Table())
         err = lib.StreamAddTable(self.sw_index, byref(options)).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def insert_page_break(self, cell: str) -> Optional[Exception]:
+    def insert_page_break(self, cell: str) -> None:
         """
         Creates a page break to determine where the printed page ends and where
         begins the next one by a given cell reference, the content before the
@@ -508,18 +509,17 @@ class StreamWriter:
             cell (str): The cell reference
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.StreamInsertPageBreak.restype = c_char_p
         err = lib.StreamInsertPageBreak(self.sw_index, cell.encode(ENCODE)).decode(
             ENCODE
         )
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def merge_cell(
-        self, top_left_cell: str, bottom_right_cell: str
-    ) -> Optional[Exception]:
+    def merge_cell(self, top_left_cell: str, bottom_right_cell: str) -> None:
         """
         Merge cells by a given range reference for the stream writer. Don't
         create a merged cell that overlaps with another existing merged cell.
@@ -529,8 +529,8 @@ class StreamWriter:
             bottom_right_cell (str): The right-bottom cell reference
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.StreamMergeCell.restype = c_char_p
         err = lib.StreamMergeCell(
@@ -538,11 +538,10 @@ class StreamWriter:
             top_left_cell.encode(ENCODE),
             bottom_right_cell.encode(ENCODE),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def set_col_width(
-        self, start_col: int, end_col: int, width: float
-    ) -> Optional[Exception]:
+    def set_col_width(self, start_col: int, end_col: int, width: float) -> None:
         """
         Set the width of a single column or multiple columns for the stream
         writer. Note that you must call the 'set_col_width' function before the
@@ -554,8 +553,8 @@ class StreamWriter:
             width (float): The column width
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example set the width column B:C as 20:
@@ -571,9 +570,10 @@ class StreamWriter:
         err = lib.StreamSetColWidth(
             self.sw_index, c_int(start_col), c_int(end_col), c_double(width)
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def set_panes(self, opts: Panes) -> Optional[Exception]:
+    def set_panes(self, opts: Panes) -> None:
         """
         Create and remove freeze panes and split panes by giving panes options
         for the stream writer. Note that you must call the 'set_panes' function
@@ -583,13 +583,14 @@ class StreamWriter:
             opts (Panes): The panes options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.StreamSetPanes.restype = c_char_p
         options = py_value_to_c(opts, types_go._Panes())
         err = lib.StreamSetPanes(self.sw_index, byref(options)).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def set_row(
         self,
@@ -1436,9 +1437,7 @@ class File:
         res = lib.GetActiveSheetIndex(self.file_index)
         return res
 
-    def get_app_props(
-        self,
-    ) -> Optional[AppProperties]:
+    def get_app_props(self) -> Optional[AppProperties]:
         """
         Get document application properties.
 
@@ -2138,7 +2137,7 @@ class File:
             return StreamWriter(res.val)
         raise RuntimeError(err)
 
-    def new_style(self, style: Style) -> Tuple[int, Optional[Exception]]:
+    def new_style(self, style: Style) -> int:
         """
         Create the style for cells by a given style options, and returns style
         index. The same style index can not be used across different workbook.
@@ -2149,18 +2148,18 @@ class File:
             style (Style): The style options
 
         Returns:
-            Tuple[int, Optional[Exception]]: A tuple containing the style index
-            and an exception if any error occurs.
+            int: Return the style index if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.NewStyle.restype = types_go._IntErrorResult
         options = py_value_to_c(style, types_go._Style())
         res = lib.NewStyle(self.file_index, byref(options))
         err = res.err.decode(ENCODE)
-        return res.val, None if err == "" else Exception(err)
+        if not err:
+            return res.val
+        raise RuntimeError(err)
 
-    def protect_sheet(
-        self, sheet: str, opts: SheetProtectionOptions
-    ) -> Optional[Exception]:
+    def protect_sheet(self, sheet: str, opts: SheetProtectionOptions) -> None:
         """
         Prevent other users from accidentally or deliberately changing, moving,
         or deleting data in a worksheet. The optional field AlgorithmName
@@ -2173,8 +2172,8 @@ class File:
             opts (SheetProtectionOptions): The sheet protection options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example, protect Sheet1 with protection settings:
@@ -2197,9 +2196,10 @@ class File:
         err = lib.ProtectSheet(
             self.file_index, sheet.encode(ENCODE), byref(options)
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def protect_workbook(self, opts: WorkbookProtectionOptions) -> Optional[Exception]:
+    def protect_workbook(self, opts: WorkbookProtectionOptions) -> None:
         """
         Prevent other users from viewing hidden worksheets, adding, moving,
         deleting, or hiding worksheets, and renaming worksheets in a workbook.
@@ -2212,8 +2212,8 @@ class File:
             opts (WorkbookProtectionOptions): The workbook protection options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example, protect workbook with protection settings:
@@ -2231,9 +2231,10 @@ class File:
         lib.ProtectWorkbook.restype = c_char_p
         options = py_value_to_c(opts, types_go._WorkbookProtectionOptions())
         err = lib.ProtectWorkbook(self.file_index, byref(options)).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def remove_col(self, sheet: str, col: str) -> Optional[Exception]:
+    def remove_col(self, sheet: str, col: str) -> None:
         """
         Remove single column by given worksheet name and column index.
         Use this method with caution, which will affect changes in references
@@ -2246,8 +2247,8 @@ class File:
             col (str): The column name
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example, remove column C in Sheet1:
@@ -2263,9 +2264,10 @@ class File:
         err = lib.RemoveCol(
             self.file_index, sheet.encode(ENCODE), col.encode(ENCODE)
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def remove_page_break(self, sheet: str, cell: str) -> Optional[Exception]:
+    def remove_page_break(self, sheet: str, cell: str) -> None:
         """
         Remove a page break by given worksheet name and cell reference.
 
@@ -2274,16 +2276,17 @@ class File:
             cell (str): The cell reference
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.RemovePageBreak.restype = c_char_p
         err = lib.RemovePageBreak(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def remove_row(self, sheet: str, row: int) -> Optional[Exception]:
+    def remove_row(self, sheet: str, row: int) -> None:
         """
         Remove single row by given worksheet name and Excel row number. Use this
         method with caution, which will affect changes in references such as
@@ -2296,8 +2299,8 @@ class File:
             row (int): The row number
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example, remove row 3 in Sheet1:
@@ -2313,11 +2316,10 @@ class File:
         err = lib.RemoveRow(self.file_index, sheet.encode(ENCODE), c_int(row)).decode(
             ENCODE
         )
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def search_sheet(
-        self, sheet: str, value: str, *reg: bool
-    ) -> Tuple[List[str], Optional[Exception]]:
+    def search_sheet(self, sheet: str, value: str, *reg: bool) -> List[str]:
         """
         Get cell reference by given worksheet name, cell value, and regular
         expression. The function doesn't support searching on the calculated
@@ -2331,8 +2333,8 @@ class File:
             *reg (bool): Specifies if search with regular expression
 
         Returns:
-            Tuple[List[str], Optional[Exception]]: A tuple containing the
-            cell name and an exception if an error occurred, otherwise None.
+            List[str]: Return the cell name list if no error occurred,
+            otherwise raise a RuntimeError with the message.
 
         Example:
             An example of search the cell reference of the value of "100" on
@@ -2364,7 +2366,9 @@ class File:
         )
         arr = c_value_to_py(res, StringArrayErrorResult()).arr
         err = res.Err.decode(ENCODE)
-        return arr if arr else [], None if err == "" else Exception(err)
+        if not err:
+            return arr if arr else []
+        raise RuntimeError(err)
 
     def set_active_sheet(self, index: int) -> None:
         """
@@ -2385,7 +2389,7 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
-    def set_cell_bool(self, sheet: str, cell: str, value: bool) -> Optional[Exception]:
+    def set_cell_bool(self, sheet: str, cell: str, value: bool) -> None:
         """
         Set bool type value of a cell by given worksheet name, cell reference
         and cell value.
@@ -2396,18 +2400,19 @@ class File:
             value (bool): The cell value
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         err, lib.SetCellBool.restype = None, c_char_p
         err = lib.SetCellBool(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE), value
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def set_cell_formula(
         self, sheet: str, cell: str, formula: str, *opts: FormulaOpts
-    ) -> Optional[Exception]:
+    ) -> None:
         """
         Set formula on the cell is taken according to the given worksheet name
         and cell formula settings. The result of the formula cell can be
@@ -2424,8 +2429,8 @@ class File:
             *opts (FormulaOpts): The formula options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         err, lib.SetCellFormula.restype = None, c_char_p
         options = (
@@ -2440,7 +2445,8 @@ class File:
             formula.encode(ENCODE),
             options,
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def set_cell_hyperlink(
         self,
@@ -2449,7 +2455,7 @@ class File:
         link: str,
         link_type: str,
         *opts: HyperlinkOpts,
-    ) -> Optional[Exception]:
+    ) -> None:
         """
         Set cell hyperlink by given worksheet name and link URL address. The
         `link_type` defines three types of hyperlink "External" for website or
@@ -2468,8 +2474,8 @@ class File:
             *opts (HyperlinkOpts): The hyperlink options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             The below is example for external link.
@@ -2509,14 +2515,10 @@ class File:
             link_type.encode(ENCODE),
             options,
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def set_cell_int(
-        self,
-        sheet: str,
-        cell: str,
-        value: int,
-    ) -> Optional[Exception]:
+    def set_cell_int(self, sheet: str, cell: str, value: int) -> None:
         """
         Set int type value of a cell by given worksheet name, cell reference and
         cell value.
@@ -2527,8 +2529,8 @@ class File:
             value (int): The cell value
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.SetCellInt.restype = c_char_p
         err = lib.SetCellInt(
@@ -2537,14 +2539,15 @@ class File:
             cell.encode(ENCODE),
             value,
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def set_cell_rich_text(
         self,
         sheet: str,
         cell: str,
         runs: List[RichTextRun],
-    ) -> Optional[Exception]:
+    ) -> None:
         """
         Set cell with rich text by given worksheet name, cell reference and rich
         text runs.
@@ -2555,9 +2558,8 @@ class File:
             runs (List[RichTextRun]): The rich text runs
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
-
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example, set rich text on the A1 cell of the worksheet named
@@ -2674,14 +2676,10 @@ class File:
             byref(vals),
             len(vals),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def set_cell_str(
-        self,
-        sheet: str,
-        cell: str,
-        value: str,
-    ) -> Optional[Exception]:
+    def set_cell_str(self, sheet: str, cell: str, value: str) -> None:
         """
         Set string type value of a cell. Total number of characters that a cell
         can contain 32767 characters.
@@ -2692,8 +2690,8 @@ class File:
             value (str): The cell value
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.SetCellStr.restype = c_char_p
         err = lib.SetCellStr(
@@ -2702,7 +2700,8 @@ class File:
             cell.encode(ENCODE),
             value.encode(ENCODE),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def set_cell_style(
         self,
@@ -2710,7 +2709,7 @@ class File:
         top_left_cell: str,
         bottom_right_cell: str,
         style_id: int,
-    ) -> Optional[Exception]:
+    ) -> None:
         """
         Add style attribute for cells by given worksheet name, range reference
         and style ID. Note that diagonalDown and diagonalUp type border should
@@ -2725,8 +2724,8 @@ class File:
             style_id (int): The style ID
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.SetCellStyle.restype = c_char_p
         err = lib.SetCellStyle(
@@ -2736,7 +2735,8 @@ class File:
             bottom_right_cell.encode(ENCODE),
             style_id,
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def set_cell_value(
         self,
@@ -2775,9 +2775,7 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
-    def set_col_outline_level(
-        self, sheet: str, col: str, level: int
-    ) -> Optional[Exception]:
+    def set_col_outline_level(self, sheet: str, col: str, level: int) -> None:
         """
         Set outline level of a single column by given worksheet name and column
         name.
@@ -2788,8 +2786,8 @@ class File:
             level (int): The out level, acceptable value from 1 to 7
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example, set outline level of column D in Sheet1 to 2:
@@ -2805,11 +2803,10 @@ class File:
         err = lib.SetColOutlineLevel(
             self.file_index, sheet.encode(ENCODE), col.encode(ENCODE), level
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def set_col_style(
-        self, sheet: str, columns: str, style_id: int
-    ) -> Optional[Exception]:
+    def set_col_style(self, sheet: str, columns: str, style_id: int) -> None:
         """
         Set style of columns by given worksheet name, columns range and style
         ID. This function is concurrency safe. Note that this will overwrite the
@@ -2822,8 +2819,8 @@ class File:
             style_id (int): The style ID
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example set style of column H on Sheet1:
@@ -2839,11 +2836,10 @@ class File:
         err = lib.SetColStyle(
             self.file_index, sheet.encode(ENCODE), columns.encode(ENCODE), style_id
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def set_col_visible(
-        self, sheet: str, columns: str, visible: bool
-    ) -> Optional[Exception]:
+    def set_col_visible(self, sheet: str, columns: str, visible: bool) -> None:
         """
         Set visible columns by given worksheet name, columns range and
         visibility.
@@ -2854,8 +2850,8 @@ class File:
             visible (bool): The column visible
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example hide column D on Sheet1:
@@ -2871,11 +2867,12 @@ class File:
         err = lib.SetColVisible(
             self.file_index, sheet.encode(ENCODE), columns.encode(ENCODE), visible
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def set_col_width(
         self, sheet: str, start_col: str, end_col: str, width: float
-    ) -> Optional[Exception]:
+    ) -> None:
         """
         Set the width of a single column or multiple columns.
 
@@ -2886,8 +2883,8 @@ class File:
             width (float): The column width
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example set column width for column A to H on Sheet1:
@@ -2907,14 +2904,15 @@ class File:
             end_col.encode(ENCODE),
             c_double(width),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def set_conditional_format(
         self,
         sheet: str,
         range_ref: str,
         opts: List[ConditionalFormatOptions],
-    ) -> Optional[Exception]:
+    ) -> None:
         """
         Create conditional formatting rule for cell value. Conditional
         formatting is a feature of Excel which allows you to apply a format to a
@@ -2926,8 +2924,8 @@ class File:
             opts (List[ConditionalFormatOptions]): The conditional format options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.SetConditionalFormat.restype = c_char_p
         vals = (types_go._ConditionalFormatOptions * len(opts))()
@@ -2940,9 +2938,10 @@ class File:
             byref(vals),
             len(vals),
         ).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def set_default_font(self, font_name: str) -> Optional[Exception]:
+    def set_default_font(self, font_name: str) -> None:
         """
         Set the default font name in the workbook. The spreadsheet generated by
         excelize default font is Calibri.
@@ -2951,16 +2950,17 @@ class File:
             font_name (str): The font name
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
         """
         lib.SetDefaultFont.restype = c_char_p
         err = lib.SetDefaultFont(self.file_index, font_name.encode(ENCODE)).decode(
             ENCODE
         )
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
-    def set_defined_name(self, defined_name: DefinedName) -> Optional[Exception]:
+    def set_defined_name(self, defined_name: DefinedName) -> None:
         """
         Set the defined names of the workbook or worksheet. If not specified
         scope, the default scope is workbook.
@@ -2969,8 +2969,8 @@ class File:
             defined_name (DefinedName): The defined name options
 
         Returns:
-            Optional[Exception]: Returns None if no error occurred,
-            otherwise returns an Exception with the message.
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
 
         Example:
             For example, create a table of A1:D5 on Sheet1:
@@ -2990,7 +2990,8 @@ class File:
         lib.SetDefinedName.restype = c_char_p
         options = py_value_to_c(defined_name, types_go._DefinedName())
         err = lib.SetDefinedName(self.file_index, byref(options)).decode(ENCODE)
-        return None if err == "" else Exception(err)
+        if err != "":
+            raise RuntimeError(err)
 
     def set_doc_props(self, doc_properties: DocProperties) -> Optional[Exception]:
         """
