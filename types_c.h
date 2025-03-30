@@ -728,6 +728,12 @@ struct BoolErrorResult
     char *err;
 };
 
+struct Float64ErrorResult
+{
+    double val;
+    char *err;
+};
+
 struct StringArrayErrorResult
 {
     int ArrLen;
