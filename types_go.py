@@ -704,6 +704,11 @@ class _BoolErrorResult(Structure):
         ("err", c_char_p),
     ]
 
+class _Float64ErrorResult(Structure):
+    _fields_ = [
+        ("val", c_double),
+        ("err", c_char_p),
+    ]
 
 class _StringArrayErrorResult(Structure):
     _fields_ = [

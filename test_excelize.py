@@ -1176,10 +1176,15 @@ class TestExcelize(unittest.TestCase):
             f.set_row_height("Sheet1", 0, 35)
         self.assertEqual(str(context.exception), "invalid row number 0")
 
-        self.assertIsNone(f.set_col_width("Sheet1", "A", "A", 44))
+        self.assertIsNone(f.set_col_width("Sheet1", "A", "A", 44.5))
         with self.assertRaises(RuntimeError) as context:
             f.set_col_width("SheetN", "A", "A", 44)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        self.assertEqual(f.get_col_width("Sheet1", "A"), 44.5)
+        with self.assertRaises(RuntimeError) as context:
+            f.get_col_width("SheetN", "A")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+
         expected = [
             excelize.RichTextRun(
                 text="bold",

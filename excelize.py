@@ -1669,6 +1669,37 @@ class File:
             return res.val
         raise RuntimeError(err)
 
+    def get_col_width(self, sheet: str, col: str) -> float:
+        """
+        Get column width by given worksheet name and column name.
+
+        Args:
+            sheet (str): The worksheet name
+            col (str): The column name
+
+        Returns:
+            float: Return the column width if no error occurred, otherwise
+            raise a RuntimeError with the message.
+
+        Example:
+            For example, get width of column D in Sheet1:
+
+            ```python
+            try:
+                width = f.get_col_width("Sheet1", "D")
+            except RuntimeError as err:
+                print(err)
+            ```
+        """
+        lib.GetColWidth.restype = types_go._Float64ErrorResult
+        res = lib.GetColWidth(
+            self.file_index, sheet.encode(ENCODE), col.encode(ENCODE)
+        )
+        err = res.err.decode(ENCODE)
+        if not err:
+            return res.val
+        raise RuntimeError(err)
+
     def get_default_font(self) -> str:
         """
         Get the default font name currently set in the workbook. The spreadsheet
