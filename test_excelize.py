@@ -679,7 +679,9 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.add_chart_sheet("Sheet1", chart)
         self.assertEqual(str(context.exception), "the same name sheet already exists")
-        self.assertIsNone(f.save_as(os.path.join("test", "TestAddChart.xlsx")))
+        with self.assertRaises(RuntimeError) as context:
+            f.save_as(os.path.join("test", "TestAddChart.xlsx"))
+        self.assertEqual(str(context.exception), "open test\TestAddChart.xlsx: The system cannot find the path specified.")
         self.assertIsNone(f.close())
 
     def test_comment(self):
@@ -1516,3 +1518,6 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(
             excelize.c_value_to_py(excelize.py_value_to_c(t1, _T1()), T1()), t1
         )
+
+if __name__ == "__main__":
+    unittest.main()
