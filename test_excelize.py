@@ -452,13 +452,13 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.close())
 
         with open(os.path.join("test", "TestStyle.xlsx"), "rb") as file:
-            f, err = excelize.open_reader(file.read())
-            self.assertIsNone(err)
+            f = excelize.open_reader(file.read())
             self.assertIsNone(f.save_as(os.path.join("test", "TestOpenReader.xlsx")))
 
         with open("chart.png", "rb") as file:
-            _, err = excelize.open_reader(file.read(), excelize.Options(password=""))
-            self.assertEqual(str(err), "zip: not a valid zip file")
+            with self.assertRaises(RuntimeError) as context:
+                _ = excelize.open_reader(file.read(), excelize.Options(password=""))
+            self.assertEqual(str(context.exception), "zip: not a valid zip file")
 
     def test_none_file_pointer(self):
         f = excelize.new_file()
@@ -1118,17 +1118,15 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
     def test_cell_name_to_coordinates(self):
-        col, row, err = excelize.cell_name_to_coordinates("Z3")
+        col, row = excelize.cell_name_to_coordinates("Z3")
         self.assertEqual(col, 26)
         self.assertEqual(row, 3)
-        self.assertIsNone(err)
 
-        col, row, err = excelize.cell_name_to_coordinates("A")
-        self.assertEqual(col, -1)
-        self.assertEqual(row, -1)
+        with self.assertRaises(RuntimeError) as context:
+            col, row = excelize.cell_name_to_coordinates("A")
         self.assertEqual(
-            str(err),
-            'cannot convert cell "A" to coordinates: invalid cell name "A"',
+            str(context.exception),
+            'cannot convert cell "A" to coordinates: invalid cell name "A"'
         )
 
     def test_cell_hyperlink(self):
