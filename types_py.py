@@ -360,26 +360,26 @@ class GraphicOptions:
 
 @dataclass
 class PageLayoutMarginsOptions:
-    bottom: Optional[float] = (None,)
-    footer: Optional[float] = (None,)
-    header: Optional[float] = (None,)
-    left: Optional[float] = (None,)
-    right: Optional[float] = (None,)
-    top: Optional[float] = (None,)
-    horizontally: Optional[bool] = (None,)
-    vertically: Optional[bool] = (None,)
+    bottom: Optional[float] = None
+    footer: Optional[float] = None
+    header: Optional[float] = None
+    left: Optional[float] = None
+    right: Optional[float] = None
+    top: Optional[float] = None
+    horizontally: Optional[bool] = None
+    vertically: Optional[bool] = None
 
 
 @dataclass
 class PageLayoutOptions:
-    size: Optional[int] = (None,)
-    orientation: Optional[str] = (None,)
-    first_page_number: Optional[int] = (None,)
-    adjust_to: Optional[int] = (None,)
-    fit_to_height: Optional[int] = (None,)
-    fit_to_width: Optional[int] = (None,)
-    black_and_white: Optional[bool] = (None,)
-    page_order: Optional[str] = (None,)
+    size: Optional[int] = None
+    orientation: Optional[str] = None
+    first_page_number: Optional[int] = None
+    adjust_to: Optional[int] = None
+    fit_to_height: Optional[int] = None
+    fit_to_width: Optional[int] = None
+    black_and_white: Optional[bool] = None
+    page_order: Optional[str] = None
 
 
 @dataclass
