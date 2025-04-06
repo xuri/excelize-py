@@ -208,8 +208,15 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
         self.assertIsNone(f.set_row_style("Sheet1", 1, 1, style_id))
+        with self.assertRaises(RuntimeError) as context:
+            f.set_row_style("SheetN", 1, 1, style_id)
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
         self.assertIsNone(f.set_row_visible("Sheet1", 1, False))
+        with self.assertRaises(RuntimeError) as context:
+            f.set_row_visible("SheetN", 1, False)
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+
         self.assertFalse(f.get_row_visible("Sheet1", 1))
         self.assertTrue(f.get_row_visible("Sheet1", 2))
         with self.assertRaises(RuntimeError) as context:
@@ -234,6 +241,10 @@ class TestExcelize(unittest.TestCase):
             self.assertIsNone(
                 f.set_sheet_background_from_bytes("Sheet1", ".png", file.read())
             )
+        with open("chart.png", "rb") as file:
+            with self.assertRaises(RuntimeError) as context:
+                f.set_sheet_background_from_bytes("SheetN", ".png", file.read())
+            self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
         self.assertIsNone(f.set_cell_value("Sheet1", "A2", None))
         self.assertIsNone(f.set_cell_value("Sheet1", "A3", "Hello"))
@@ -288,7 +299,6 @@ class TestExcelize(unittest.TestCase):
 
         with self.assertRaises(RuntimeError) as context:
             result = f.search_sheet("SheetN", "H", False)
-            self.assertEqual(result, [])
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
         self.assertIsNone(f.duplicate_row("Sheet1", 20))
@@ -314,6 +324,9 @@ class TestExcelize(unittest.TestCase):
             f.merge_cell("SheetN", "A1", "B2")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         self.assertIsNone(f.unmerge_cell("Sheet1", "A1", "B2"))
+        with self.assertRaises(RuntimeError) as context:
+            f.unmerge_cell("SheetN", "A1", "B2")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
         idx = f.new_sheet("Sheet2")
         self.assertEqual(idx, 1)
@@ -335,12 +348,17 @@ class TestExcelize(unittest.TestCase):
             _ = f.get_col_outline_level("SheetN", "D")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         self.assertIsNone(f.set_row_outline("Sheet1", 2, 1))
+        with self.assertRaises(RuntimeError) as context:
+            f.set_row_outline("SheetN", 2, 1)
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
         self.assertIsNone(f.set_sheet_background("Sheet2", "chart.png"))
+        with self.assertRaises(RuntimeError) as context:
+            f.set_sheet_background("SheetN", "chart.png")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
         with self.assertRaises(RuntimeError) as context:
             idx = f.new_sheet(":\\/?*[]Maximum 31 characters allowed in sheet title.")
-            self.assertEqual(idx, -1)
         self.assertEqual(
             str(context.exception),
             "the sheet name length exceeds the 31 characters limit",
@@ -496,6 +514,18 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
             f.set_defined_name(excelize.DefinedName())
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
+            f.set_doc_props(excelize.DocProperties())
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
+            f.set_workbook_props(excelize.WorkbookPropsOptions())
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
+            f.ungroup_sheets()
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
+            f.update_linked_value()
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
             f.save_as(os.path.join("test", "TestNoneFilePointer.xlsx"))
@@ -792,6 +822,9 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(
             f.set_sheet_props("Sheet1", excelize.SheetPropsOptions(code_name="Sheet1"))
         )
+        with self.assertRaises(RuntimeError) as context:
+            f.set_sheet_props("SheetN", excelize.SheetPropsOptions(code_name="Sheet1"))
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         with open(os.path.join("test", "vbaProject.bin"), "rb") as file:
             self.assertIsNone(f.add_vba_project(file.read()))
         self.assertIsNone(f.save_as(os.path.join("test", "TestAddFormControl.xlsm")))
@@ -813,6 +846,9 @@ class TestExcelize(unittest.TestCase):
                 ),
             )
         )
+        with self.assertRaises(RuntimeError) as context:
+            f.set_header_footer("SheetN", excelize.HeaderFooterOptions())
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         self.assertIsNone(f.save_as(os.path.join("test", "TestHeaderFooter.xlsx")))
         self.assertIsNone(f.close())
 
@@ -833,6 +869,9 @@ class TestExcelize(unittest.TestCase):
                 ),
             )
         )
+        with self.assertRaises(RuntimeError) as context:
+            f.set_page_layout("SheetN", excelize.PageLayoutOptions())
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         self.assertIsNone(f.save_as(os.path.join("test", "TestPageLayout.xlsx")))
         self.assertIsNone(f.close())
 
@@ -853,6 +892,9 @@ class TestExcelize(unittest.TestCase):
                 ),
             )
         )
+        with self.assertRaises(RuntimeError) as context:
+            f.set_page_margins("SheetN", excelize.PageLayoutMarginsOptions())
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         self.assertIsNone(f.save_as(os.path.join("test", "TestPageMargins.xlsx")))
         self.assertIsNone(f.close())
 
@@ -878,6 +920,9 @@ class TestExcelize(unittest.TestCase):
                 ),
             )
         )
+        with self.assertRaises(RuntimeError) as context:
+            f.set_panes("SheetN", excelize.Panes())
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         self.assertIsNone(f.save_as(os.path.join("test", "TestPanes.xlsx")))
         self.assertIsNone(f.close())
 
@@ -1032,7 +1077,6 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(str(context.exception), "parameter is invalid")
         with self.assertRaises(RuntimeError) as context:
             tables = f.get_tables("SheetN")
-            self.assertEqual(tables, [])
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         self.assertIsNone(f.save_as(os.path.join("test", "TestAddSlicer.xlsx")))
         self.assertIsNone(f.close())
@@ -1126,7 +1170,7 @@ class TestExcelize(unittest.TestCase):
             col, row = excelize.cell_name_to_coordinates("A")
         self.assertEqual(
             str(context.exception),
-            'cannot convert cell "A" to coordinates: invalid cell name "A"'
+            'cannot convert cell "A" to coordinates: invalid cell name "A"',
         )
 
     def test_cell_hyperlink(self):
@@ -1301,26 +1345,19 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.close())
 
     def test_column_name_to_number(self):
-        col, err = excelize.column_name_to_number("Z")
-        self.assertEqual(col, 26)
-        self.assertIsNone(err)
+        self.assertEqual(excelize.column_name_to_number("Z"), 26)
 
-        col, err = excelize.column_name_to_number("-")
-        self.assertEqual(col, -1)
-        self.assertEqual(
-            str(err),
-            'invalid column name "-"',
-        )
+        with self.assertRaises(RuntimeError) as context:
+            excelize.column_name_to_number("-")
+        self.assertEqual(str(context.exception), 'invalid column name "-"')
 
     def test_column_number_to_name(self):
-        name, err = excelize.column_number_to_name(26)
-        self.assertEqual(name, "Z")
-        self.assertIsNone(err)
+        self.assertEqual(excelize.column_number_to_name(26), "Z")
 
-        name, err = excelize.column_number_to_name(0)
-        self.assertEqual(name, "")
+        with self.assertRaises(RuntimeError) as context:
+            excelize.column_number_to_name(0)
         self.assertEqual(
-            str(err),
+            str(context.exception),
             "the column number must be greater than or equal to 1 and less than or equal to 16384",
         )
 
@@ -1435,13 +1472,31 @@ class TestExcelize(unittest.TestCase):
                 ],
             )
         )
+        with self.assertRaises(RuntimeError) as context:
+            f.set_sheet_col("Sheet1", "A", [])
+        self.assertEqual(
+            str(context.exception),
+            'cannot convert cell "A" to coordinates: invalid cell name "A"',
+        )
         self.assertIsNone(f.set_sheet_dimension("Sheet1", "A1:B6"))
+        with self.assertRaises(RuntimeError) as context:
+            f.set_sheet_dimension("SheetN", "A1:B6")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         dimension = f.get_sheet_dimension("Sheet1")
         self.assertEqual(dimension, "A1:B6")
         with self.assertRaises(RuntimeError) as context:
             _ = f.get_sheet_dimension("SheetN")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         self.assertIsNone(f.set_sheet_name("Sheet1", "SheetN"))
+        with self.assertRaises(RuntimeError) as context:
+            f.set_sheet_name(
+                "Maximum 31 characters allowed i",
+                "[Rename]:\\/?* Maximum 31 characters allowed in sheet title.",
+            )
+        self.assertEqual(
+            str(context.exception),
+            "the sheet name length exceeds the 31 characters limit",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestSetSheetCol.xlsx")))
         self.assertIsNone(f.close())
 
@@ -1460,6 +1515,9 @@ class TestExcelize(unittest.TestCase):
             zoom_scale=120,
         )
         self.assertIsNone(f.set_sheet_view("Sheet1", 0, expected))
+        with self.assertRaises(RuntimeError) as context:
+            f.set_sheet_view("SheetN", 0, expected)
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         self.assertIsNone(f.save_as(os.path.join("test", "TestSheetView.xlsx")))
         self.assertIsNone(f.close())
 
@@ -1467,6 +1525,12 @@ class TestExcelize(unittest.TestCase):
         f = excelize.new_file()
         _ = f.new_sheet("Sheet2")
         self.assertIsNone(f.set_sheet_visible("Sheet2", False, True))
+        with self.assertRaises(RuntimeError) as context:
+            f.set_sheet_visible("Sheet:1", False, True)
+        self.assertEqual(
+            str(context.exception),
+            "the sheet can not contain any of the characters :\/?*[or]",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestSheetVisible.xlsx")))
         self.assertIsNone(f.close())
 

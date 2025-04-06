@@ -1222,18 +1222,17 @@ class File:
             return res.val.decode(ENCODE)
         raise RuntimeError(err)
 
-    def close(self) -> None:
+    def close(self) -> Optional[Exception]:
         """
         Closes and cleanup the open temporary file for the spreadsheet.
 
         Returns:
-            None: Return None if no error occurred, otherwise raise a
-            RuntimeError with the message.
+            Optional[Exception]: Returns None if no error occurred,
+            otherwise returns an Exception with the message.
         """
         err, lib.Close.restype = None, c_char_p
         err = lib.Close(self.file_index).decode(ENCODE)
-        if err != "":
-            raise RuntimeError(err)
+        return None if err == "" else Exception(err)
 
     def copy_sheet(self, src: int, to: int) -> None:
         """
@@ -3038,9 +3037,7 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
-    def set_header_footer(
-        self, sheet: str, opts: HeaderFooterOptions
-    ) -> None:
+    def set_header_footer(self, sheet: str, opts: HeaderFooterOptions) -> None:
         """
         Set headers and footers by given worksheet name and the control
         characters.
@@ -3082,9 +3079,7 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
-    def set_page_layout(
-        self, sheet: str, opts: PageLayoutOptions
-    ) -> None:
+    def set_page_layout(self, sheet: str, opts: PageLayoutOptions) -> None:
         """
         Sets worksheet page layout.
 
@@ -3104,9 +3099,7 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
-    def set_page_margins(
-        self, sheet: str, opts: PageLayoutMarginsOptions
-    ) -> None:
+    def set_page_margins(self, sheet: str, opts: PageLayoutMarginsOptions) -> None:
         """
         Set worksheet page margins.
 
@@ -3210,9 +3203,7 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
-    def set_row_style(
-        self, sheet: str, start: int, end: int, style_id: int
-    ) -> None:
+    def set_row_style(self, sheet: str, start: int, end: int, style_id: int) -> None:
         """
         Set the style of rows by given worksheet name, row range, and style ID.
         Note that this will overwrite the existing styles for the rows, it won't
@@ -3249,10 +3240,7 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
-
-    def set_row_visible(
-        self, sheet: str, row: int, visible: bool
-    ) -> None:
+    def set_row_visible(self, sheet: str, row: int, visible: bool) -> None:
         """
         Set visible of a single row by given worksheet name and Excel row
         number.
@@ -3421,9 +3409,7 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
-    def set_sheet_props(
-        self, sheet: str, opts: SheetPropsOptions
-    ) -> None:
+    def set_sheet_props(self, sheet: str, opts: SheetPropsOptions) -> None:
         """
         Set worksheet properties.
 
@@ -3477,9 +3463,7 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
-    def set_sheet_view(
-        self, sheet: str, view_index: int, opts: ViewOptions
-    ) -> None:
+    def set_sheet_view(self, sheet: str, view_index: int, opts: ViewOptions) -> None:
         """
         Sets sheet view options. The viewIndex may be negative and if so is
         counted backward (-1 is the last view).
@@ -3501,9 +3485,7 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
-    def set_sheet_visible(
-        self, sheet: str, visible: bool, *very_hidden: bool
-    ) -> None:
+    def set_sheet_visible(self, sheet: str, visible: bool, *very_hidden: bool) -> None:
         """
         Set worksheet visible by given worksheet name. A workbook must contain
         at least one visible worksheet. If the given worksheet has been
@@ -3622,8 +3604,8 @@ def cell_name_to_coordinates(cell: str) -> Tuple[int, int]:
         cell (str): The cell reference
 
     Returns:
-        int: Return the style index if no error occurred, otherwise raise a
-            RuntimeError with the message.
+        Tuple[int, int]: Return a tuple containing the column number, row number
+        if no error occurred, otherwise raise a RuntimeError with the message.
     """
     lib.CellNameToCoordinates.restype = types_go._CellNameToCoordinatesResult
     res = lib.CellNameToCoordinates(cell.encode(ENCODE))
@@ -3633,7 +3615,7 @@ def cell_name_to_coordinates(cell: str) -> Tuple[int, int]:
     raise RuntimeError(err)
 
 
-def column_name_to_number(name: str) -> Tuple[int, Optional[Exception]]:
+def column_name_to_number(name: str) -> int:
     """
     Convert Excel sheet column name (case-insensitive) to int. The function
     returns an error if column name incorrect.
@@ -3642,16 +3624,18 @@ def column_name_to_number(name: str) -> Tuple[int, Optional[Exception]]:
         name (str): The column name
 
     Returns:
-        Tuple[int, Optional[Exception]]: A tuple containing the column number
-        and an Exception if an error occurred, otherwise None.
+        int: Return the column number as a integer if no error occurred,
+        otherwise raise a RuntimeError with the message.
     """
     lib.ColumnNameToNumber.restype = types_go._IntErrorResult
     res = lib.ColumnNameToNumber(name.encode(ENCODE))
     err = res.err.decode(ENCODE)
-    return res.val, None if err == "" else Exception(err)
+    if not err:
+        return res.val
+    raise RuntimeError(err)
 
 
-def column_number_to_name(num: int) -> Tuple[str, Optional[Exception]]:
+def column_number_to_name(num: int) -> str:
     """
     Convert the integer to Excel sheet column title.
 
@@ -3659,13 +3643,15 @@ def column_number_to_name(num: int) -> Tuple[str, Optional[Exception]]:
         num (int): The column number
 
     Returns:
-        Tuple[str, Optional[Exception]]: A tuple containing the column name and
-        an Exception if an error occurred, otherwise None.
+        str: Return the column name as a string if no error occurred, otherwise
+        raise a RuntimeError with the message.
     """
     lib.ColumnNumberToName.restype = types_go._StringErrorResult
     res = lib.ColumnNumberToName(c_int(num))
     err = res.err.decode(ENCODE)
-    return res.val.decode(ENCODE), None if err == "" else Exception(err)
+    if not err:
+        return res.val.decode(ENCODE)
+    raise RuntimeError(err)
 
 
 def coordinates_to_cell_name(col: int, row: int, *is_absolute: bool) -> str:
@@ -3729,7 +3715,7 @@ def open_file(filename: str, *opts: Options) -> File:
 
 def open_reader(
     buffer: bytes, *opts: Options
-) -> None:
+) -> Optional[File]:
     """
     Read data stream from bytes and return a populated spreadsheet file.
 
