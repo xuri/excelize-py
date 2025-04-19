@@ -797,3 +797,10 @@ class _GetSheetMapResult(Structure):
         ("Arr", POINTER(_IntStringResult)),
         ("Err", c_char_p),
     ]
+
+class _GetCommentsResult(Structure):
+    _fields_ = [
+        ("CommentsLen", c_int),
+        ("Comments", POINTER(_Comment)),
+        ("Err", c_char_p),
+    ]

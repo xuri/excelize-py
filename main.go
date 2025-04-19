@@ -13,7 +13,7 @@
 package main
 
 /*
-#include "types_c.h"
+	#include "types_c.h"
 */
 import "C"
 
@@ -1350,6 +1350,48 @@ func GetSheetMap(idx int) C.struct_GetSheetMapResult {
 	ret := cVal.Elem().Interface().(C.struct_GetSheetMapResult)
 	ret.Err = C.CString(emptyString)
 	return ret
+}
+
+// GetComments retrieves all comments in a worksheet by given worksheet name.
+//
+//export GetComments
+func GetComments(idx int, sheet *C.char) C.struct_GetCommentsResult {
+	type Comment struct {
+		Author       string
+		AuthorID     int
+		Cell         string
+		Text         string
+		Width        uint
+		Height       uint
+		ParagraphLen int
+		Paragraph    []excelize.RichTextRun
+	}
+	type GetCommentsResult struct {
+		CommentsLen int
+		Comments    []Comment
+		Err         string
+	}
+	var result GetCommentsResult
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetCommentsResult{Err: C.CString(errFilePtr)}
+	}
+	comments, err := f.(*excelize.File).GetComments(C.GoString(sheet))
+	if err != nil {
+		return C.struct_GetCommentsResult{Err: C.CString(err.Error())}
+	}
+	result.CommentsLen = len(comments)
+	for _, c := range comments {
+		result.Comments = append(result.Comments, Comment{Author: c.Author, AuthorID: c.AuthorID, Cell: c.Cell, Text: c.Text, Width: c.Width, Height: c.Height, ParagraphLen: len(c.Paragraph), Paragraph: c.Paragraph})
+	}
+	cVal, err := goValueToC(reflect.ValueOf(result), reflect.ValueOf(&C.struct_GetCommentsResult{}))
+	if err != nil {
+		return C.struct_GetCommentsResult{Err: C.CString(err.Error())}
+	}
+	ret := cVal.Elem().Interface().(C.struct_GetCommentsResult)
+	ret.Err = C.CString(emptyString)
+	return ret
+
 }
 
 // GetSheetName provides a function to get the sheet name by the given worksheet index.

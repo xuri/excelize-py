@@ -810,3 +810,9 @@ struct GetSheetMapResult {
     struct IntStringResult* Arr;
     char* Err;
 };
+
+struct GetCommentsResult {
+    int CommentsLen;
+    struct Comment* Comments;
+    char* Err;
+};

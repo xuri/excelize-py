@@ -1859,10 +1859,28 @@ class File:
         err = res.Err.decode(ENCODE)
         result = c_value_to_py(res, GetSheetMapResult()).arr
         if result:
-            print(result)
             for item in result:
                 sheet_map[item.k] = item.v
         return sheet_map
+    
+    def get_comments(self, sheet: str) -> List[Comment]:
+
+        """
+        GetComments retrieves all comments in a worksheet by given worksheet name.
+
+        Returns:
+            List[Comment]: Return the comment list if no error occurred,
+            otherwise raise a RuntimeError with the message.
+        """
+        lib.GetComments.restype = types_go._GetCommentsResult
+        res = lib.GetComments(self.file_index, sheet.encode(ENCODE))
+        if res.Err:
+            err = res.Err.decode(ENCODE)
+            if err:
+                raise RuntimeError(err) 
+        result = c_value_to_py(res, GetCommentsResult())
+        return result.comments if result and result.comments else []
+
 
 
     def get_sheet_name(self, sheet: int) -> str:

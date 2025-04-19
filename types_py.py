@@ -806,3 +806,8 @@ class IntStringResult:
 class GetSheetMapResult:
     arr: Optional[List[IntStringResult]] = None
     err: str = ""
+
+@dataclass
+class GetCommentsResult:
+    comments: Optional[List[Comment]] = None
+    err: str = ""
