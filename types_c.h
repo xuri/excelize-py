@@ -799,3 +799,20 @@ struct GetWorkbookPropsResult
     struct WorkbookPropsOptions opts;
     char *err;
 };
+
+struct IntStringResult {
+    int K;
+    char* V;
+};
+
+struct GetSheetMapResult {
+    int ArrLen;
+    struct IntStringResult* Arr;
+    char* Err;
+};
+
+struct GetCommentsResult {
+    int CommentsLen;
+    struct Comment* Comments;
+    char* Err;
+};

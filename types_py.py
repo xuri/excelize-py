@@ -796,3 +796,18 @@ class WorkbookProtectionOptions:
 class StringArrayErrorResult:
     arr: Optional[List[str]] = None
     err: str = ""
+
+@dataclass
+class IntStringResult:
+    k: int = 0
+    v: str = ""
+
+@dataclass
+class GetSheetMapResult:
+    arr: Optional[List[IntStringResult]] = None
+    err: str = ""
+
+@dataclass
+class GetCommentsResult:
+    comments: Optional[List[Comment]] = None
+    err: str = ""

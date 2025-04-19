@@ -13,7 +13,7 @@
 package main
 
 /*
-#include "types_c.h"
+	#include "types_c.h"
 */
 import "C"
 
@@ -1300,6 +1300,98 @@ func GetSheetIndex(idx int, sheet *C.char) C.struct_IntErrorResult {
 		return C.struct_IntErrorResult{val: C.int(idx), err: C.CString(err.Error())}
 	}
 	return C.struct_IntErrorResult{val: C.int(idx), err: C.CString(emptyString)}
+}
+
+// GetSheetList provides a function to get worksheets, chart sheets, and
+// dialog sheets name list of the workbook.
+//
+//export GetSheetList
+func GetSheetList(idx int) C.struct_StringArrayErrorResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_StringArrayErrorResult{Err: C.CString(errFilePtr)}
+	}
+	result := f.(*excelize.File).GetSheetList()
+	cArray := C.malloc(C.size_t(len(result)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	for i, v := range result {
+		*(*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(uintptr(0)))) = unsafe.Pointer(C.CString(v))
+	}
+	return C.struct_StringArrayErrorResult{ArrLen: C.int(len(result)), Arr: (**C.char)(cArray), Err: C.CString(emptyString)}
+}
+
+// GetSheetMap provides a function to get worksheets, chart sheets,
+// dialog sheets ID, and name maps of the workbook.
+//
+//export GetSheetMap
+func GetSheetMap(idx int) C.struct_GetSheetMapResult {
+	type IntStringResult struct {
+		K int
+		V string
+	}
+	type GetSheetMapResult struct {
+		Arr []IntStringResult
+		Err string
+	}
+	var result GetSheetMapResult
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetSheetMapResult{
+			Err: C.CString(errFilePtr),
+		}
+	}
+	for k, v := range f.(*excelize.File).GetSheetMap() {
+		result.Arr = append(result.Arr, IntStringResult{K: k, V: v})
+	}
+
+	cVal, err := goValueToC(reflect.ValueOf(result), reflect.ValueOf(&C.struct_GetSheetMapResult{}))
+	if err != nil {
+		return C.struct_GetSheetMapResult{Err: C.CString(err.Error())}
+	}
+	ret := cVal.Elem().Interface().(C.struct_GetSheetMapResult)
+	ret.Err = C.CString(emptyString)
+	return ret
+}
+
+// GetComments retrieves all comments in a worksheet by given worksheet name.
+//
+//export GetComments
+func GetComments(idx int, sheet *C.char) C.struct_GetCommentsResult {
+	type Comment struct {
+		Author       string
+		AuthorID     int
+		Cell         string
+		Text         string
+		Width        uint
+		Height       uint
+		ParagraphLen int
+		Paragraph    []excelize.RichTextRun
+	}
+	type GetCommentsResult struct {
+		CommentsLen int
+		Comments    []Comment
+		Err         string
+	}
+	var result GetCommentsResult
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetCommentsResult{Err: C.CString(errFilePtr)}
+	}
+	comments, err := f.(*excelize.File).GetComments(C.GoString(sheet))
+	if err != nil {
+		return C.struct_GetCommentsResult{Err: C.CString(err.Error())}
+	}
+	result.CommentsLen = len(comments)
+	for _, c := range comments {
+		result.Comments = append(result.Comments, Comment{Author: c.Author, AuthorID: c.AuthorID, Cell: c.Cell, Text: c.Text, Width: c.Width, Height: c.Height, ParagraphLen: len(c.Paragraph), Paragraph: c.Paragraph})
+	}
+	cVal, err := goValueToC(reflect.ValueOf(result), reflect.ValueOf(&C.struct_GetCommentsResult{}))
+	if err != nil {
+		return C.struct_GetCommentsResult{Err: C.CString(err.Error())}
+	}
+	ret := cVal.Elem().Interface().(C.struct_GetCommentsResult)
+	ret.Err = C.CString(emptyString)
+	return ret
+
 }
 
 // GetSheetName provides a function to get the sheet name by the given worksheet index.
