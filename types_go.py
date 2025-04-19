@@ -784,3 +784,16 @@ class _GetWorkbookPropsResult(Structure):
         ("opts", _WorkbookPropsOptions),
         ("err", c_char_p),
     ]
+
+class _IntStringResult(Structure):
+    _fields_ = [
+        ("K", c_int),
+        ("V", c_char_p),
+    ]
+
+class _GetSheetMapResult(Structure):
+    _fields_ = [
+        ("ArrLen", c_int),
+        ("Arr", POINTER(_IntStringResult)),
+        ("Err", c_char_p),
+    ]

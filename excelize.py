@@ -1826,6 +1826,44 @@ class File:
         if not err:
             return res.val
         raise RuntimeError(err)
+    
+    def get_sheet_list(self) -> List[str]:
+        """
+        GetSheetList provides a function to get worksheets, chart sheets, and 
+        dialog sheets name list of the workbook.
+
+        Returns:
+            List[str]: Return the sheet name list if no error occurred,
+            otherwise return an empty list.
+        """
+
+        lib.GetSheetList.restype = types_go._StringArrayErrorResult
+        res = lib.GetSheetList(
+            self.file_index
+        )
+        arr = c_value_to_py(res, StringArrayErrorResult()).arr
+        return arr if arr else []
+    
+    def get_sheet_map(self) -> dict[int, str]:
+        """
+        GetSheetMap provides a function to get worksheets, chart sheets, 
+        dialog sheets ID, and name maps of the workbook.
+
+        Returns:
+            dict[int, str]: Return the sheet ID and name map if no error occurred,
+            otherwise return an empty dictionary.
+        """
+        lib.GetSheetMap.restype = types_go._GetSheetMapResult
+        sheet_map = dict()
+        res = lib.GetSheetMap(self.file_index)
+        err = res.Err.decode(ENCODE)
+        result = c_value_to_py(res, GetSheetMapResult()).arr
+        if result:
+            print(result)
+            for item in result:
+                sheet_map[item.k] = item.v
+        return sheet_map
+
 
     def get_sheet_name(self, sheet: int) -> str:
         """
