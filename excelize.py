@@ -13,7 +13,7 @@ amounts of data. This library needs Python version 3.9 or later.
 from dataclasses import fields
 from datetime import datetime, date, time
 from enum import Enum
-from typing import Tuple, get_args, get_origin, List, Optional, Union
+from typing import Tuple, get_args, get_origin, Dict, List, Optional, Union
 from ctypes import (
     byref,
     c_bool,
@@ -1698,6 +1698,24 @@ class File:
             return res.val
         raise RuntimeError(err)
 
+    def get_comments(self, sheet: str) -> List[Comment]:
+        """
+        GetComments retrieves all comments in a worksheet by given worksheet
+        name.
+
+        Returns:
+            List[Comment]: Return the comment list if no error occurred,
+            otherwise raise a RuntimeError with the message.
+        """
+        lib.GetComments.restype = types_go._GetCommentsResult
+        res = lib.GetComments(self.file_index, sheet.encode(ENCODE))
+        result = c_value_to_py(res, GetCommentsResult())
+        if res.Err:
+            err = res.Err.decode(ENCODE)
+            if err:
+                raise RuntimeError(err)
+        return result.comments if result and result.comments else []
+
     def get_default_font(self) -> str:
         """
         Get the default font name currently set in the workbook. The spreadsheet
@@ -1834,48 +1852,28 @@ class File:
             List[str]: Return the sheet name list if no error occurred,
             otherwise return an empty list.
         """
-
         lib.GetSheetList.restype = types_go._StringArrayErrorResult
         res = lib.GetSheetList(self.file_index)
         arr = c_value_to_py(res, StringArrayErrorResult()).arr
         return arr if arr else []
 
-    def get_sheet_map(self) -> dict[int, str]:
+    def get_sheet_map(self) -> Dict[int, str]:
         """
-        GetSheetMap provides a function to get worksheets, chart sheets,
-        dialog sheets ID, and name maps of the workbook.
+        GetSheetMap provides a function to get worksheets, chart sheets, dialog
+        sheets ID, and name maps of the workbook.
 
         Returns:
-            Dict[int, str]: Return the sheet ID and name map if no error
+            dict[int, str]: Return the sheet ID and name map if no error
             occurred, otherwise return an empty dictionary.
         """
         lib.GetSheetMap.restype = types_go._GetSheetMapResult
         sheet_map = dict()
         res = lib.GetSheetMap(self.file_index)
-        err = res.Err.decode(ENCODE)
         result = c_value_to_py(res, GetSheetMapResult()).arr
         if result:
             for item in result:
                 sheet_map[item.k] = item.v
         return sheet_map
-
-    def get_comments(self, sheet: str) -> List[Comment]:
-        """
-        GetComments retrieves all comments in a worksheet by given worksheet 
-        name.
-
-        Returns:
-            List[Comment]: Return the comment list if no error occurred,
-            otherwise raise a RuntimeError with the message.
-        """
-        lib.GetComments.restype = types_go._GetCommentsResult
-        res = lib.GetComments(self.file_index, sheet.encode(ENCODE))
-        result = c_value_to_py(res, GetCommentsResult())
-        if res.Err:
-            err = res.Err.decode(ENCODE)
-            if err:
-                raise RuntimeError(err)
-        return result.comments if result and result.comments else []
 
     def get_sheet_name(self, sheet: int) -> str:
         """

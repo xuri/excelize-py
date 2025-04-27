@@ -741,6 +741,11 @@ struct StringArrayErrorResult
     char *Err;
 };
 
+struct IntStringResult {
+    int K;
+    char *V;
+};
+
 struct GetCellHyperLinkResult
 {
     bool link;
@@ -798,11 +803,6 @@ struct GetWorkbookPropsResult
 {
     struct WorkbookPropsOptions opts;
     char *err;
-};
-
-struct IntStringResult {
-    int K;
-    char *V;
 };
 
 struct GetSheetMapResult {

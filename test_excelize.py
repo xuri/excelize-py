@@ -744,7 +744,7 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(comments[0].paragraph[0].text, comment.paragraph[0].text)
         self.assertEqual(comments[0].paragraph[1].text, comment.paragraph[1].text)
         with self.assertRaises(RuntimeError) as context:
-           f.get_comments("SheetN")
+            f.get_comments("SheetN")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         with self.assertRaises(RuntimeError) as context:
             f.add_comment("SheetN", comment)

@@ -704,11 +704,20 @@ class _BoolErrorResult(Structure):
         ("err", c_char_p),
     ]
 
+
 class _Float64ErrorResult(Structure):
     _fields_ = [
         ("val", c_double),
         ("err", c_char_p),
     ]
+
+
+class _IntStringResult(Structure):
+    _fields_ = [
+        ("K", c_int),
+        ("V", c_char_p),
+    ]
+
 
 class _StringArrayErrorResult(Structure):
     _fields_ = [
@@ -785,11 +794,6 @@ class _GetWorkbookPropsResult(Structure):
         ("err", c_char_p),
     ]
 
-class _IntStringResult(Structure):
-    _fields_ = [
-        ("K", c_int),
-        ("V", c_char_p),
-    ]
 
 class _GetSheetMapResult(Structure):
     _fields_ = [
@@ -797,6 +801,7 @@ class _GetSheetMapResult(Structure):
         ("Arr", POINTER(_IntStringResult)),
         ("Err", c_char_p),
     ]
+
 
 class _GetCommentsResult(Structure):
     _fields_ = [

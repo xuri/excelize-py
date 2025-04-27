@@ -89,7 +89,7 @@ finally:
 
 使用 Excelize 生成图表十分简单，仅需几行代码。您可以根据工作表中的已有数据构建图表，或向工作表中添加数据并创建图表。
 
-<p align="center"><img width="650" src="./chart.png" alt="使用 Excelize 在 Excel 电子表格文档中创建图表"></p>
+<p align="center"><img width="650" src="https://github.com/xuri/excelize-py/raw/main/chart.png" alt="使用 Excelize 在 Excel 电子表格文档中创建图表"></p>
 
 ```python
 import excelize
