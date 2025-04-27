@@ -1355,7 +1355,7 @@ func GetSheetMap(idx int) C.struct_GetSheetMapResult {
 // GetComments retrieves all comments in a worksheet by given worksheet name.
 //
 //export GetComments
-func GetComments(idx int, sheet *C.char) C.struct_GetCommentsResult {
+/*func GetComments(idx int, sheet *C.char) C.struct_GetCommentsResult {
 	type Comment struct {
 		Author       string
 		AuthorID     int
@@ -1392,6 +1392,27 @@ func GetComments(idx int, sheet *C.char) C.struct_GetCommentsResult {
 	ret.Err = C.CString(emptyString)
 	return ret
 
+}*/
+
+//export GetComments
+func GetComments(idx int, sheet *C.char) C.struct_GetCommentsResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetCommentsResult{Err: C.CString(errFilePtr)}
+	}
+	comments, err := f.(*excelize.File).GetComments(C.GoString(sheet))
+	if err != nil {
+		return C.struct_GetCommentsResult{Err: C.CString(err.Error())}
+	}
+	cArray := C.malloc(C.size_t(len(comments)) * C.size_t(unsafe.Sizeof(C.struct_Comment{})))
+	for i, r := range comments {
+		cVal, err := goValueToC(reflect.ValueOf(r), reflect.ValueOf(&C.struct_Comment{}))
+		if err != nil {
+			return C.struct_GetCommentsResult{Err: C.CString(err.Error())}
+		}
+		*(*C.struct_Comment)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(C.struct_Comment{}))) = cVal.Elem().Interface().(C.struct_Comment)
+	}
+	return C.struct_GetCommentsResult{CommentsLen: C.int(len(comments)), Comments: (*C.struct_Comment)(cArray), Err: C.CString(emptyString)}
 }
 
 // GetSheetName provides a function to get the sheet name by the given worksheet index.

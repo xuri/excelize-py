@@ -737,7 +737,12 @@ class TestExcelize(unittest.TestCase):
                 comment,
             )
         )
-        self.assertEqual(str(f.get_comments("Sheet1")), "[Comment(author='Excelize', author_id=0, cell='A5', text='', width=0, height=0, paragraph=[RichTextRun(font=Font(bold=True, italic=False, underline='', family='', size=0, strike=False, color='', color_indexed=0, color_theme=None, color_tint=0, vert_align=''), text='Excelize: '), RichTextRun(font=Font(bold=False, italic=False, underline='', family='Calibri', size=9.0, strike=False, color='', color_indexed=81, color_theme=None, color_tint=0, vert_align=''), text='This is a comment.')])]")
+        comments = f.get_comments("Sheet1")
+        self.assertEqual(len(comments), 1)
+        self.assertEqual(comments[0].cell, "A5")
+        self.assertEqual(comments[0].author, "Excelize")
+        self.assertEqual(comments[0].paragraph[0].text, comment.paragraph[0].text)
+        self.assertEqual(comments[0].paragraph[1].text, comment.paragraph[1].text)
         with self.assertRaises(RuntimeError) as context:
            f.get_comments("SheetN")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")

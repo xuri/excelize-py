@@ -1692,9 +1692,7 @@ class File:
             ```
         """
         lib.GetColWidth.restype = types_go._Float64ErrorResult
-        res = lib.GetColWidth(
-            self.file_index, sheet.encode(ENCODE), col.encode(ENCODE)
-        )
+        res = lib.GetColWidth(self.file_index, sheet.encode(ENCODE), col.encode(ENCODE))
         err = res.err.decode(ENCODE)
         if not err:
             return res.val
@@ -1826,10 +1824,10 @@ class File:
         if not err:
             return res.val
         raise RuntimeError(err)
-    
+
     def get_sheet_list(self) -> List[str]:
         """
-        GetSheetList provides a function to get worksheets, chart sheets, and 
+        GetSheetList provides a function to get worksheets, chart sheets, and
         dialog sheets name list of the workbook.
 
         Returns:
@@ -1838,20 +1836,18 @@ class File:
         """
 
         lib.GetSheetList.restype = types_go._StringArrayErrorResult
-        res = lib.GetSheetList(
-            self.file_index
-        )
+        res = lib.GetSheetList(self.file_index)
         arr = c_value_to_py(res, StringArrayErrorResult()).arr
         return arr if arr else []
-    
+
     def get_sheet_map(self) -> dict[int, str]:
         """
-        GetSheetMap provides a function to get worksheets, chart sheets, 
+        GetSheetMap provides a function to get worksheets, chart sheets,
         dialog sheets ID, and name maps of the workbook.
 
         Returns:
-            dict[int, str]: Return the sheet ID and name map if no error occurred,
-            otherwise return an empty dictionary.
+            Dict[int, str]: Return the sheet ID and name map if no error
+            occurred, otherwise return an empty dictionary.
         """
         lib.GetSheetMap.restype = types_go._GetSheetMapResult
         sheet_map = dict()
@@ -1862,11 +1858,11 @@ class File:
             for item in result:
                 sheet_map[item.k] = item.v
         return sheet_map
-    
-    def get_comments(self, sheet: str) -> List[Comment]:
 
+    def get_comments(self, sheet: str) -> List[Comment]:
         """
-        GetComments retrieves all comments in a worksheet by given worksheet name.
+        GetComments retrieves all comments in a worksheet by given worksheet 
+        name.
 
         Returns:
             List[Comment]: Return the comment list if no error occurred,
@@ -1874,14 +1870,12 @@ class File:
         """
         lib.GetComments.restype = types_go._GetCommentsResult
         res = lib.GetComments(self.file_index, sheet.encode(ENCODE))
+        result = c_value_to_py(res, GetCommentsResult())
         if res.Err:
             err = res.Err.decode(ENCODE)
             if err:
-                raise RuntimeError(err) 
-        result = c_value_to_py(res, GetCommentsResult())
+                raise RuntimeError(err)
         return result.comments if result and result.comments else []
-
-
 
     def get_sheet_name(self, sheet: int) -> str:
         """
@@ -3800,9 +3794,7 @@ def open_file(filename: str, *opts: Options) -> File:
     raise RuntimeError(err)
 
 
-def open_reader(
-    buffer: bytes, *opts: Options
-) -> Optional[File]:
+def open_reader(buffer: bytes, *opts: Options) -> Optional[File]:
     """
     Read data stream from bytes and return a populated spreadsheet file.
 

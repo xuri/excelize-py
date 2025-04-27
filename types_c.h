@@ -802,17 +802,17 @@ struct GetWorkbookPropsResult
 
 struct IntStringResult {
     int K;
-    char* V;
+    char *V;
 };
 
 struct GetSheetMapResult {
     int ArrLen;
-    struct IntStringResult* Arr;
-    char* Err;
+    struct IntStringResult *Arr;
+    char *Err;
 };
 
 struct GetCommentsResult {
     int CommentsLen;
-    struct Comment* Comments;
-    char* Err;
+    struct Comment *Comments;
+    char *Err;
 };
