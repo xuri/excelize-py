@@ -337,6 +337,8 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             _ = f.get_sheet_index("")
         self.assertEqual(str(context.exception), "the sheet name can not be blank")
+        self.assertEqual(f.get_sheet_list(), ["Sheet1", "Sheet2"])
+        self.assertEqual(len(f.get_sheet_map()), 2)
         self.assertEqual(f.get_sheet_name(index), "Sheet2")
 
         self.assertIsNone(f.set_col_outline_level("Sheet1", "D", 2))
@@ -735,6 +737,15 @@ class TestExcelize(unittest.TestCase):
                 comment,
             )
         )
+        comments = f.get_comments("Sheet1")
+        self.assertEqual(len(comments), 1)
+        self.assertEqual(comments[0].cell, "A5")
+        self.assertEqual(comments[0].author, "Excelize")
+        self.assertEqual(comments[0].paragraph[0].text, comment.paragraph[0].text)
+        self.assertEqual(comments[0].paragraph[1].text, comment.paragraph[1].text)
+        with self.assertRaises(RuntimeError) as context:
+            f.get_comments("SheetN")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         with self.assertRaises(RuntimeError) as context:
             f.add_comment("SheetN", comment)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
