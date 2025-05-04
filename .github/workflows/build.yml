@@ -64,9 +64,12 @@ jobs:
         name: codecov-umbrella
 
   build:
-    runs-on: macos-latest
+    runs-on: ${{ matrix.os }}
     needs: [test]
     if: github.event_name == 'release' && github.event.action == 'published'
+    strategy:
+      matrix:
+        os: [ubuntu-24.04, macos-latest]
 
     steps:
 
@@ -93,28 +96,44 @@ jobs:
         env:
           CGO_ENABLED: 1
         run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          brew tap messense/macos-cross-toolchains
-          brew install FiloSottile/musl-cross/musl-cross i686-unknown-linux-gnu mingw-w64
-          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20250114/llvm-mingw-20250114-ucrt-macos-universal.tar.xz
-          tar -xzf llvm-mingw-20250114-ucrt-macos-universal.tar.xz
-          export PATH="$(pwd)/llvm-mingw-20250114-ucrt-macos-universal/bin:$PATH"
-          CC=i686-linux-gnu-gcc GOOS=linux GOARCH=386 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.386.linux.so main.go
-          CC=x86_64-linux-musl-gcc GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.amd64.linux.so main.go
-          CC=aarch64-linux-musl-gcc GOOS=linux GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.arm64.linux.so main.go
-          CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.amd64.windows.dll main.go
-          CC=i686-w64-mingw32-gcc GOOS=windows GOARCH=386 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.386.windows.dll main.go
-          CC=aarch64-w64-mingw32-gcc GOOS=windows GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.arm64.windows.dll main.go
-          CC=gcc GOOS=darwin GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.arm64.darwin.dylib main.go
-          CC=gcc GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.amd64.darwin.dylib main.go
-          rm -f libexcelize.*.h
+          if [[ "$RUNNER_OS" == "Linux" ]]; then
+            sudo dpkg --add-architecture i386
+            sudo apt update
+            sudo apt install -y gcc-multilib g++-multilib libc6-dev-i386
+            CC="gcc -m32" GOOS=linux GOARCH=386 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.386.linux.so main.go
+            GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.amd64.linux.so main.go
+            rm -f libexcelize.*.h
+          elif [[ "$RUNNER_OS" == "macOS" ]]; then
+            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+            brew tap messense/macos-cross-toolchains
+            brew install FiloSottile/musl-cross/musl-cross mingw-w64
+            wget https://github.com/mstorsjo/llvm-mingw/releases/download/20250430/llvm-mingw-20250430-ucrt-macos-universal.tar.xz
+            tar -xzf llvm-mingw-20250430-ucrt-macos-universal.tar.xz
+            export PATH="$(pwd)/llvm-mingw-20250430-ucrt-macos-universal/bin:$PATH"            
+            CC=aarch64-linux-musl-gcc GOOS=linux GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.arm64.linux.so main.go
+            CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.amd64.windows.dll main.go
+            CC=i686-w64-mingw32-gcc GOOS=windows GOARCH=386 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.386.windows.dll main.go
+            CC=aarch64-w64-mingw32-gcc GOOS=windows GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.arm64.windows.dll main.go
+            CC=gcc GOOS=darwin GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.arm64.darwin.dylib main.go
+            CC=gcc GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.amd64.darwin.dylib main.go
+            rm -f libexcelize.*.h
+          fi
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload Linux Artifacts
+        if: matrix.os == 'ubuntu-24.04'
+        uses: actions/upload-artifact@v4
         with:
-          name: libexcelize
+          name: linux-artifacts
           path: |
             libexcelize.386.linux.so
             libexcelize.amd64.linux.so
+
+      - name: Upload Darwin Artifacts
+        if: matrix.os == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: darwin-artifacts
+          path: |
             libexcelize.arm64.linux.so
             libexcelize.amd64.windows.dll
             libexcelize.386.windows.dll

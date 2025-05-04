@@ -524,6 +524,8 @@ class ChartPlotArea:
     second_plot_values: int = 0
     show_bubble_size: bool = False
     show_cat_name: bool = False
+    show_data_table: bool = False
+    show_data_table_keys: bool = False
     show_leader_lines: bool = False
     show_percent: bool = False
     show_ser_name: bool = False

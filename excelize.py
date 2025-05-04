@@ -55,6 +55,7 @@ def load_lib() -> Optional[str]:
                 "x86": "386",
                 "i386": "386",
                 "i686": "386",
+                "amd64": "386",
             },
         },
         "darwin": {
@@ -74,6 +75,7 @@ def load_lib() -> Optional[str]:
                 "x86": "386",
                 "i386": "386",
                 "i686": "386",
+                "amd64": "386",
             },
         },
     }
@@ -88,7 +90,7 @@ def load_lib() -> Optional[str]:
 
 lib = CDLL(os.path.join(os.path.dirname(__file__), load_lib()))
 ENCODE = "utf-8"
-__version__ = "0.0.3"
+__version__ = "0.0.4"
 uppercase_words = ["id", "rgb", "sq", "xml"]
 
 
@@ -781,7 +783,11 @@ class File:
         control options. Supported form control type: button, check box, group
         box, label, option button, scroll bar and spinner. If set macro for the
         form control, the workbook extension should be XLSM or XLTM. Scroll
-        value must be between 0 and 30000.
+        value must be between 0 and 30000. Please note that if a cell link is
+        set for a checkbox form control, Excelize will not assign a value to the
+        linked cell when the checkbox is checked. To reflect the checkbox state,
+        please use the `set_cell_value` function to manually set the linked
+        cell's value to true.
 
         Args:
             sheet (str): The worksheet name
@@ -790,6 +796,112 @@ class File:
         Returns:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
+
+        Example:
+            Example 1, add button form control with macro, rich-text, custom
+            button size, print property on Sheet1!A2, and let the button do not
+            move or size with cells:
+
+            ```python
+            try:
+                f.add_form_control(
+                    "Sheet1",
+                    excelize.FormControl(
+                        cell="A2",
+                        type=excelize.FormControlType.FormControlButton,
+                        macro="Button1_Click",
+                        width=140,
+                        height=60,
+                        text="Button 1\r\n",
+                        paragraph=[
+                            excelize.RichTextRun(
+                                font=excelize.Font(
+                                    bold=True,
+                                    italic=True,
+                                    underline="single",
+                                    family="Times New Roman",
+                                    size=14,
+                                    color="777777",
+                                ),
+                                text="C1=A1+B1",
+                            ),
+                        ],
+                        format=excelize.GraphicOptions(
+                            print_object=True,
+                            positioning="absolute",
+                        ),
+                    ),
+                )
+            except RuntimeError as err:
+                print(err)
+            ```
+
+            Example 2, add option button form control with checked status and
+            text on Sheet1!A1:
+
+            ```python
+            try:
+                f.add_form_control(
+                    "Sheet1",
+                    excelize.FormControl(
+                        cell="A2",
+                        type=excelize.FormControlType.FormControlOptionButton,
+                        text="Option Button 1",
+                        checked=True,
+                    ),
+                )
+            except RuntimeError as err:
+                print(err)
+            ```
+
+            Example 3, add spin button form control on Sheet1!B1 to increase or
+            decrease the value of Sheet1!A1:
+
+            ```python
+            try:
+                f.add_form_control(
+                    "Sheet1",
+                    excelize.FormControl(
+                        cell="B1",
+                        type=excelize.FormControlType.FormControlSpinButton,
+                        width=15,
+                        height=40,
+                        current_val=7,
+                        min_val=5,
+                        max_val=10,
+                        inc_change=1,
+                        cell_link="A1",
+                    ),
+                )
+            except RuntimeError as err:
+                print(err)
+            ```
+
+            Example 4, add horizontally scroll bar form control on Sheet1!A2 to
+            change  the value of Sheet1!A1 by click the scroll arrows or drag
+            the scroll box:
+
+            ```python
+            try:
+                f.add_form_control(
+                    "Sheet1",
+                    excelize.FormControl(
+                        cell="A2",
+                        type=excelize.FormControlType.FormControlScrollBar,
+                        width=140,
+                        height=20,
+                        current_val=50,
+                        min_val=10,
+                        max_val=100,
+                        inc_change=1,
+                        page_change=1,
+                        cell_link="A1",
+                        horizontally=True,
+                    ),
+                )
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.AddFormControl.restype = c_char_p
         options = py_value_to_c(opts, types_go._FormControl())
@@ -842,7 +954,7 @@ class File:
         JPEG, JPG, PNG, SVG, TIF, TIFF, WMF, and WMZ. Note that this function
         only supports adding pictures placed over the cells currently, and
         doesn't support adding pictures placed in cells or creating the Kingsoft
-        WPS Office embedded image cells
+        WPS Office embedded image cells.
 
         Args:
             sheet (str): The worksheet name

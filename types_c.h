@@ -422,6 +422,8 @@ struct ChartPlotArea
     int SecondPlotValues;
     bool ShowBubbleSize;
     bool ShowCatName;
+    bool ShowDataTable;
+    bool ShowDataTableKeys;
     bool ShowLeaderLines;
     bool ShowPercent;
     bool ShowSerName;

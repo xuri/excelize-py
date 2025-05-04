@@ -396,6 +396,8 @@ class _ChartPlotArea(Structure):
         ("SecondPlotValues", c_int),
         ("ShowBubbleSize", c_bool),
         ("ShowCatName", c_bool),
+        ("ShowDataTable", c_bool),
+        ("ShowDataTableKeys", c_bool),
         ("ShowLeaderLines", c_bool),
         ("ShowPercent", c_bool),
         ("ShowSerName", c_bool),
