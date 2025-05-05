@@ -1,5 +1,8 @@
 on: [push, pull_request, release]
 name: build
+permissions:
+  contents: read
+  pull-requests: write
 
 jobs:
 
@@ -109,7 +112,7 @@ jobs:
             brew install FiloSottile/musl-cross/musl-cross mingw-w64
             wget https://github.com/mstorsjo/llvm-mingw/releases/download/20250430/llvm-mingw-20250430-ucrt-macos-universal.tar.xz
             tar -xzf llvm-mingw-20250430-ucrt-macos-universal.tar.xz
-            export PATH="$(pwd)/llvm-mingw-20250430-ucrt-macos-universal/bin:$PATH"            
+            export PATH="$(pwd)/llvm-mingw-20250430-ucrt-macos-universal/bin:$PATH"
             CC=aarch64-linux-musl-gcc GOOS=linux GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.arm64.linux.so main.go
             CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.amd64.windows.dll main.go
             CC=i686-w64-mingw32-gcc GOOS=windows GOARCH=386 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.386.windows.dll main.go
