@@ -1699,6 +1699,117 @@ class File:
             return res.val.decode(ENCODE)
         raise RuntimeError(err)
 
+    def get_row_outline_level(self, sheet: str, row: int) -> int:
+        """
+        Get outline level of a single row by given worksheet name and row
+        number.
+
+        Args:
+            sheet (str): The worksheet name
+            row (int): The row number
+
+        Returns:
+            int: Return the row outline level if no error occurred, otherwise
+            raise a RuntimeError with the message.
+
+        Example:
+            For example, get outline level of row 5 in Sheet1:
+
+            ```python
+            try:
+                level = f.get_row_outline_level("Sheet1", 5)
+            except RuntimeError as err:
+                print(err)
+            ```
+        """
+        lib.GetRowOutlineLevel.restype = types_go._IntErrorResult
+        res = lib.GetRowOutlineLevel(
+            self.file_index, sheet.encode(ENCODE), row
+        )
+        err = res.err.decode(ENCODE)
+        if not err:
+            return res.val
+        raise RuntimeError(err)
+
+    def get_row_style(self, sheet: str, row: int) -> int:
+        """
+        Get row style ID by given worksheet name and row number.
+
+        Args:
+            sheet (str): The worksheet name
+            row (int): The row number
+
+        Returns:
+            int: Return the row style ID if no error occurred, otherwise
+            raise a RuntimeError with the message.
+        """
+        lib.GetRowStyle.restype = types_go._IntErrorResult
+        res = lib.GetRowStyle(self.file_index, sheet.encode(ENCODE), row)
+        err = res.err.decode(ENCODE)
+        if not err:
+            return res.val
+        raise RuntimeError(err)
+
+    def get_row_visible(self, sheet: str, row: int) -> bool:
+        """
+        Get visible of a single row by given worksheet name and row number.
+
+        Args:
+            sheet (str): The worksheet name
+            row (int): The row number
+
+        Returns:
+            bool: Return the row visible if no error occurred, otherwise
+            raise a RuntimeError with the message.
+
+        Example:
+            For example, get visible state of row 5 in Sheet1:
+
+            ```python
+            try:
+                visible = f.get_row_visible("Sheet1", 5)
+            except RuntimeError as err:
+                print(err)
+            ```
+        """
+        lib.GetRowVisible.restype = types_go._BoolErrorResult
+        res = lib.GetRowVisible(
+            self.file_index, sheet.encode(ENCODE), row
+        )
+        err = res.err.decode(ENCODE)
+        if not err:
+            return res.val
+        raise RuntimeError(err)
+
+    def get_row_height(self, sheet: str, row: int) -> float:
+        """
+        Get row height by given worksheet name and row number.
+
+        Args:
+            sheet (str): The worksheet name
+            row (int): The row number
+
+        Returns:
+            float: Return the row height if no error occurred, otherwise
+            raise a RuntimeError with the message.
+
+        Example:
+            For example, get height of row 5 in Sheet1:
+
+            ```python
+            try:
+                height = f.get_row_height("Sheet1", 5)
+            except RuntimeError as err:
+                print(err)
+            ```
+        """
+        lib.GetRowHeight.restype = types_go._Float64ErrorResult
+        res = lib.GetRowHeight(self.file_index, sheet.encode(ENCODE), row)
+        err = res.err.decode(ENCODE)
+        if not err:
+            return res.val
+        raise RuntimeError(err)
+
     def get_col_outline_level(self, sheet: str, col: str) -> int:
         """
         Get outline level of a single column by given worksheet name and column

@@ -1126,6 +1126,70 @@ func GetCellValue(idx int, sheet, cell *C.char, opts *C.struct_Options) C.struct
 	return C.struct_StringErrorResult{val: C.CString(val), err: C.CString(emptyString)}
 }
 
+// GetRowOutlineLevel provides a function to get outline level of a single row by given
+// worksheet name and row number. This function is concurrency safe.
+//
+//export GetRowOutlineLevel
+func GetRowOutlineLevel(idx int, sheet *C.char, row C.int) C.struct_IntErrorResult {
+    f, ok := files.Load(idx)
+    if !ok {
+        return C.struct_IntErrorResult{val: C.int(0), err: C.CString(errFilePtr)}
+    }
+    val, err := f.(*excelize.File).GetRowOutlineLevel(C.GoString(sheet), int(row))
+    if err != nil {
+        return C.struct_IntErrorResult{val: C.int(int32(val)), err: C.CString(err.Error())}
+    }
+    return C.struct_IntErrorResult{val: C.int(int32(val)), err: C.CString(emptyString)}
+}
+
+// GetRowStyle provides a function to get row style ID by given worksheet
+// name and row number. This function is concurrency safe.
+//
+//export GetRowStyle
+func GetRowStyle(idx int, sheet *C.char, row C.int) C.struct_IntErrorResult {
+    f, ok := files.Load(idx)
+    if !ok {
+        return C.struct_IntErrorResult{val: C.int(0), err: C.CString(errFilePtr)}
+    }
+    val, err := f.(*excelize.File).GetRowStyle(C.GoString(sheet), int(row))
+    if err != nil {
+        return C.struct_IntErrorResult{val: C.int(val), err: C.CString(err.Error())}
+    }
+    return C.struct_IntErrorResult{val: C.int(val), err: C.CString(emptyString)}
+}
+
+// GetRowVisible provides a function to get visible of a single row by given
+// worksheet name and row number. This function is concurrency safe.
+//
+//export GetRowVisible
+func GetRowVisible(idx int, sheet *C.char, row C.int) C.struct_BoolErrorResult {
+    f, ok := files.Load(idx)
+    if !ok {
+        return C.struct_BoolErrorResult{val: C._Bool(false), err: C.CString(errFilePtr)}
+    }
+    val, err := f.(*excelize.File).GetRowVisible(C.GoString(sheet), int(row))
+    if err != nil {
+        return C.struct_BoolErrorResult{val: C._Bool(val), err: C.CString(err.Error())}
+    }
+    return C.struct_BoolErrorResult{val: C._Bool(val), err: C.CString(emptyString)}
+}
+
+// GetRowHeight provides a function to get row height by given worksheet name
+// and row number. This function is concurrency safe.
+//
+//export GetRowHeight
+func GetRowHeight(idx int, sheet *C.char, row C.int) C.struct_Float64ErrorResult {
+    f, ok := files.Load(idx)
+    if !ok {
+        return C.struct_Float64ErrorResult{val: C.double(0), err: C.CString(errFilePtr)}
+    }
+    val, err := f.(*excelize.File).GetRowHeight(C.GoString(sheet), int(row))
+    if err != nil {
+        return C.struct_Float64ErrorResult{val: C.double(val), err: C.CString(err.Error())}
+    }
+    return C.struct_Float64ErrorResult{val: C.double(val), err: C.CString(emptyString)}
+}
+
 // GetColOutlineLevel provides a function to get outline level of a single
 // column by given worksheet name and column name.
 //
