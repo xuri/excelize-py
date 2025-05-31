@@ -779,7 +779,7 @@ class File:
 
     def add_form_control(self, sheet: str, opts: FormControl) -> None:
         """
-        Add form control button in a worksheet by given worksheet name and form
+        Add form control object in a worksheet by given worksheet name and form
         control options. Supported form control type: button, check box, group
         box, label, option button, scroll bar and spinner. If set macro for the
         form control, the workbook extension should be XLSM or XLTM. Scroll
@@ -1554,8 +1554,8 @@ class File:
         Get document application properties.
 
         Returns:
-            Optional[AppProperties]: Return the the app properties if no
-            error occurred, otherwise raise a RuntimeError with the message.
+            Optional[AppProperties]: Return the app properties if no error
+            occurred, otherwise raise a RuntimeError with the message.
         """
         lib.GetAppProps.restype = types_go._GetAppPropsResult
         res = lib.GetAppProps(self.file_index)
@@ -1723,59 +1723,7 @@ class File:
             ```
         """
         lib.GetRowOutlineLevel.restype = types_go._IntErrorResult
-        res = lib.GetRowOutlineLevel(
-            self.file_index, sheet.encode(ENCODE), row
-        )
-        err = res.err.decode(ENCODE)
-        if not err:
-            return res.val
-        raise RuntimeError(err)
-
-    def get_row_style(self, sheet: str, row: int) -> int:
-        """
-        Get row style ID by given worksheet name and row number.
-
-        Args:
-            sheet (str): The worksheet name
-            row (int): The row number
-
-        Returns:
-            int: Return the row style ID if no error occurred, otherwise
-            raise a RuntimeError with the message.
-        """
-        lib.GetRowStyle.restype = types_go._IntErrorResult
-        res = lib.GetRowStyle(self.file_index, sheet.encode(ENCODE), row)
-        err = res.err.decode(ENCODE)
-        if not err:
-            return res.val
-        raise RuntimeError(err)
-
-    def get_row_visible(self, sheet: str, row: int) -> bool:
-        """
-        Get visible of a single row by given worksheet name and row number.
-
-        Args:
-            sheet (str): The worksheet name
-            row (int): The row number
-
-        Returns:
-            bool: Return the row visible if no error occurred, otherwise
-            raise a RuntimeError with the message.
-
-        Example:
-            For example, get visible state of row 5 in Sheet1:
-
-            ```python
-            try:
-                visible = f.get_row_visible("Sheet1", 5)
-            except RuntimeError as err:
-                print(err)
-            ```
-        """
-        lib.GetRowVisible.restype = types_go._BoolErrorResult
-        res = lib.GetRowVisible(
-            self.file_index, sheet.encode(ENCODE), row
-        )
+        res = lib.GetRowOutlineLevel(self.file_index, sheet.encode(ENCODE), row)
         err = res.err.decode(ENCODE)
         if not err:
             return res.val
@@ -2086,7 +2034,7 @@ class File:
         sheets ID, and name maps of the workbook.
 
         Returns:
-            dict[int, str]: Return the sheet ID and name map if no error
+            Dict[int, str]: Return the sheet ID and name map if no error
             occurred, otherwise return an empty dictionary.
         """
         lib.GetSheetMap.restype = types_go._GetSheetMapResult
@@ -3474,7 +3422,7 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
-    def set_row_outline(self, sheet: str, row: int, level: int) -> None:
+    def set_row_outline_level(self, sheet: str, row: int, level: int) -> None:
         """
         Set outline level number of a single row by given worksheet name and
         Excel row number. The value of parameter 'level' is 1-7.
@@ -3493,7 +3441,7 @@ class File:
 
             ```python
             try:
-                f.set_row_outline("Sheet1", 2, 1)
+                f.set_row_outline_level("Sheet1", 2, 1)
             except RuntimeError as err:
                 print(err)
             ```
