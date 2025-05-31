@@ -1560,6 +1560,22 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.save_as(os.path.join("test", "TestWorkbookProps.xlsx")))
         self.assertIsNone(f.close())
 
+    def test_sheet_props(self):
+        f = excelize.new_file()
+        sheet_name = "Sheet1"
+        expected_sheet_properties = excelize.SheetPropsOptions(
+            code_name="SheetTestCodeName",      
+            fit_to_page=False,                  
+            published=True,                     
+            auto_page_breaks=False              
+        )
+        self.assertIsNone(f.set_sheet_props(sheet_name, expected_sheet_properties))
+        retrieved_sheet_properties = f.get_sheet_props(sheet_name)
+        self.assertEqual(retrieved_sheet_properties, expected_sheet_properties)
+        file_path = os.path.join(self.test_dir, "TestSheetProps.xlsx")
+        self.assertIsNone(f.save_as(file_path))
+        self.assertIsNone(f.close())   
+
     def test_type_convert(self):
         class _T2(Structure):
             _fields_ = [

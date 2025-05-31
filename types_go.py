@@ -127,6 +127,7 @@ class _Font(Structure):
         ("ColorTheme", POINTER(c_int)),
         ("ColorTint", c_double),
         ("VertAlign", c_char_p),
+        ("Charset", POINTER(c_int)),
     ]
 
 
@@ -793,6 +794,13 @@ class _GetTablesResult(Structure):
 class _GetWorkbookPropsResult(Structure):
     _fields_ = [
         ("opts", _WorkbookPropsOptions),
+        ("err", c_char_p),
+    ]
+
+
+class _GetSheetPropsResult(Structure):
+    _fields_ = [
+        ("opts", _SheetPropsOptions),
         ("err", c_char_p),
     ]
 

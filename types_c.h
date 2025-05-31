@@ -152,6 +152,7 @@ struct Font
     int *ColorTheme;
     double ColorTint;
     char *VertAlign;
+    int *Charset;
 };
 
 // Alignment directly maps the alignment settings of the cells.
@@ -804,6 +805,12 @@ struct GetTablesResult
 struct GetWorkbookPropsResult
 {
     struct WorkbookPropsOptions opts;
+    char *err;
+};
+
+struct GetSheetPropsResult
+{
+    struct SheetPropsOptions opts;
     char *err;
 };
 

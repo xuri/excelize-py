@@ -265,6 +265,7 @@ class Font:
     color_theme: Optional[int] = None
     color_tint: float = 0
     vert_align: str = ""
+    charset: Optional[int] = None
 
 
 @dataclass
