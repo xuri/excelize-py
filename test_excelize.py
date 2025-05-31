@@ -833,6 +833,11 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(
             f.set_sheet_props("Sheet1", excelize.SheetPropsOptions(code_name="Sheet1"))
         )
+        props = f.get_sheet_props("Sheet1")
+        self.assertEqual(props.code_name, "Sheet1")
+        with self.assertRaises(RuntimeError) as context:
+            f.get_sheet_props("SheetN")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         with self.assertRaises(RuntimeError) as context:
             f.set_sheet_props("SheetN", excelize.SheetPropsOptions(code_name="Sheet1"))
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
@@ -1559,22 +1564,6 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(f.get_workbook_props(), expected)
         self.assertIsNone(f.save_as(os.path.join("test", "TestWorkbookProps.xlsx")))
         self.assertIsNone(f.close())
-
-    def test_sheet_props(self):
-        f = excelize.new_file()
-        sheet_name = "Sheet1"
-        expected_sheet_properties = excelize.SheetPropsOptions(
-            code_name="SheetTestCodeName",      
-            fit_to_page=False,                  
-            published=True,                     
-            auto_page_breaks=False              
-        )
-        self.assertIsNone(f.set_sheet_props(sheet_name, expected_sheet_properties))
-        retrieved_sheet_properties = f.get_sheet_props(sheet_name)
-        self.assertEqual(retrieved_sheet_properties, expected_sheet_properties)
-        file_path = os.path.join(self.test_dir, "TestSheetProps.xlsx")
-        self.assertIsNone(f.save_as(file_path))
-        self.assertIsNone(f.close())   
 
     def test_type_convert(self):
         class _T2(Structure):

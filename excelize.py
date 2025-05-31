@@ -2058,13 +2058,13 @@ class File:
         if not err:
             return c_value_to_py(res.opts, WorkbookPropsOptions())
         raise RuntimeError(err)
-    
-    def get_sheet_props(self, sheet_name: str) -> SheetPropsOptions:
+
+    def get_sheet_props(self, sheet_name: str) -> Optional[SheetPropsOptions]:
         """
-        Get sheet property options by given worksheet name.
+        Get worksheet properties.
 
         Returns:
-            SheetPropsOptions: Return the sheet property options if no
+            Optional[SheetPropsOptions]: Return the sheet property options if no
             error occurred, otherwise raise a RuntimeError with the message.
         """
         lib.GetSheetProps.restype = types_go._GetSheetPropsResult
