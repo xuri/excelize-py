@@ -111,7 +111,7 @@ var (
 			return reflect.ValueOf(C.uint(uint32(goVal.Uint()))), nil
 		},
 		reflect.Uint8: func(goVal reflect.Value, kind reflect.Kind) (reflect.Value, error) {
-			return reflect.ValueOf(C.uchar(int8(goVal.Uint()))), nil
+			return reflect.ValueOf(C.uint(uint32(goVal.Uint()))), nil
 		},
 		reflect.Uint32: func(goVal reflect.Value, kind reflect.Kind) (reflect.Value, error) {
 			return reflect.ValueOf(C.uint(uint32(goVal.Uint()))), nil
@@ -1386,6 +1386,25 @@ func GetSheetName(idx int, sheetIndex int) C.struct_StringErrorResult {
 		return C.struct_StringErrorResult{val: C.CString(emptyString), err: C.CString(errFilePtr)}
 	}
 	return C.struct_StringErrorResult{val: C.CString(f.(*excelize.File).GetSheetName(sheetIndex)), err: C.CString(emptyString)}
+}
+
+// GetSheetProps provides a function to get worksheet properties.
+//
+//export GetSheetProps
+func GetSheetProps(idx int, sheet *C.char) C.struct_GetSheetPropsResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetSheetPropsResult{err: C.CString(errFilePtr)}
+	}
+	opts, err := f.(*excelize.File).GetSheetProps(C.GoString(sheet))
+	if err != nil {
+		return C.struct_GetSheetPropsResult{err: C.CString(err.Error())}
+	}
+	cVal, err := goValueToC(reflect.ValueOf(opts), reflect.ValueOf(&C.struct_SheetPropsOptions{}))
+	if err != nil {
+		return C.struct_GetSheetPropsResult{err: C.CString(err.Error())}
+	}
+	return C.struct_GetSheetPropsResult{opts: cVal.Elem().Interface().(C.struct_SheetPropsOptions), err: C.CString(emptyString)}
 }
 
 // GetStyle provides a function to get style definition by given style index.

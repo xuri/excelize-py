@@ -2059,6 +2059,21 @@ class File:
             return c_value_to_py(res.opts, WorkbookPropsOptions())
         raise RuntimeError(err)
 
+    def get_sheet_props(self, sheet_name: str) -> Optional[SheetPropsOptions]:
+        """
+        Get worksheet properties.
+
+        Returns:
+            Optional[SheetPropsOptions]: Return the sheet property options if no
+            error occurred, otherwise raise a RuntimeError with the message.
+        """
+        lib.GetSheetProps.restype = types_go._GetSheetPropsResult
+        res = lib.GetSheetProps(self.file_index, sheet_name.encode(ENCODE))
+        err = res.err.decode(ENCODE)
+        if not err:
+            return c_value_to_py(res.opts, SheetPropsOptions())
+        raise RuntimeError(err)
+
     def group_sheets(self, sheets: List[str]) -> None:
         """
         Group worksheets by given worksheets name. Group worksheets must contain

@@ -833,6 +833,11 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(
             f.set_sheet_props("Sheet1", excelize.SheetPropsOptions(code_name="Sheet1"))
         )
+        props = f.get_sheet_props("Sheet1")
+        self.assertEqual(props.code_name, "Sheet1")
+        with self.assertRaises(RuntimeError) as context:
+            f.get_sheet_props("SheetN")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         with self.assertRaises(RuntimeError) as context:
             f.set_sheet_props("SheetN", excelize.SheetPropsOptions(code_name="Sheet1"))
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
