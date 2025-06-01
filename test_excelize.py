@@ -349,9 +349,14 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             _ = f.get_col_outline_level("SheetN", "D")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
-        self.assertIsNone(f.set_row_outline("Sheet1", 2, 1))
+
+        self.assertIsNone(f.set_row_outline_level("Sheet1", 2, 1))
         with self.assertRaises(RuntimeError) as context:
-            f.set_row_outline("SheetN", 2, 1)
+            f.set_row_outline_level("SheetN", 2, 1)
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        self.assertEqual(f.get_row_outline_level("Sheet1", 2), 1)
+        with self.assertRaises(RuntimeError) as context:
+            _ = f.get_row_outline_level("SheetN", 2)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
         self.assertIsNone(f.set_sheet_background("Sheet2", "chart.png"))
@@ -1229,6 +1234,10 @@ class TestExcelize(unittest.TestCase):
     def test_cell_rich_text(self):
         f = excelize.new_file()
         self.assertIsNone(f.set_row_height("Sheet1", 1, 35))
+        self.assertEqual(f.get_row_height("Sheet1", 1), 35)
+        with self.assertRaises(RuntimeError) as context:
+            f.get_row_height("SheetN", 1)
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
         with self.assertRaises(RuntimeError) as context:
             f.set_row_height("Sheet1", 0, 35)

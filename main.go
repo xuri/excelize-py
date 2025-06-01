@@ -524,7 +524,7 @@ func AddComment(idx int, sheet *C.char, opts *C.struct_Comment) *C.char {
 	return C.CString(emptyString)
 }
 
-// AddFormControl provides the method to add form control button in a worksheet
+// AddFormControl provides the method to add form control object in a worksheet
 // by given worksheet name and form control options. Supported form control
 // type: button, check box, group box, label, option button, scroll bar and
 // spinner. If set macro for the form control, the workbook extension should be
@@ -1227,6 +1227,38 @@ func GetDefaultFont(idx int) C.struct_StringErrorResult {
 		return C.struct_StringErrorResult{val: C.CString(val), err: C.CString(err.Error())}
 	}
 	return C.struct_StringErrorResult{val: C.CString(val), err: C.CString(emptyString)}
+}
+
+// GetRowHeight provides a function to get row height by given worksheet name
+// and row number.
+//
+//export GetRowHeight
+func GetRowHeight(idx int, sheet *C.char, row C.int) C.struct_Float64ErrorResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_Float64ErrorResult{val: C.double(0), err: C.CString(errFilePtr)}
+	}
+	val, err := f.(*excelize.File).GetRowHeight(C.GoString(sheet), int(row))
+	if err != nil {
+		return C.struct_Float64ErrorResult{val: C.double(val), err: C.CString(err.Error())}
+	}
+	return C.struct_Float64ErrorResult{val: C.double(val), err: C.CString(emptyString)}
+}
+
+// GetRowOutlineLevel provides a function to get outline level of a single row
+// by given worksheet name and row number.
+//
+//export GetRowOutlineLevel
+func GetRowOutlineLevel(idx int, sheet *C.char, row C.int) C.struct_IntErrorResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_IntErrorResult{val: C.int(0), err: C.CString(errFilePtr)}
+	}
+	val, err := f.(*excelize.File).GetRowOutlineLevel(C.GoString(sheet), int(row))
+	if err != nil {
+		return C.struct_IntErrorResult{val: C.int(int32(val)), err: C.CString(err.Error())}
+	}
+	return C.struct_IntErrorResult{val: C.int(int32(val)), err: C.CString(emptyString)}
 }
 
 // GetRowVisible provides a function to get visible of a single row by given
