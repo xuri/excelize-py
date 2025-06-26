@@ -1359,6 +1359,18 @@ class File:
         Returns:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
+
+        Example:
+            For example:
+
+            ```python
+            try:
+                # Sheet1 already exists...
+                index = f.new_sheet("Sheet2")
+                f.copy_sheet(0, index)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         err, lib.CopySheet.restype = None, c_char_p
         err = lib.CopySheet(self.file_index, src, to).decode(ENCODE)
@@ -1504,6 +1516,16 @@ class File:
         Returns:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
+
+        Example:
+            For example:
+
+            ```python
+            try:
+                f.duplicate_row("Sheet1", 2)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         err, lib.DuplicateRow.restype = None, c_char_p
         err = lib.DuplicateRow(self.file_index, sheet.encode(ENCODE), row).decode(
@@ -1529,6 +1551,16 @@ class File:
         Returns:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
+
+        Example:
+            For example:
+
+            ```python
+            try:
+                f.duplicate_row_to("Sheet1", 2, 7)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         err, lib.DuplicateRowTo.restype = None, c_char_p
         err = lib.DuplicateRowTo(
@@ -2016,8 +2048,8 @@ class File:
 
     def get_sheet_list(self) -> List[str]:
         """
-        GetSheetList provides a function to get worksheets, chart sheets, and
-        dialog sheets name list of the workbook.
+        Get worksheets, chart sheets, and dialog sheets name list of the
+        workbook.
 
         Returns:
             List[str]: Return the sheet name list if no error occurred,
@@ -2030,12 +2062,32 @@ class File:
 
     def get_sheet_map(self) -> Dict[int, str]:
         """
-        GetSheetMap provides a function to get worksheets, chart sheets, dialog
-        sheets ID, and name maps of the workbook.
+        Get worksheets, chart sheets, dialog sheets ID, and name maps of the
+        workbook.
 
         Returns:
             Dict[int, str]: Return the sheet ID and name map if no error
             occurred, otherwise return an empty dictionary.
+
+        Example:
+            For example:
+
+            ```python
+            try:
+                f = excelize.open_file("Book1.xlsx")
+            except RuntimeError as err:
+                print(err)
+                exit()
+            try:
+                for index, name in f.get_sheet_map().items():
+                    print(index, name)
+            except RuntimeError as err:
+                print(err)
+            finally:
+                err = f.close()
+                if err:
+                    print(err)
+            ```
         """
         lib.GetSheetMap.restype = types_go._GetSheetMapResult
         sheet_map = dict()
@@ -2468,7 +2520,7 @@ class File:
         """
         Prevent other users from viewing hidden worksheets, adding, moving,
         deleting, or hiding worksheets, and renaming worksheets in a workbook.
-        The optional field AlgorithmName specified hash algorithm, support XOR,
+        The optional field algorithm_name specified hash algorithm, support XOR,
         MD4, MD5, SHA-1, SHA2-56, SHA-384, and SHA-512 currently, if no hash
         algorithm specified, will be using the XOR algorithm as default. The
         generated workbook only works on Microsoft Office 2007 and later.
@@ -3127,6 +3179,15 @@ class File:
             except RuntimeError as err:
                 print(err)
             ```
+
+            Hide the columns from `D` to `F` (included):
+
+            ```python
+            try:
+                f.set_col_visible("Sheet1", "D:F", False)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.SetColVisible.restype = c_char_p
         err = lib.SetColVisible(
@@ -3238,18 +3299,39 @@ class File:
             RuntimeError with the message.
 
         Example:
-            For example, create a table of A1:D5 on Sheet1:
+            For example:
 
             ```python
-            try:
-                f.set_defined_name(excelize.DefinedName(
-                    name="Amount",
-                    refers_to="Sheet1!$A$2:$D$5",
-                    comment="defined name comment",
-                    scope="Sheet2",
-                ))
-            except RuntimeError as err:
-                print(err)
+            f.set_defined_name(excelize.DefinedName(
+                name="Amount",
+                refers_to="Sheet1!$A$2:$D$5",
+                comment="defined name comment",
+                scope="Sheet2",
+            ))
+            ```
+
+            If you fill the `refers_to` property with only one columns range
+            without a comma, it will work as "Columns to repeat at left" only.
+            For example:
+
+            ```python
+            f.set_defined_name(excelize.DefinedName(
+                name="_xlnm.Print_Titles",
+                refers_to="Sheet1!$A:$A",
+                scope="Sheet1"
+            ))
+            ```
+
+            If you fill the `refers_to` property with only one rows range
+            without a comma, it will work as "Rows to repeat at top" only.
+            For example:
+
+            ```python
+            f.set_defined_name(excelize.DefinedName(
+                name="_xlnm.Print_Titles",
+                refers_to="Sheet1!$1:$1",
+                scope="Sheet1"
+            ))
             ```
         """
         lib.SetDefinedName.restype = c_char_p
@@ -3279,11 +3361,11 @@ class File:
                         category="category",
                         content_status="Draft",
                         created="2019-06-04T22:00:10Z",
-                        creator="Go Excelize",
-                        description="This file created by Go Excelize",
+                        creator="Excelize for Python",
+                        description="This file created by Excelize for Python",
                         identifier="xlsx",
                         keywords="Spreadsheet",
-                        last_modified_by="Go Author",
+                        last_modified_by="Author Name",
                         modified="2019-06-04T22:00:10Z",
                         revision="0",
                         subject="Test Subject",
@@ -3440,7 +3522,7 @@ class File:
     def set_row_outline_level(self, sheet: str, row: int, level: int) -> None:
         """
         Set outline level number of a single row by given worksheet name and
-        Excel row number. The value of parameter 'level' is 1-7.
+        row number. The range of `level` parameter value from 1 to 7.
 
         Args:
             sheet (str): The worksheet name
@@ -3609,6 +3691,17 @@ class File:
         Returns:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
+
+        Example:
+            For example, writes an array to column `B` start with the cell `B6`
+            on `Sheet1`:
+
+            ```python
+            try:
+                f.set_sheet_col("Sheet1", "B6", ["1", None, 2])
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.SetSheetCol.restype = c_char_p
         vals = (types_go._Interface * len(values))()
@@ -3713,6 +3806,17 @@ class File:
         Returns:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
+
+        Example:
+            For example, writes an array to row `6` start with the cell `B6` on
+            `Sheet1`:
+
+            ```python
+            try:
+                f.set_sheet_row("Sheet1", "B6", ["1", None, 2])
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.SetSheetRow.restype = c_char_p
         vals = (types_go._Interface * len(values))()
@@ -3765,6 +3869,13 @@ class File:
         Returns:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
+
+        Example:
+            For example, hide `Sheet1`:
+
+            ```python
+            f.set_sheet_visible("Sheet1", False)
+            ```
         """
         lib.SetSheetVisible.restype = c_char_p
         vh = False
@@ -3957,7 +4068,7 @@ def new_file() -> File:
 
 def open_file(filename: str, *opts: Options) -> File:
     """
-    OpenFile take the name of a spreadsheet file and returns a populated
+    This function take the name of a spreadsheet file and returns a populated
     spreadsheet file struct for it.
 
     Args:
