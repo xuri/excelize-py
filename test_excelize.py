@@ -450,6 +450,16 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.protect_sheet("SheetN", excelize.SheetProtectionOptions())
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+
+        with self.assertRaises(RuntimeError) as context:
+            f.unprotect_sheet("SheetN")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(RuntimeError) as context:
+            f.unprotect_sheet("Sheet1", "")
+        self.assertEqual(str(context.exception), "password length invalid")
+        self.assertIsNone(f.unprotect_sheet("Sheet1", "password"))
+        self.assertIsNone(f.unprotect_sheet("Sheet1"))
+
         self.assertIsNone(
             f.protect_workbook(
                 excelize.WorkbookProtectionOptions(

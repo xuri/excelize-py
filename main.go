@@ -2747,6 +2747,28 @@ func UnmergeCell(idx int, sheet, topLeftCell, bottomRightCell *C.char) *C.char {
 	return C.CString(emptyString)
 }
 
+// UnprotectSheet provides a function to remove protection for a sheet,
+// specified the second optional password parameter to remove sheet
+// protection with password verification.
+//
+//export UnprotectSheet
+func UnprotectSheet(idx int, sheet, password *C.char, verify bool) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if verify {
+		if err := f.(*excelize.File).UnprotectSheet(C.GoString(sheet), C.GoString(password)); err != nil {
+			return C.CString(err.Error())
+		}
+		return C.CString(emptyString)
+	}
+	if err := f.(*excelize.File).UnprotectSheet(C.GoString(sheet)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
 // UpdateLinkedValue fix linked values within a spreadsheet are not updating in
 // Office Excel application. This function will be remove value tag when met a
 // cell have a linked value.
