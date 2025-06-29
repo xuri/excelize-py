@@ -3952,6 +3952,30 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
+    def unprotect_sheet(self, sheet: str, *password: str) -> None:
+        """
+        Remove protection for a sheet, specified the second optional password
+        parameter to remove sheet protection with password verification.
+
+        Args:
+            sheet (str): The worksheet name
+            *password (str): Optional password for sheet protection verification
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+        """
+        lib.UnprotectSheet.restype = c_char_p
+        passwd = password[0] if len(password) > 0 else ""
+        err = lib.UnprotectSheet(
+            self.file_index,
+            sheet.encode(ENCODE),
+            passwd.encode(ENCODE),
+            len(password) > 0,
+        ).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+            
     def update_linked_value(self) -> None:
         """
         Fix linked values within a spreadsheet are not updating in Office Excel
