@@ -43,6 +43,9 @@ struct Interface
 // should be less than or equal to UnzipSizeLimit, the default value is
 // 16MB.
 //
+// TmpDir specifies the temporary directory for creating temporary files, if the
+// value is empty, the system default temporary directory will be used.
+//
 // ShortDatePattern specifies the short date number format code. In the
 // spreadsheet applications, date formats display date and time serial numbers
 // as date values. Date formats that begin with an asterisk (*) respond to
@@ -64,6 +67,7 @@ struct Options
     bool RawCellValue;
     long int UnzipSizeLimit;
     long int UnzipXMLSizeLimit;
+    char *TmpDir;
     char *ShortDatePattern;
     char *LongDatePattern;
     char *LongTimePattern;

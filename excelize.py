@@ -452,7 +452,7 @@ def py_value_to_c_interface(py_value):
             integer=int(datetime.combine(py_value, time.min).timestamp()),
         ),
     }
-    interface = type_mappings.get(type(py_value), lambda: Interface())()
+    interface = type_mappings.get(type(py_value), Interface)()
     return py_value_to_c(interface, types_go._Interface())
 
 
@@ -546,8 +546,8 @@ class StreamWriter:
     def set_col_width(self, start_col: int, end_col: int, width: float) -> None:
         """
         Set the width of a single column or multiple columns for the stream
-        writer. Note that you must call the 'set_col_width' function before the
-        'set_row' function.
+        writer. Note that you must call the `set_col_width` function before the
+        `set_row` function.
 
         Args:
             start_col (int): The start column number
@@ -578,8 +578,8 @@ class StreamWriter:
     def set_panes(self, opts: Panes) -> None:
         """
         Create and remove freeze panes and split panes by giving panes options
-        for the stream writer. Note that you must call the 'set_panes' function
-        before the 'set_row' function.
+        for the stream writer. Note that you must call the `set_panes` function
+        before the `set_row` function.
 
         Args:
             opts (Panes): The panes options
@@ -601,7 +601,7 @@ class StreamWriter:
     ) -> None:
         """
         Writes an array to stream rows by giving starting cell reference and a
-        pointer to an array of values. Note that you must call the 'flush'
+        pointer to an array of values. Note that you must call the `flush`
         function to end the streaming writing process.
 
         Args:
@@ -710,6 +710,497 @@ class File:
         Returns:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
+
+        The following shows the type of chart supported by excelize:
+
+        | ID  | Enumeration                 | Chart                                    |
+        |-----|-----------------------------|------------------------------------------|
+        | 0   | Area                        | 2D area chart                            |
+        | 1   | AreaStacked                 | 2D stacked area chart                    |
+        | 2   | AreaPercentStacked          | 2D 100% stacked area chart               |
+        | 3   | Area3D                      | 3D area chart                            |
+        | 4   | Area3DStacked               | 3D stacked area chart                    |
+        | 5   | Area3DPercentStacked        | 3D 100% stacked area chart               |
+        | 6   | Bar                         | 2D clustered bar chart                   |
+        | 7   | BarStacked                  | 2D stacked bar chart                     |
+        | 8   | BarPercentStacked           | 2D 100% stacked bar chart                |
+        | 9   | Bar3DClustered              | 3D clustered bar chart                   |
+        | 10  | Bar3DStacked                | 3D stacked bar chart                     |
+        | 11  | Bar3DPercentStacked         | 3D 100% stacked bar chart                |
+        | 12  | Bar3DConeClustered          | 3D cone clustered bar chart              |
+        | 13  | Bar3DConeStacked            | 3D cone stacked bar chart                |
+        | 14  | Bar3DConePercentStacked     | 3D cone percent bar chart                |
+        | 15  | Bar3DPyramidClustered       | 3D pyramid clustered bar chart           |
+        | 16  | Bar3DPyramidStacked         | 3D pyramid stacked bar chart             |
+        | 17  | Bar3DPyramidPercentStacked  | 3D pyramid percent stacked bar chart     |
+        | 18  | Bar3DCylinderClustered      | 3D cylinder clustered bar chart          |
+        | 19  | Bar3DCylinderStacked        | 3D cylinder stacked bar chart            |
+        | 20  | Bar3DCylinderPercentStacked | 3D cylinder percent stacked bar chart    |
+        | 21  | Col                         | 2D clustered column chart                |
+        | 22  | ColStacked                  | 2D stacked column chart                  |
+        | 23  | ColPercentStacked           | 2D 100% stacked column chart             |
+        | 24  | Col3DClustered              | 3D clustered column chart                |
+        | 25  | Col3D                       | 3D column chart                          |
+        | 26  | Col3DStacked                | 3D stacked column chart                  |
+        | 27  | Col3DPercentStacked         | 3D 100% stacked column chart             |
+        | 28  | Col3DCone                   | 3D cone column chart                     |
+        | 29  | Col3DConeClustered          | 3D cone clustered column chart           |
+        | 30  | Col3DConeStacked            | 3D cone stacked column chart             |
+        | 31  | Col3DConePercentStacked     | 3D cone percent stacked column chart     |
+        | 32  | Col3DPyramid                | 3D pyramid column chart                  |
+        | 33  | Col3DPyramidClustered       | 3D pyramid clustered column chart        |
+        | 34  | Col3DPyramidStacked         | 3D pyramid stacked column chart          |
+        | 35  | Col3DPyramidPercentStacked  | 3D pyramid percent stacked column chart  |
+        | 36  | Col3DCylinder               | 3D cylinder column chart                 |
+        | 37  | Col3DCylinderClustered      | 3D cylinder clustered column chart       |
+        | 38  | Col3DCylinderStacked        | 3D cylinder stacked column chart         |
+        | 39  | Col3DCylinderPercentStacked | 3D cylinder percent stacked column chart |
+        | 40  | Doughnut                    | Doughnut chart                           |
+        | 41  | Line                        | Line chart                               |
+        | 42  | Line3D                      | 3D line chart                            |
+        | 43  | Pie                         | Pie chart                                |
+        | 44  | Pie3D                       | 3D pie chart                             |
+        | 45  | PieOfPie                    | Pie of pie chart                         |
+        | 46  | BarOfPie                    | Bar of pie chart                         |
+        | 47  | Radar                       | Radar chart                              |
+        | 48  | Scatter                     | Scatter chart                            |
+        | 49  | Surface3D                   | 3D surface chart                         |
+        | 50  | WireframeSurface3D          | 3D wireframe surface chart               |
+        | 51  | Contour                     | Contour chart                            |
+        | 52  | WireframeContour            | Wireframe contour chart                  |
+        | 53  | Bubble                      | Bubble chart                             |
+        | 54  | Bubble3D                    | 3D bubble chart                          |
+
+        In Excel a chart series is a collection of information that defines
+        which data is plotted such as values, axis labels and formatting.
+        The series options that can be set are:
+
+            name
+            categories
+            values
+            fill
+            line
+            marker
+            data_label
+            data_label_position
+
+        name: Set the name for the series. The name is displayed in the chart
+        legend and in the formula bar. The 'name' property is optional and if it
+        isn't supplied it will default to Series 1..n. The name can also be a
+        formula such as Sheet1!$A$1
+
+        categories: This sets the chart category labels. The category is more or
+        less the same as the X axis. In most chart types the 'categories'
+        property is optional and the chart will just assume a sequential series
+        from 1..n.
+
+        values: This is the most important property of a series and is the only
+        mandatory option for every chart object. This option links the chart
+        with the worksheet data that it displays.
+
+        sizes: This sets the bubble size in a data series. The 'sizes' property
+        is optional and the default value was same with 'values'.
+
+        fill: This set the format for the data series fill. The 'fill' property
+        is optional
+
+        line: This sets the line format of the line chart. The 'line' property
+        is optional and if it isn't supplied it will default style. The options
+        that can be set are width and color. The range of width is 0.25pt -
+        999pt. If the value of width is outside the range, the default width of
+        the line is 2pt.
+
+        marker: This sets the marker of the line chart and scatter chart. The
+        range of optional field 'size' is 2-72 (default value is 5). The
+        enumeration value of optional field 'symbol' are (default value is
+        'auto'):
+
+            circle
+            dash
+            diamond
+            dot
+            none
+            picture
+            plus
+            square
+            star
+            triangle
+            x
+            auto
+
+        data_label: This sets the format of the chart series data label.
+
+        data_label_position: This sets the position of the chart series data
+        label.
+
+        Set properties of the chart legend. The options that can be set are:
+
+            position
+            show_legend_key
+
+        position: Set the position of the chart legend. The default legend
+        position is bottom. The available positions are:
+
+            none
+            top
+            bottom
+            left
+            right
+            top_right
+
+        ShowLegendKey: Set the legend keys shall be shown in data labels. The default
+        value is false.
+
+        Set properties of the chart title. The properties that can be set are:
+
+       	    title
+
+        title: Set the name (title) for the chart. The name is displayed above
+        the chart. The name can also be a formula such as Sheet1!$A$1 or a list
+        with a sheet name. The name property is optional. The default is to have
+        no chart title.
+
+        Specifies how blank cells are plotted on the chart by 'show_blanks_as'.
+        The default value is gap. The options that can be set are:
+
+            gap
+            span
+            zero
+
+        gap: Specifies that blank values shall be left as a gap.
+
+        span: Specifies that blank values shall be spanned with a line.
+
+        zero: Specifies that blank values shall be treated as zero.
+
+        Specifies that each data marker in the series has a different color by
+        'vary_colors'. The default value is True.
+
+        Set chart offset, scale, aspect ratio setting and print settings by
+        'format', same as function `add_picture`.
+
+        Set the position of the chart plot area by 'plot_area'. The properties
+        that can be set are:
+
+            second_plot_values
+            show_bubble_size
+            show_cat_name
+            show_data_table
+            show_data_table_keys
+            show_leader_lines
+            show_percent
+            show_ser_name
+            show_val
+            num_fmt
+
+        second_plot_values: Specifies the values in second plot for the
+        'PieOfPie' and 'BarOfPie' chart.
+
+        show_bubble_size: Specifies the bubble size shall be shown in a data
+        label. The 'show_bubble_size' property is optional. The default value is
+        False.
+
+        show_cat_name: Specifies that the category name shall be shown in the
+        data label. The 'show_cat_name' property is optional. The default value
+        is True.
+
+        show_data_table: Used for add data table under chart, depending on the
+        chart type, only available for area, bar, column and line series type
+        charts. The 'show_data_table' property is optional. The default value is
+        False.
+
+        show_data_table_keys: Used for add legend key in data table, only works
+        on 'show_data_table' is enabled. The 'show_data_table_keys' property is
+        optional. The default value is False.
+
+        show_leader_lines: Specifies leader lines shall be shown for data
+        labels. The 'show_leader_lines' property is optional. The default value
+        is False.
+
+        show_percent: Specifies that the percentage shall be shown in a data
+        label. The 'show_percent' property is optional. The default value is
+        False.
+
+        show_ser_name: Specifies that the series name shall be shown in a data
+        label. The 'show_ser_name' property is optional. The default value is
+        False.
+
+        show_val: Specifies that the value shall be shown in a data label. The
+        'show_val' property is optional. The default value is False.
+
+        num_fmt: Specifies that if linked to source and set custom number format
+        code for data labels. The 'NumFmt' property is optional. The default
+        format code is 'General'.
+
+        Set the primary horizontal and vertical axis options by 'x_axis' and
+        'y_axis'. The properties of 'x_axis' that can be set are:
+
+            none
+            major_grid_lines
+            minor_grid_lines
+            tick_label_skip
+            reverse_order
+            maximum
+            minimum
+            alignment
+            font
+            num_fmt
+            title
+
+        The properties of 'y_axis' that can be set are:
+
+            none
+            major_grid_lines
+            minor_grid_lines
+            major_unit
+            secondary
+            reverse_order
+            maximum
+            minimum
+            alignment
+            font
+            log_base
+            num_fmt
+            title
+
+        none: Disable axes.
+
+        major_grid_lines: Specifies major grid lines.
+
+        minor_grid_lines: Specifies minor grid lines.
+
+        major_unit: Specifies the distance between major ticks. Shall contain a
+        positive floating-point number. The 'major_unit' property is optional.
+        The default value is auto.
+
+        secondary: Specifies the current series vertical axis as the secondary
+        axis, this only works for the second and later chart in the combo chart.
+        The default value is False.
+
+        tick_label_skip: Specifies how many tick labels to skip between label
+        that is drawn. The 'tick_label_skip' property is optional. The default
+        value is auto.
+
+        reverse_order: Specifies that the categories or values on reverse order
+        (orientation of the chart). The 'reverse_order' property is optional. The
+        default value is false.
+
+        maximum: Specifies that the fixed maximum, 0 is auto. The 'maximum'
+        property is optional. The default value is auto.
+
+        minimum: Specifies that the fixed minimum, 0 is auto. The 'minimum'
+        property is optional. The default value is auto.
+
+        alignment: Specifies that the alignment of the horizontal and vertical
+        axis. The properties of alignment that can be set are:
+
+            text_rotation
+            vertical
+
+        The value of 'text_rotation' that can be set from -90 to 90.
+
+        The value of 'vertical' that can be set are:
+
+            horz
+            vert
+            vert270
+            wordArtVert
+            eaVert
+            mongolianVert
+            wordArtVertRtl
+
+        font: Specifies that the font of the horizontal and vertical axis. The
+        properties of font that can be set are:
+
+            bold
+            italic
+            underline
+            family
+            size
+            strike
+            color
+            vert_align
+
+        log_base: Specifies logarithmic scale base number of the vertical axis.
+
+        num_fmt: Specifies that if linked to source and set custom number format
+        code for axis. The 'num_fmt' property is optional. The default format
+        code is 'General'.
+
+        title: Specifies that the primary horizontal or vertical axis title and
+        resize chart. The 'title' property is optional.
+
+        Set chart size by 'dimension' property. The 'dimension' property is
+        optional. The default width is 480, and height is 260.
+
+        Set the bubble size in all data series for the bubble chart or 3D bubble
+        chart by 'bubble_sizes' property. The 'bubble_sizes' property is
+        optional. The default width is 100, and the value should be great than 0
+        and less or equal than 300.
+
+        Set the doughnut hole size in all data series for the doughnut chart by
+        'hole_size' property. The 'hole_size' property is optional. The default
+        width is 75, and the value should be great than 0 and less or equal than
+        90.
+
+        Set the gap with of the column and bar series chart by 'gap_width'
+        property. The 'gap_width' property is optional. The default width is
+        150, and the value should be great or equal than 0 and less or equal
+        than 500.
+
+        Set series overlap of the column and bar series chart by 'overlap'
+        property. The 'overlap' property is optional. The default width is 0,
+        and the value should be great or equal than -100 and less or equal than
+        100.
+
+        combo: Specifies the create a chart that combines two or more chart
+        types in a single chart.
+
+        Example:
+            For example, create 3D clustered column chart with data
+            Sheet1!$E$1:$L$15:
+
+            ```python
+            import excelize
+
+            f = excelize.new_file()
+            data = [
+                [None, "Apple", "Orange", "Pear"],
+                ["Small", 2, 3, 3],
+                ["Normal", 5, 2, 4],
+                ["Large", 6, 7, 8],
+            ]
+            try:
+                for idx, row in enumerate(data):
+                    cell = excelize.coordinates_to_cell_name(1, idx + 1, False)
+                    f.set_sheet_row("Sheet1", cell, row)
+                chart = excelize.Chart(
+                    type=excelize.ChartType.Col3DClustered,
+                    series=[
+                        excelize.ChartSeries(
+                            name="Sheet1!$A$2",
+                            categories="Sheet1!$B$1:$D$1",
+                            values="Sheet1!$B$2:$D$2",
+                        ),
+                        excelize.ChartSeries(
+                            name="Sheet1!$A$3",
+                            categories="Sheet1!$B$1:$D$1",
+                            values="Sheet1!$B$3:$D$3",
+                        ),
+                        excelize.ChartSeries(
+                            name="Sheet1!$A$4",
+                            categories="Sheet1!$B$1:$D$1",
+                            values="Sheet1!$B$4:$D$4",
+                        ),
+                    ],
+                    title=[excelize.RichTextRun(text="Fruit 3D Clustered Column Chart")],
+                )
+                f.add_chart("Sheet1", "E1", chart)
+                # Save spreadsheet by the given path.
+                f.save_as("Book1.xlsx")
+            except RuntimeError as err:
+                print(err)
+            finally:
+                err = f.close()
+                if err:
+                    print(err)
+            ```
+
+            For example, create a clustered column - line chart with data
+            Sheet1!$E$1:$L$15:
+
+            ```python
+            import excelize
+
+            f = excelize.new_file()
+            try:
+                for idx, row in enumerate(
+                    [
+                        [None, "Apple", "Orange", "Pear"],
+                        ["Small", 2, 3, 3],
+                        ["Normal", 5, 2, 4],
+                        ["Large", 6, 7, 8],
+                    ]
+                ):
+                    cell = excelize.coordinates_to_cell_name(1, idx + 1)
+                    f.set_sheet_row("Sheet1", cell, row)
+
+                f.add_chart(
+                    "Sheet1",
+                    "E1",
+                    excelize.Chart(
+                        type=excelize.ChartType.Col,
+                        series=[
+                            excelize.ChartSeries(
+                                name="Sheet1!$A$2",
+                                categories="Sheet1!$B$1:$D$1",
+                                values="Sheet1!$B$2:$D$2",
+                            )
+                        ],
+                        format=excelize.GraphicOptions(
+                            scale_x=1,
+                            scale_y=1,
+                            offset_x=15,
+                            offset_y=10,
+                            print_object=True,
+                            lock_aspect_ratio=False,
+                            locked=False,
+                        ),
+                        title=[
+                            excelize.RichTextRun(
+                                text="Clustered Column - Line Chart",
+                            )
+                        ],
+                        legend=excelize.ChartLegend(position="left"),
+                        plot_area=excelize.ChartPlotArea(
+                            show_cat_name=False,
+                            show_leader_lines=False,
+                            show_percent=True,
+                            show_ser_name=True,
+                            show_val=True,
+                        ),
+                    ),
+                    combo=excelize.Chart(
+                        type=excelize.ChartType.Line,
+                        series=[
+                            excelize.ChartSeries(
+                                name="Sheet1!$A$4",
+                                categories="Sheet1!$B$1:$D$1",
+                                values="Sheet1!$B$4:$D$4",
+                                marker=excelize.ChartMarker(
+                                    symbol="none",
+                                    size=10,
+                                ),
+                            )
+                        ],
+                        format=excelize.GraphicOptions(
+                            scale_x=1,
+                            scale_y=1,
+                            offset_x=15,
+                            offset_y=10,
+                            print_object=True,
+                            lock_aspect_ratio=False,
+                            locked=False,
+                        ),
+                        legend=excelize.ChartLegend(position="right"),
+                        plot_area=excelize.ChartPlotArea(
+                            show_cat_name=False,
+                            show_leader_lines=False,
+                            show_percent=True,
+                            show_ser_name=True,
+                            show_val=True,
+                        ),
+                    ),
+                )
+                # Save the spreadsheet by the given path.
+                f.save_as("Book1.xlsx")
+            except RuntimeError as err:
+                print(err)
+            finally:
+                err = f.close()
+                if err:
+                    print(err)
+            ```
         """
         lib.AddChart.restype = c_char_p
         opts = [chart] + list(combo.values())
@@ -768,6 +1259,26 @@ class File:
         Returns:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
+
+        Example:
+            For example, add a rich-text comment with a specified comments box
+            size in Sheet1!A5:
+
+            ```python
+            try:
+                f.add_comment("Sheet1", excelize.Comment(
+                    cell="A5",
+                    author="Excelize",
+                    paragraph=[
+                        excelize.RichTextRun(text="Excelize: ", font=excelize.Font(bold=True)),
+                        excelize.RichTextRun(text="This is a comment."),
+                    ],
+                    height=40,
+                    width=180,
+                ))
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.AddComment.restype = c_char_p
         options = py_value_to_c(opts, types_go._Comment())
@@ -916,9 +1427,11 @@ class File:
     ) -> None:
         """
         Add picture in a sheet by given picture format set (such as offset,
-        scale, aspect ratio setting and print settings) and file path, supported
-        image types: BMP, EMF, EMZ, GIF, JPEG, JPG, PNG, SVG, TIF, TIFF, WMF,
-        and WMZ.
+        scale, aspect ratio setting and print settings) and file path. Supported
+        image types: GIF, JPEG, JPG, PNG, TIF and TIFF. Note that this function
+        only supports adding pictures placed over the cells currently, and
+        doesn't support adding pictures placed in cells or creating the Kingsoft
+        WPS Office embedded image cells.
 
         Args:
             sheet (str): The worksheet name
@@ -929,6 +1442,47 @@ class File:
         Returns:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
+
+        Example:
+            For example:
+
+            ```python
+            import excelize
+
+            try:
+                f = excelize.new_file()
+            except RuntimeError as err:
+                print(err)
+                exit()
+            try:
+                # Insert a picture.
+                f.add_picture("Sheet1", "A2", "image.png", None)
+                # Insert a picture to worksheet with scaling.
+                f.add_picture("Sheet1", "D2", "image.jpg", excelize.GraphicOptions(
+                    scale_x=0.5,
+                    scale_y=0.5,
+                ))
+                # Insert a picture offset in the cell with printing support.
+                f.add_picture("Sheet1", "H2", "image.gif", excelize.GraphicOptions(
+                    offset_x=15,
+                    offset_y=10,
+                    hyperlink="https://github.com/xuri/excelize",
+                    hyperlink_type="External",
+                    print_object=True,
+                    lock_aspect_ratio=False,
+                    locked=False,
+                    positioning="oneCell",
+                ))
+                # Save the spreadsheet with the origin path.
+                f.save_as("Book1.xlsx")
+            except RuntimeError as err:
+                print(err)
+            finally:
+                # Close the spreadsheet.
+                err = f.close()
+                if err:
+                    print(err)
+            ```
         """
         lib.AddPicture.restype = c_char_p
         options = (
@@ -950,11 +1504,11 @@ class File:
         """
         Add picture in a sheet by given picture format set (such as offset,
         scale, aspect ratio setting and print settings), file base name,
-        extension name and file bytes, supported image types: EMF, EMZ, GIF,
-        JPEG, JPG, PNG, SVG, TIF, TIFF, WMF, and WMZ. Note that this function
-        only supports adding pictures placed over the cells currently, and
-        doesn't support adding pictures placed in cells or creating the Kingsoft
-        WPS Office embedded image cells.
+        extension name and file bytes. Supported image types:  GIF, JPEG, JPG,
+        PNG, TIF and TIFF. Note that this function only supports adding pictures
+        placed over the cells currently, and doesn't support adding pictures
+        placed in cells or creating the Kingsoft WPS Office embedded image
+        cells.
 
         Args:
             sheet (str): The worksheet name
@@ -964,6 +1518,37 @@ class File:
         Returns:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
+
+        Example:
+            For example:
+
+            ```python
+            import excelize
+
+            try:
+                f = excelize.new_file()
+            except RuntimeError as err:
+                print(err)
+                exit()
+            try:
+                with open("image.jpg", "rb") as file:
+                    f.add_picture_from_bytes(
+                        "Sheet1",
+                        "A2",
+                        excelize.Picture(
+                            extension=".jpg",
+                            file=file.read(),
+                            format=excelize.GraphicOptions(alt_text="Excel Logo"),
+                        ),
+                    )
+                f.save_as("Book1.xlsx")
+            except RuntimeError as err:
+                print(err)
+            finally:
+                err = f.close()
+                if err:
+                    print(err)
+            ```
         """
         lib.AddPictureFromBytes.restype = c_char_p
         err = lib.AddPictureFromBytes(
@@ -1066,6 +1651,220 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
 
+        The following shows the type of shape supported by excelize:
+
+        | Type                             | Shape                                      |
+        |----------------------------------|--------------------------------------------|
+        | accentBorderCallout1             | Callout 1 with Border and Accent Shape     |
+        | accentBorderCallout2             | Callout 2 with Border and Accent Shape     |
+        | accentBorderCallout3             | Callout 3 with Border and Accent Shape     |
+        | accentCallout1                   | Callout 1 Shape                            |
+        | accentCallout2                   | Callout 2 Shape                            |
+        | accentCallout3                   | Callout 3 Shape                            |
+        | actionButtonBackPrevious         | Back or Previous Button Shape              |
+        | actionButtonBeginning            | Beginning Button Shape                     |
+        | actionButtonBlank                | Blank Button Shape                         |
+        | actionButtonDocument             | Document Button Shape                      |
+        | actionButtonEnd                  | End Button Shape                           |
+        | actionButtonForwardNext          | Forward or Next Button Shape               |
+        | actionButtonHelp                 | Help Button Shape                          |
+        | actionButtonHome                 | Home Button Shape                          |
+        | actionButtonInformation          | Information Button Shape                   |
+        | actionButtonMovie                | Movie Button Shape                         |
+        | actionButtonReturn               | Return Button Shape                        |
+        | actionButtonSound                | Sound Button Shape                         |
+        | arc                              | Curved Arc Shape                           |
+        | bentArrow                        | Bent Arrow Shape                           |
+        | bentConnector2                   | Bent Connector 2 Shape                     |
+        | bentConnector3                   | Bent Connector 3 Shape                     |
+        | bentConnector4                   | Bent Connector 4 Shape                     |
+        | bentConnector5                   | Bent Connector 5 Shape                     |
+        | bentUpArrow                      | Bent Up Arrow Shape                        |
+        | bevel                            | Bevel Shape                                |
+        | blockArc                         | Block Arc Shape                            |
+        | borderCallout1                   | Callout 1 with Border Shape                |
+        | borderCallout2                   | Callout 2 with Border Shape                |
+        | borderCallout3                   | Callout 3 with Border Shape                |
+        | bracePair                        | Brace Pair Shape                           |
+        | bracketPair                      | Bracket Pair Shape                         |
+        | callout1                         | Callout 1 Shape                            |
+        | callout2                         | Callout 2 Shape                            |
+        | callout3                         | Callout 3 Shape                            |
+        | can                              | Can Shape                                  |
+        | chartPlus                        | Chart Plus Shape                           |
+        | chartStar                        | Chart Star Shape                           |
+        | chartX                           | Chart X Shape                              |
+        | chevron                          | Chevron Shape                              |
+        | chord                            | Chord Shape                                |
+        | circularArrow                    | Circular Arrow Shape                       |
+        | cloud                            | Cloud Shape                                |
+        | cloudCallout                     | Callout Cloud Shape                        |
+        | corner                           | Corner Shape                               |
+        | cornerTabs                       | Corner Tabs Shape                          |
+        | cube                             | Cube Shape                                 |
+        | curvedConnector2                 | Curved Connector 2 Shape                   |
+        | curvedConnector3                 | Curved Connector 3 Shape                   |
+        | curvedConnector4                 | Curved Connector 4 Shape                   |
+        | curvedConnector5                 | Curved Connector 5 Shape                   |
+        | curvedDownArrow                  | Curved Down Arrow Shape                    |
+        | curvedLeftArrow                  | Curved Left Arrow Shape                    |
+        | curvedRightArrow                 | Curved Right Arrow Shape                   |
+        | curvedUpArrow                    | Curved Up Arrow Shape                      |
+        | decagon                          | Decagon Shape                              |
+        | diagStripe                       | Diagonal Stripe Shape                      |
+        | diamond                          | Diamond Shape                              |
+        | dodecagon                        | Dodecagon Shape                            |
+        | donut                            | Donut Shape                                |
+        | doubleWave                       | Double Wave Shape                          |
+        | downArrow                        | Down Arrow Shape                           |
+        | downArrowCallout                 | Callout Down Arrow Shape                   |
+        | ellipse                          | Ellipse Shape                              |
+        | ellipseRibbon                    | Ellipse Ribbon Shape                       |
+        | ellipseRibbon2                   | Ellipse Ribbon 2 Shape                     |
+        | flowChartAlternateProcess        | Alternate Process Flow Shape               |
+        | flowChartCollate                 | Collate Flow Shape                         |
+        | flowChartConnector               | Connector Flow Shape                       |
+        | flowChartDecision                | Decision Flow Shape                        |
+        | flowChartDelay                   | Delay Flow Shape                           |
+        | flowChartDisplay                 | Display Flow Shape                         |
+        | flowChartDocument                | Document Flow Shape                        |
+        | flowChartExtract                 | Extract Flow Shape                         |
+        | flowChartInputOutput             | Input Output Flow Shape                    |
+        | flowChartInternalStorage         | Internal Storage Flow Shape                |
+        | flowChartMagneticDisk            | Magnetic Disk Flow Shape                   |
+        | flowChartMagneticDrum            | Magnetic Drum Flow Shape                   |
+        | flowChartMagneticTape            | Magnetic Tape Flow Shape                   |
+        | flowChartManualInput             | Manual Input Flow Shape                    |
+        | flowChartManualOperation         | Manual Operation Flow Shape                |
+        | flowChartMerge                   | Merge Flow Shape                           |
+        | flowChartMultidocument           | Multi-Document Flow Shape                  |
+        | flowChartOfflineStorage          | Offline Storage Flow Shape                 |
+        | flowChartOffpageConnector        | Off-Page Connector Flow Shape              |
+        | flowChartOnlineStorage           | Online Storage Flow Shape                  |
+        | flowChartOr                      | Or Flow Shape                              |
+        | flowChartPredefinedProcess       | Predefined Process Flow Shape              |
+        | flowChartPreparation             | Preparation Flow Shape                     |
+        | flowChartProcess                 | Process Flow Shape                         |
+        | flowChartPunchedCard             | Punched Card Flow Shape                    |
+        | flowChartPunchedTape             | Punched Tape Flow Shape                    |
+        | flowChartSort                    | Sort Flow Shape                            |
+        | flowChartSummingJunction         | Summing Junction Flow Shape                |
+        | flowChartTerminator              | Terminator Flow Shape                      |
+        | foldedCorner                     | Folded Corner Shape                        |
+        | frame                            | Frame Shape                                |
+        | funnel                           | Funnel Shape                               |
+        | gear6                            | Gear 6 Shape                               |
+        | gear9                            | Gear 9 Shape                               |
+        | halfFrame                        | Half Frame Shape                           |
+        | heart                            | Heart Shape                                |
+        | heptagon                         | Heptagon Shape                             |
+        | hexagon                          | Hexagon Shape                              |
+        | homePlate                        | Home Plate Shape                           |
+        | horizontalScroll                 | Horizontal Scroll Shape                    |
+        | irregularSeal1                   | Irregular Seal 1 Shape                     |
+        | irregularSeal2                   | Irregular Seal 2 Shape                     |
+        | leftArrow                        | Left Arrow Shape                           |
+        | leftArrowCallout                 | Callout Left Arrow Shape                   |
+        | leftBrace                        | Left Brace Shape                           |
+        | leftBracket                      | Left Bracket Shape                         |
+        | leftCircularArrow                | Left Circular Arrow Shape                  |
+        | leftRightArrow                   | Left Right Arrow Shape                     |
+        | leftRightArrowCallout            | Callout Left Right Arrow Shape             |
+        | leftRightCircularArrow           | Left Right Circular Arrow Shape            |
+        | leftRightRibbon                  | Left Right Ribbon Shape                    |
+        | leftRightUpArrow                 | Left Right Up Arrow Shape                  |
+        | leftUpArrow                      | Left Up Arrow Shape                        |
+        | lightningBolt                    | Lightning Bolt Shape                       |
+        | line                             | Line Shape                                 |
+        | lineInv                          | Line Inverse Shape                         |
+        | mathDivide                       | Divide Math Shape                          |
+        | mathEqual                        | Equal Math Shape                           |
+        | mathMinus                        | Minus Math Shape                           |
+        | mathMultiply                     | Multiply Math Shape                        |
+        | mathNotEqual                     | Not Equal Math Shape                       |
+        | mathPlus                         | Plus Math Shape                            |
+        | moon                             | Moon Shape                                 |
+        | nonIsoscelesTrapezoid            | Non-Isosceles Trapezoid Shape              |
+        | noSmoking                        | No Smoking Shape                           |
+        | notchedRightArrow                | Notched Right Arrow Shape                  |
+        | octagon                          | Octagon Shape                              |
+        | parallelogram                    | Parallelogram Shape                        |
+        | pentagon                         | Pentagon Shape                             |
+        | pie                              | Pie Shape                                  |
+        | pieWedge                         | Pie Wedge Shape                            |
+        | plaque                           | Plaque Shape                               |
+        | plaqueTabs                       | Plaque Tabs Shape                          |
+        | plus                             | Plus Shape                                 |
+        | quadArrow                        | Quad-Arrow Shape                           |
+        | quadArrowCallout                 | Callout Quad-Arrow Shape                   |
+        | rect                             | Rectangle Shape                            |
+        | ribbon                           | Ribbon Shape                               |
+        | ribbon2                          | Ribbon 2 Shape                             |
+        | rightArrow                       | Right Arrow Shape                          |
+        | rightArrowCallout                | Callout Right Arrow Shape                  |
+        | rightBrace                       | Right Brace Shape                          |
+        | rightBracket                     | Right Bracket Shape                        |
+        | round1Rect                       | One Round Corner Rectangle Shape           |
+        | round2DiagRect                   | Two Diagonal Round Corner Rectangle Shape  |
+        | round2SameRect                   | Two Same-side Round Corner Rectangle Shape |
+        | roundRect                        | Round Corner Rectangle Shape               |
+        | rtTriangle                       | Right Triangle Shape                       |
+        | smileyFace                       | Smiley Face Shape                          |
+        | snip1Rect                        | One Snip Corner Rectangle Shape            |
+        | snip2DiagRect                    | Two Diagonal Snip Corner Rectangle Shape   |
+        | snip2SameRect                    | Two Same-side Snip Corner Rectangle Shape  |
+        | snipRoundRect                    | One Snip One Round Corner Rectangle Shape  |
+        | squareTabs                       | Square Tabs Shape                          |
+        | star10                           | Ten Pointed Star Shape                     |
+        | star12                           | Twelve Pointed Star Shape                  |
+        | star16                           | Sixteen Pointed Star Shape                 |
+        | star24                           | Twenty Four Pointed Star Shape             |
+        | star32                           | Thirty Two Pointed Star Shape              |
+        | star4                            | Four Pointed Star Shape                    |
+        | star5                            | Five Pointed Star Shape                    |
+        | star6                            | Six Pointed Star Shape                     |
+        | star7                            | Seven Pointed Star Shape                   |
+        | star8                            | Eight Pointed Star Shape                   |
+        | straightConnector1               | Straight Connector 1 Shape                 |
+        | stripedRightArrow                | Striped Right Arrow Shape                  |
+        | sun                              | Sun Shape                                  |
+        | swooshArrow                      | Swoosh Arrow Shape                         |
+        | teardrop                         | Teardrop Shape                             |
+        | trapezoid                        | Trapezoid Shape                            |
+        | triangle                         | Triangle Shape                             |
+        | upArrow                          | Up Arrow Shape                             |
+        | upArrowCallout                   | Callout Up Arrow Shape                     |
+        | upDownArrow                      | Up Down Arrow Shape                        |
+        | upDownArrowCallout               | Callout Up Down Arrow Shape                |
+        | uturnArrow                       | U-Turn Arrow Shape                         |
+        | verticalScroll                   | Vertical Scroll Shape                      |
+        | wave                             | Wave Shape                                 |
+        | wedgeEllipseCallout              | Callout Wedge Ellipse Shape                |
+        | wedgeRectCallout                 | Callout Wedge Rectangle Shape              |
+        | wedgeRoundRectCallout            | Callout Wedge Round Rectangle Shape        |
+
+
+        The following shows the type of text underline supported by excelize:
+
+            none
+            words
+            sng
+            dbl
+            heavy
+            dotted
+            dottedHeavy
+            dash
+            dashHeavy
+            dashLong
+            dashLongHeavy
+            dotDash
+            dotDashHeavy
+            dotDotDash
+            dotDotDashHeavy
+            wavy
+            wavyHeavy
+            wavyDbl
+
         Example:
             For example, add text box (rect shape) in Sheet1:
 
@@ -1165,7 +1964,7 @@ class File:
 
     def add_sparkline(self, sheet: str, opts: SparklineOptions) -> None:
         """
-        add sparklines to the worksheet by given formatting options. Sparklines
+        Add sparklines to the worksheet by given formatting options. Sparklines
         are small charts that fit in a single cell and are used to show trends
         in data. Sparklines are a feature of Excel 2010 and later only. You can
         write them to workbook that can be read by Excel 2007, but they won't be
@@ -1178,6 +1977,25 @@ class File:
         Returns:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
+
+        The following shows the formatting options of sparkline supported by
+        excelize:
+
+        | Parameter   | Description                                                   |
+        |-------------|---------------------------------------------------------------|
+        | Location    | Required, must have the same number with 'range' parameter    |
+        | Range       | Required, must have the same number with 'location' parameter |
+        | Type        | Enumeration value: line, column, win_loss                     |
+        | Style       | Value range: 0 - 35                                           |
+        | Hight       | Toggle sparkline high points                                  |
+        | Low         | Toggle sparkline low points                                   |
+        | First       | Toggle sparkline first points                                 |
+        | Last        | Toggle sparkline last points                                  |
+        | Negative    | Toggle sparkline negative points                              |
+        | Markers     | Toggle sparkline markers                                      |
+        | Axis        | Used to specify if show horizontal axis                       |
+        | Reverse     | Used to specify if enable plot data right-to-left             |
+        | SeriesColor | An RGB Color is specified as RRGGBB                           |
 
         Example:
             For example, add a grouped sparkline. Changes are applied to all
@@ -1212,7 +2030,7 @@ class File:
 
         Note that the table must be at least two lines including the header. The
         header cells must contain strings and must be unique, and must set the
-        header row data of the table before calling the AddTable function.
+        header row data of the table before calling the `add_table` function.
         Multiple tables range reference that can't have an intersection.
 
         Args:
@@ -1273,13 +2091,13 @@ class File:
         and settings. An auto filter in Excel is a way of filtering a 2D range
         of data based on some simple criteria.
 
-        Column defines the filter columns in an auto filter range based on simple
-        criteria
+        Column defines the filter columns in an auto filter range based on
+        simple criteria.
 
         It isn't sufficient to just specify the filter condition. You must also
-        hide any rows that don't match the filter condition. Rows are hidden using
-        the SetRowVisible function. Excelize can't filter rows automatically since
-        this isn't part of the file format.
+        hide any rows that don't match the filter condition. Rows are hidden
+        using the `set_row_visible` function. Excelize can't filter rows
+        automatically since this isn't part of the file format.
 
         Args:
             sheet (str): The worksheet name
@@ -1407,6 +2225,13 @@ class File:
         Returns:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
+
+        Example:
+            For example, delete the comment in Sheet1!$A$30:
+
+            ```python
+            f.delete_comment("Sheet1", "A30")
+            ```
         """
         err, lib.DeleteComment.restype = None, c_char_p
         err = lib.DeleteComment(
@@ -1703,10 +2528,9 @@ class File:
         """
         Get formatted value from cell by given worksheet name and cell reference
         in spreadsheet. The return value is converted to the 'string' data type.
-        This function is concurrency safe. If the cell format can be applied to
-        the value of a cell, the applied value will be returned, otherwise the
-        original value will be returned. All cells' values will be the same in a
-        merged range.
+        If the cell format can be applied to the value of a cell, the applied
+        value will be returned, otherwise the original value will be returned.
+        All cells' values will be the same in a merged range.
 
         Args:
             sheet (str): The worksheet name
@@ -1903,7 +2727,7 @@ class File:
 
     def get_comments(self, sheet: str) -> List[Comment]:
         """
-        GetComments retrieves all comments in a worksheet by given worksheet
+        Retrieves all comments in a worksheet by given worksheet
         name.
 
         Returns:
@@ -1970,7 +2794,7 @@ class File:
         two-dimensional array, where the value of the cell is converted to the
         string type. If the cell format can be applied to the value of the cell,
         the applied value will be used, otherwise the original value will be
-        used. GetRows fetched the rows with value or formula cells, the
+        used. This function fetched the rows with value or formula cells, the
         continually blank cells in the tail of each row will be skipped, so the
         length of each row may be inconsistent.
 
@@ -1981,13 +2805,19 @@ class File:
         Returns:
             List[List[str]]: Return all the rows in a sheet by given worksheet
             name, returned as a two-dimensional array if no error occurred,
-            otherwise raise a RuntimeError with the message. Where the value of
-            the cell is converted to the string type. If the cell format can be
-            applied to the value of the cell, the applied value will be used,
-            otherwise the original value will be used. GetRows fetched the rows
-            with value or formula cells, the continually blank cells in the tail
-            of each row will be skipped, so the length of each row may be
-            inconsistent.
+            otherwise raise a RuntimeError with the message.
+
+        Example:
+            For example, get and traverse the value of all cells by rows on a
+            worksheet named 'Sheet1':
+
+            ```python
+            rows = f.get_rows("Sheet1")
+            for row in rows:
+                for cell in row:
+                    print(f"{cell}\t", end="")
+                print()
+            ```
         """
         lib.GetRows.restype = types_go._GetRowsResult
         rows = []
@@ -2120,7 +2950,7 @@ class File:
 
     def get_style(self, style_id: int) -> Optional[Style]:
         """
-        Get style definition by given style index.
+        Get style definition by given style ID.
 
         Args:
             style_id (int): The style ID
@@ -2318,6 +3148,16 @@ class File:
         Returns:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
+
+        Example:
+            For example create a merged cell of D3:E9 on Sheet1:
+
+            ```python
+            try:
+                f.merge_cell("Sheet1", "D3", "E9")
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.MergeCell.restype = c_char_p
         err = lib.MergeCell(
@@ -2367,7 +3207,7 @@ class File:
     def new_conditional_style(self, style: Style) -> int:
         """
         Create style for conditional format by given style format. The
-        parameters are the same with the new_style function.
+        parameters are the same with the `new_style` function.
 
         Args:
             style (Style): The style options
@@ -2458,8 +3298,8 @@ class File:
         """
         Create the style for cells by a given style options, and returns style
         index. The same style index can not be used across different workbook.
-        This function is concurrency safe. Note that the 'Font.Color' field uses
-        an RGB color represented in 'RRGGBB' hexadecimal notation.
+        Note that the 'font.color' field uses an RGB color represented in
+        'RRGGBB' hexadecimal notation.
 
         Args:
             style (Style): The style options
@@ -2467,6 +3307,133 @@ class File:
         Returns:
             int: Return the style index if no error occurred, otherwise raise a
             RuntimeError with the message.
+
+        Example:
+            For example create a borders of cell H9 on Sheet1:
+
+            ```python
+            try:
+                style = f.new_style(excelize.Style(
+                    border=[
+                        excelize.Border(type="left", color="0000FF", style=3),
+                        excelize.Border(type="top", color="00FF00", style=4),
+                        excelize.Border(type="bottom", color="FFFF00", style=5),
+                        excelize.Border(type="right", color="FF0000", style=6),
+                        excelize.Border(type="diagonalDown", color="A020F0", style=7),
+                        excelize.Border(type="diagonalUp", color="A020F0", style=8),
+                    ]
+                ))
+                f.set_cell_style("Sheet1", "H9", "H9", style)
+            except RuntimeError as err:
+                print(err)
+            ```
+
+            Set gradient fill with vertical variants shading styles for cell H9
+            on Sheet1:
+
+            ```python
+            try:
+                style = f.new_style(
+                    excelize.Style(
+                        fill=excelize.Fill(
+                            type="gradient",
+                            color=["FFFFFF", "E0EBF5"],
+                            shading=1,
+                        )
+                    )
+                )
+                f.set_cell_style("Sheet1", "H9", "H9", style)
+            except RuntimeError as err:
+                print(err)
+            ```
+
+            Set solid style pattern fill for cell H9 on Sheet1:
+
+            ```python
+            try:
+                style = f.new_style(
+                    excelize.Style(
+                        fill=excelize.Fill(type="pattern", color=["E0EBF5"], pattern=1),
+                    )
+                )
+                f.set_cell_style("Sheet1", "H9", "H9", style)
+            except RuntimeError as err:
+                print(err)
+            ```
+
+            Set alignment style for cell H9 on Sheet1:
+
+            ```python
+            try:
+                f.set_cell_value("Sheet1", "H9", "Style")
+                style = f.new_style(
+                    excelize.Style(
+                        alignment=excelize.Alignment(
+                            horizontal="center",
+                            indent=1,
+                            justify_last_line=True,
+                            reading_order=0,
+                            relative_indent=1,
+                            shrink_to_fit=True,
+                            text_rotation=45,
+                            vertical="",
+                            wrap_text=True,
+                        ),
+                    )
+                )
+                f.set_cell_style("Sheet1", "H9", "H9s", style)
+            except RuntimeError as err:
+                print(err)
+            ```
+
+            Dates and times in Excel are represented by real numbers, for
+            example "Apr 7 2017 12:00 PM" is represented by the number 42920.5.
+            Set date and time format for cell H9 on Sheet1:
+
+            ```python
+            try:
+                f.set_cell_value("Sheet1", "H9", 42920.5)
+                f.set_col_width("Sheet1", "H", "H", 13)
+                style = f.new_style(excelize.Style(num_fmt=22))
+                f.set_cell_style("Sheet1", "H9", "H9", style)
+            except RuntimeError as err:
+                print(err)
+            ```
+
+            Set font style for cell H9 on Sheet1:
+
+            ```python
+            try:
+                f.set_cell_value("Sheet1", "H9", "Excel")
+                style = f.new_style(
+                    excelize.Style(
+                        font=excelize.Font(
+                            bold=True,
+                            italic=True,
+                            family="Times New Roman",
+                            size=36,
+                            color="777777",
+                        )
+                    )
+                )
+                f.set_cell_style("Sheet1", "H9", "H9", style)
+            except RuntimeError as err:
+                print(err)
+            ```
+
+            Hide and lock for cell H9 on Sheet1:
+
+            ```python
+            try:
+                style = f.new_style(
+                    excelize.Style(
+                        protection=excelize.Protection(hidden=True, locked=True),
+                    )
+                )
+                f.set_cell_style("Sheet1", "H9", "H9", style)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.NewStyle.restype = types_go._IntErrorResult
         options = py_value_to_c(style, types_go._Style())
@@ -2691,8 +3658,8 @@ class File:
         """
         Set the default active sheet of the workbook by a given index. Note that
         the active index is different from the ID returned by function
-        get_sheet_map. It should be greater than or equal to 0 and less than the
-        total worksheet numbers.
+        `get_sheet_map`. It should be greater than or equal to 0 and less than
+        the total worksheet numbers.
 
         Args:
             index (int): The sheet index
@@ -2734,10 +3701,10 @@ class File:
         Set formula on the cell is taken according to the given worksheet name
         and cell formula settings. The result of the formula cell can be
         calculated when the worksheet is opened by the Office Excel application
-        or can be using the "CalcCellValue" function also can get the calculated
-        cell value. If the Excel application doesn't calculate the formula
-        automatically when the workbook has been opened, please call
-        "update_linked_value" after setting the cell formula functions.
+        or can be using the `calc_cell_value` function also can get the
+        calculated cell value. If the Excel application doesn't calculate the
+        formula automatically when the workbook has been opened, please call
+        `update_linked_value` after setting the cell formula functions.
 
         Args:
             sheet (str): The worksheet name
@@ -2748,6 +3715,94 @@ class File:
         Returns:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
+
+        Example:
+            Example 1, set normal formula "SUM(A1,B1)" for the cell "A3" on
+            "Sheet1":
+
+            ```python
+            f.set_cell_formula("Sheet1", "A3", "SUM(A1,B1)")
+            ```
+
+            Example 2, set one-dimensional vertical constant array (column
+            array) formula "1,2,3" for the cell "A3" on "Sheet1":
+
+            ```python
+            f.set_cell_formula("Sheet1", "A3", "{1;2;3}")
+            ```
+
+            Example 3, set one-dimensional horizontal constant array (row array)
+            formula '"a","b","c"' for the cell "A3" on "Sheet1":
+
+            ```python
+            f.set_cell_formula("Sheet1", "A3", "{\"a\",\"b\",\"c\"}")
+            ```
+
+            Example 4, set two-dimensional constant array formula
+            '{1,2,"a","b"}' for the cell "A3" on "Sheet1":
+
+            ```python
+            f.set_cell_formula(
+                "Sheet1",
+                "A3",
+                '{1,2;"a","b"}',
+                excelize.FormulaOpts(ref="A3:A3", type="array"),
+            )
+            ```
+
+            Example 5, set range array formula "A1:A2" for the cell "A3" on
+            "Sheet1":
+
+            ```python
+            f.set_cell_formula(
+                "Sheet1",
+                "A3",
+                "A1:A2",
+                excelize.FormulaOpts(ref="A3:A3", type="array"),
+            )
+            ```
+
+            Example 6, set shared formula "A1+B1" for the cell "C1:C5" on
+            "Sheet1", "C1" is the master cell:
+
+            ```python
+            f.set_cell_formula(
+                "Sheet1",
+                "C1",
+                "A1+B1",
+                excelize.FormulaOpts(ref="C1:C5", type="shared"),
+            )
+            ```
+
+            Example 7, set table formula "SUM(Table1[[A]:[B]])" for the cell
+            "C2" on "Sheet1":
+
+            ```python
+            import excelize
+
+            f = excelize.new_file()
+            try:
+                for idx, row in enumerate([["A", "B", "C"], [1, 2]]):
+                    f.set_sheet_row("Sheet1", f"A{idx+1}", row)
+                f.add_table("Sheet1", excelize.Table(
+                    range="A1:C2",
+                    name="Table1",
+                    style_name="TableStyleMedium2"
+                ))
+                f.set_cell_formula(
+                    "Sheet1",
+                    "C2",
+                    "SUM(Table1[[A]:[B]])",
+                    excelize.FormulaOpts(type="dataTable")
+                )
+                f.save_as("Book1.xlsx")
+            except RuntimeError as err:
+                print(err)
+            finally:
+                err = f.close()
+                if err:
+                    print(err)
+            ```
         """
         err, lib.SetCellFormula.restype = None, c_char_p
         options = (
@@ -2816,6 +3871,12 @@ class File:
                 f.set_cell_style("Sheet1", "A3", "A3", style)
             except RuntimeError as err:
                 print(err)
+            ```
+
+            This is another example for "Location":
+
+            ```python
+            f.set_cell_hyperlink("Sheet1", "A3", "Sheet1!A40", "Location")
             ```
         """
         err, lib.SetCellHyperLink.restype = None, c_char_p
@@ -3029,10 +4090,11 @@ class File:
     ) -> None:
         """
         Add style attribute for cells by given worksheet name, range reference
-        and style ID. Note that diagonalDown and diagonalUp type border should
-        be use same color in the same range. SetCellStyle will overwrite the
-        existing styles for the cell, it won't append or merge style with
-        existing styles.
+        and style ID. Style indexes can be obtained with the new_style function.
+        Note that diagonalDown and diagonalUp type border should be use same
+        color in the same range. This function will overwrite the existing
+        styles for the cell, it won't append or merge style with existing
+        styles.
 
         Args:
             sheet (str): The worksheet name
@@ -3059,24 +4121,24 @@ class File:
         self,
         sheet: str,
         cell: str,
-        value: Union[None, int, str, bool, datetime, date],
+        value: Union[bool, float, int, str, date, datetime, None],
     ) -> None:
         """
         Set the value of a cell. The specified coordinates should not be in the
         first row of the table, a complex number can be set with string text.
 
-        Note that default date format is m/d/yy h:mm of time.Time type value.
-        You can set numbers format by the SetCellStyle function. If you need to
+        Note that default date format is m/d/yy h:mm of datetime type value. You
+        can set numbers format by the `set_cell_style` function. If you need to
         set the specialized date in Excel like January 0, 1900 or February 29,
-        1900, these times can not representation in Go language time.Time data
-        type. Please set the cell value as number 0 or 60, then create and bind
-        the date-time number format style for the cell.
+        1900, these times can not representation in Python language datetime
+        data type. Please set the cell value as number 0 or 60, then create and
+        bind the date-time number format style for the cell.
 
         Args:
             sheet (str): The worksheet name
             cell (str): The cell reference
-            value (Union[None, int, str, bool, datetime, date]): The cell value
-            to be write
+            value (Union[bool, float, int, str, date, datetime, None]): The cell
+            value to be write
 
         Returns:
             None: Return None if no error occurred, otherwise raise a
@@ -3126,9 +4188,8 @@ class File:
     def set_col_style(self, sheet: str, columns: str, style_id: int) -> None:
         """
         Set style of columns by given worksheet name, columns range and style
-        ID. This function is concurrency safe. Note that this will overwrite the
-        existing styles for the columns, it won't append or merge style with
-        existing styles.
+        ID. Note that this will overwrite the existing styles for the columns,
+        it won't append or merge style with existing styles.
 
         Args:
             sheet (str): The worksheet name
@@ -3145,6 +4206,15 @@ class File:
             ```python
             try:
                 f.set_col_style("Sheet1", "H", style)
+            except RuntimeError as err:
+                print(err)
+            ```
+
+            Set style of columns C:F on Sheet1:
+
+            ```python
+            try:
+                f.set_col_style("Sheet1", "C:F", style)
             except RuntimeError as err:
                 print(err)
             ```
@@ -3575,6 +4645,15 @@ class File:
             except RuntimeError as err:
                 print(err)
             ```
+
+            Set style of rows 1 to 10 on Sheet1:
+
+            ```python
+            try:
+                f.set_row_style("Sheet1", 1, 10, style_id)
+            except RuntimeError as err:
+                print(err)
+            ```
         """
         lib.SetRowStyle.restype = c_char_p
         err = lib.SetRowStyle(
@@ -3975,7 +5054,7 @@ class File:
         ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
-            
+
     def update_linked_value(self) -> None:
         """
         Fix linked values within a spreadsheet are not updating in Office Excel

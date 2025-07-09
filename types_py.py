@@ -188,6 +188,7 @@ class Options:
     raw_cell_value: bool = False
     unzip_size_limit: int = 0
     unzip_xml_size_limit: int = 0
+    tmp_dir: str = ""
     short_date_pattern: str = ""
     long_date_pattern: str = ""
     long_time_pattern: str = ""

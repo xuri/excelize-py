@@ -41,6 +41,7 @@ class _Options(Structure):
         ("RawCellValue", c_bool),
         ("UnzipSizeLimit", c_long),
         ("UnzipXMLSizeLimit", c_long),
+        ("TmpDir", c_char_p),
         ("ShortDatePattern", c_char_p),
         ("LongDatePattern", c_char_p),
         ("LongTimePattern", c_char_p),
