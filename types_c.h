@@ -442,22 +442,26 @@ struct ChartLegend
 {
     char *Position;
     bool ShowLegendKey;
-};
-
-// ChartMarker directly maps the format settings of the chart marker.
-struct ChartMarker
-{
-    struct Fill Fill;
-    char *Symbol;
-    int Size;
+    struct Font *Font;
 };
 
 // ChartLine directly maps the format settings of the chart line.
 struct ChartLine
 {
     unsigned char Type;
+	unsigned char Dash;
+	struct Fill Fill;
     bool Smooth;
     double Width;
+};
+
+// ChartMarker directly maps the format settings of the chart marker.
+struct ChartMarker
+{
+    struct ChartLine Border;
+    struct Fill Fill;
+    char *Symbol;
+    int Size;
 };
 
 // ChartSeries directly maps the format settings of the chart series.
@@ -468,6 +472,7 @@ struct ChartSeries
     char *Values;
     char *Sizes;
     struct Fill Fill;
+    struct ChartLegend Legend;
     struct ChartLine Line;
     struct ChartMarker Marker;
     struct ChartDataLabel DataLabel;

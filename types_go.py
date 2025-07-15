@@ -413,22 +413,26 @@ class _ChartLegend(Structure):
     _fields_ = [
         ("Position", c_char_p),
         ("ShowLegendKey", c_bool),
-    ]
-
-
-class _ChartMarker(Structure):
-    _fields_ = [
-        ("Fill", _Fill),
-        ("Symbol", c_char_p),
-        ("Size", c_int),
+        ("Font", POINTER(_Font)),
     ]
 
 
 class _ChartLine(Structure):
     _fields_ = [
         ("Type", c_uint),
+        ("Dash", c_uint),
+        ("Fill", _Fill),
         ("Smooth", c_bool),
         ("Width", c_double),
+    ]
+
+
+class _ChartMarker(Structure):
+    _fields_ = [
+        ("Border", _ChartLine),
+        ("Fill", _Fill),
+        ("Symbol", c_char_p),
+        ("Size", c_int),
     ]
 
 
@@ -439,6 +443,7 @@ class _ChartSeries(Structure):
         ("Values", c_char_p),
         ("Sizes", c_char_p),
         ("Fill", _Fill),
+        ("Legend", _ChartLegend),
         ("Line", _ChartLine),
         ("Marker", _ChartMarker),
         ("DataLabel", _ChartDataLabel),

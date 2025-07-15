@@ -779,6 +779,7 @@ class File:
             categories
             values
             fill
+            legend
             line
             marker
             data_label
@@ -803,6 +804,9 @@ class File:
 
         fill: This set the format for the data series fill. The 'fill' property
         is optional
+
+        legend: This set the font of legend text for a data series. The 'legend'
+        property is optional.
 
         line: This sets the line format of the line chart. The 'line' property
         is optional and if it isn't supplied it will default style. The options
@@ -837,6 +841,7 @@ class File:
 
             position
             show_legend_key
+            font
 
         position: Set the position of the chart legend. The default legend
         position is bottom. The available positions are:
@@ -848,8 +853,13 @@ class File:
             right
             top_right
 
-        ShowLegendKey: Set the legend keys shall be shown in data labels. The default
-        value is false.
+        show_legend_key: Set the legend keys shall be shown in data labels.
+        The default value is False.
+
+        font: Set the font properties of the chart legend text. The properties
+        that can be set are the same as the font object that is used for cell
+        formatting. The font family, size, color, bold, italic, underline, and
+        strike properties can be set.
 
         Set properties of the chart title. The properties that can be set are:
 
@@ -983,7 +993,7 @@ class File:
 
         reverse_order: Specifies that the categories or values on reverse order
         (orientation of the chart). The 'reverse_order' property is optional. The
-        default value is false.
+        default value is False.
 
         maximum: Specifies that the fixed maximum, 0 is auto. The 'maximum'
         property is optional. The default value is auto.
@@ -1032,6 +1042,9 @@ class File:
 
         Set chart size by 'dimension' property. The 'dimension' property is
         optional. The default width is 480, and height is 260.
+
+        Set chart legend for all data series by 'legend' property. The 'legend'
+        property is optional.
 
         Set the bubble size in all data series for the bubble chart or 3D bubble
         chart by 'bubble_sizes' property. The 'bubble_sizes' property is
@@ -4938,7 +4951,7 @@ class File:
         Set worksheet visible by given worksheet name. A workbook must contain
         at least one visible worksheet. If the given worksheet has been
         activated, this setting will be invalidated. The third optional
-        very_hidden parameter only works when visible was false.
+        very_hidden parameter only works when visible was False.
 
         Args:
             sheet (str): The worksheet name

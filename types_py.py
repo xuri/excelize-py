@@ -59,6 +59,25 @@ class FormControlType(IntEnum):
     FormControlScrollBar = 7
 
 
+class ChartDashType(IntEnum):
+    """
+    ChartDashType defines the currently supported chart dash types enumeration.
+    """
+
+    ChartDashUnset = 0
+    ChartDashSolid = 1
+    ChartDashDot = 2
+    ChartDashDash = 3
+    ChartDashLgDash = 4
+    ChartDashSashDot = 5
+    ChartDashLgDashDot = 6
+    ChartDashLgDashDotDot = 7
+    ChartDashSysDash = 8
+    ChartDashSysDot = 9
+    ChartDashSysDashDot = 10
+    ChartDashSysDashDotDot = 11
+
+
 class ChartLineType(IntEnum):
     """
     ChartLineType defines the currently supported chart line types enumeration.
@@ -540,20 +559,24 @@ class ChartPlotArea:
 class ChartLegend:
     position: str = ""
     show_legend_key: bool = False
-
-
-@dataclass
-class ChartMarker:
-    fill: Fill = Fill
-    symbol: str = ""
-    size: int = 0
+    font: Optional[Font] = None
 
 
 @dataclass
 class ChartLine:
     type: ChartLineType = ChartLineType.ChartLineUnset
+    dash: ChartDashType = ChartDashType.ChartDashUnset
+    fill: Fill = Fill
     smooth: bool = False
     width: float = 0
+
+
+@dataclass
+class ChartMarker:
+    border: ChartLine = ChartLine
+    fill: Fill = Fill
+    symbol: str = ""
+    size: int = 0
 
 
 @dataclass
@@ -563,6 +586,7 @@ class ChartSeries:
     values: str = ""
     sizes: str = ""
     fill: Fill = Fill
+    legend: ChartLegend = ChartLegend
     line: ChartLine = ChartLine
     marker: ChartMarker = ChartMarker
     data_label: ChartDataLabel = ChartDataLabel
