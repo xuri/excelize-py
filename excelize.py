@@ -863,7 +863,7 @@ class File:
 
         Set properties of the chart title. The properties that can be set are:
 
-       	    title
+            title
 
         title: Set the name (title) for the chart. The name is displayed above
         the chart. The name can also be a formula such as Sheet1!$A$1 or a list
@@ -2959,6 +2959,34 @@ class File:
         err = res.err.decode(ENCODE)
         if not err:
             return res.val.decode(ENCODE)
+        raise RuntimeError(err)
+
+    def get_sheet_visible(self, sheet: str) -> bool:
+        """
+        Get visible state of the sheet by given sheet name.
+
+        Args:
+            sheet (str): The sheet name.
+
+        Returns:
+            bool: Return the sheet visible if no error occurred, otherwise raise
+            a RuntimeError with the message.
+
+        Example:
+            For example, get the visible state of "Sheet1":
+
+            ```python
+            try:
+                visible = f.get_sheet_visible("Sheet1")
+            except RuntimeError as err:
+                print(err)
+            ```
+        """
+        lib.GetSheetVisible.restype = types_go._BoolErrorResult
+        res = lib.GetSheetVisible(self.file_index, sheet.encode(ENCODE))
+        err = res.err.decode(ENCODE)
+        if not err:
+            return res.val
         raise RuntimeError(err)
 
     def get_style(self, style_id: int) -> Optional[Style]:
