@@ -468,6 +468,11 @@ class TestExcelize(unittest.TestCase):
                 )
             )
         )
+        with self.assertRaises(RuntimeError) as context:
+            f.unprotect_workbook("")
+        self.assertEqual(str(context.exception), "password length invalid")
+        self.assertIsNone(f.unprotect_workbook("password"))
+        self.assertIsNone(f.unprotect_workbook())
         self.assertIsNone(f.move_sheet("Sheet2", "Sheet1"))
         with self.assertRaises(RuntimeError) as context:
             f.move_sheet("SheetN", "Sheet1")
@@ -1569,7 +1574,7 @@ class TestExcelize(unittest.TestCase):
             f.set_sheet_visible("Sheet:1", False, True)
         self.assertEqual(
             str(context.exception),
-            "the sheet can not contain any of the characters :\/?*[or]",
+            "the sheet can not contain any of the characters :\\/?*[or]",
         )
         self.assertTrue(f.get_sheet_visible("Sheet1"))
         self.assertFalse(f.get_sheet_visible("Sheet2"))
@@ -1577,7 +1582,7 @@ class TestExcelize(unittest.TestCase):
             f.get_sheet_visible("Sheet:1")
         self.assertEqual(
             str(context.exception),
-            "the sheet can not contain any of the characters :\/?*[or]",
+            "the sheet can not contain any of the characters :\\/?*[or]",
         )
         self.assertIsNone(f.save_as(os.path.join("test", "TestSheetVisible.xlsx")))
         self.assertIsNone(f.close())

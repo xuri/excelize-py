@@ -2785,6 +2785,28 @@ func UnprotectSheet(idx int, sheet, password *C.char, verify bool) *C.char {
 	return C.CString(emptyString)
 }
 
+// UnprotectWorkbook provides a function to remove protection for workbook,
+// specified the optional password parameter to remove workbook protection with
+// password verification.
+//
+//export UnprotectWorkbook
+func UnprotectWorkbook(idx int, password *C.char, verify bool) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if verify {
+		if err := f.(*excelize.File).UnprotectWorkbook(C.GoString(password)); err != nil {
+			return C.CString(err.Error())
+		}
+		return C.CString(emptyString)
+	}
+	if err := f.(*excelize.File).UnprotectWorkbook(); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
 // UpdateLinkedValue fix linked values within a spreadsheet are not updating in
 // Office Excel application. This function will be remove value tag when met a
 // cell have a linked value.
