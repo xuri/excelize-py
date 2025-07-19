@@ -1571,6 +1571,14 @@ class TestExcelize(unittest.TestCase):
             str(context.exception),
             "the sheet can not contain any of the characters :\/?*[or]",
         )
+        self.assertTrue(f.get_sheet_visible("Sheet1"))
+        self.assertFalse(f.get_sheet_visible("Sheet2"))
+        with self.assertRaises(RuntimeError) as context:
+            f.get_sheet_visible("Sheet:1")
+        self.assertEqual(
+            str(context.exception),
+            "the sheet can not contain any of the characters :\/?*[or]",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestSheetVisible.xlsx")))
         self.assertIsNone(f.close())
 

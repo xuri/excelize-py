@@ -1439,6 +1439,22 @@ func GetSheetProps(idx int, sheet *C.char) C.struct_GetSheetPropsResult {
 	return C.struct_GetSheetPropsResult{opts: cVal.Elem().Interface().(C.struct_SheetPropsOptions), err: C.CString(emptyString)}
 }
 
+// GetSheetVisible provides a function to get worksheet visible by given
+// worksheet name.
+//
+//export GetSheetVisible
+func GetSheetVisible(idx int, sheet *C.char) C.struct_BoolErrorResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_BoolErrorResult{val: C._Bool(false), err: C.CString(errFilePtr)}
+	}
+	visible, err := f.(*excelize.File).GetSheetVisible(C.GoString(sheet))
+	if err != nil {
+		return C.struct_BoolErrorResult{val: C._Bool(visible), err: C.CString(err.Error())}
+	}
+	return C.struct_BoolErrorResult{val: C._Bool(visible), err: C.CString(emptyString)}
+}
+
 // GetStyle provides a function to get style definition by given style index.
 //
 //export GetStyle
