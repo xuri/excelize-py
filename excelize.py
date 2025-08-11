@@ -456,6 +456,38 @@ def py_value_to_c_interface(py_value):
     return py_value_to_c(interface, types_go._Interface())
 
 
+def prepare_args(args: List, types: List[argsRule]):
+    """
+    Validate arguments against expected types.
+
+    Args:
+        args (List): The arguments to validate.
+        types (List[argsRule]): The expected argument rules.
+
+    Raises:
+        TypeError: If an argument type doesn't match the expected types.
+    """
+    if not types:
+        return
+    opts = types[-1].opts if types else False
+    for i, excepted in enumerate(types):
+        if opts and i >= len(args):
+            return
+        if i >= len(args):
+            continue
+        received = type(args[i])
+        if received not in excepted.types:
+            names = [t.__name__ for t in excepted.types]
+            if len(names) == 1:
+                t = names[0]
+            else:
+                t = ", ".join(names[:-1]) + f", or {names[-1]}"
+            raise TypeError(
+                f"expected type {t} for argument "
+                f"'{excepted.name}', but got {received.__name__}"
+            )
+
+
 class StreamWriter:
     """
     StreamWriter is a streaming writer for writing large amounts of data to a
@@ -475,7 +507,7 @@ class StreamWriter:
         Note that the table must be at least two lines including the header. The
         header cells must contain strings and must be unique. Currently, only
         one table is allowed for a stream writer. The function must be called
-        after the rows are written but before 'flush'.
+        after the rows are written but before `flush`.
 
         Args:
             table (Table): The table options
@@ -490,10 +522,11 @@ class StreamWriter:
             ```python
             try:
                 sw.add_table(excelize.Table(range="A1:D5"))
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
+        prepare_args([table], [argsRule("table", [Table])])
         lib.StreamAddTable.restype = c_char_p
         options = py_value_to_c(table, types_go._Table())
         err = lib.StreamAddTable(self.sw_index, byref(options)).decode(ENCODE)
@@ -514,6 +547,7 @@ class StreamWriter:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args([cell], [argsRule("cell", [str])])
         lib.StreamInsertPageBreak.restype = c_char_p
         err = lib.StreamInsertPageBreak(self.sw_index, cell.encode(ENCODE)).decode(
             ENCODE
@@ -534,6 +568,13 @@ class StreamWriter:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [top_left_cell, bottom_right_cell],
+            [
+                argsRule("top_left_cell", [str]),
+                argsRule("bottom_right_cell", [str]),
+            ],
+        )
         lib.StreamMergeCell.restype = c_char_p
         err = lib.StreamMergeCell(
             self.sw_index,
@@ -564,10 +605,18 @@ class StreamWriter:
             ```python
             try:
                 sw.set_col_width(2, 3, 20)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
+        prepare_args(
+            [start_col, end_col, width],
+            [
+                argsRule("start_col", [int]),
+                argsRule("end_col", [int]),
+                argsRule("width", [float]),
+            ],
+        )
         lib.StreamSetColWidth.restype = c_char_p
         err = lib.StreamSetColWidth(
             self.sw_index, c_int(start_col), c_int(end_col), c_double(width)
@@ -588,6 +637,7 @@ class StreamWriter:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args([opts], [argsRule("opts", [Panes])])
         lib.StreamSetPanes.restype = c_char_p
         options = py_value_to_c(opts, types_go._Panes())
         err = lib.StreamSetPanes(self.sw_index, byref(options)).decode(ENCODE)
@@ -613,6 +663,10 @@ class StreamWriter:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [cell, values],
+            [argsRule("cell", [str]), argsRule("values", [list])],
+        )
         lib.StreamSetRow.restype = c_char_p
         vals = (types_go._Interface * len(values))()
         for i, value in enumerate(values):
@@ -661,6 +715,10 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [opts[0]] if opts else [],
+            [argsRule("opts", [Options], True)],
+        )
         err, lib.Save.restype = None, c_char_p
         options = POINTER(types_go._Options)()
         options = (
@@ -684,6 +742,10 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [filename, opts[0]] if opts else [filename],
+            [argsRule("filename", [str]), argsRule("opts", [Options], True)],
+        )
         lib.SaveAs.restype = c_char_p
         options = (
             byref(py_value_to_c(opts[0], types_go._Options()))
@@ -1111,7 +1173,7 @@ class File:
                 f.add_chart("Sheet1", "E1", chart)
                 # Save spreadsheet by the given path.
                 f.save_as("Book1.xlsx")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             finally:
                 err = f.close()
@@ -1207,7 +1269,7 @@ class File:
                 )
                 # Save the spreadsheet by the given path.
                 f.save_as("Book1.xlsx")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             finally:
                 err = f.close()
@@ -1289,7 +1351,7 @@ class File:
                     height=40,
                     width=180,
                 ))
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -1356,7 +1418,7 @@ class File:
                         ),
                     ),
                 )
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
 
@@ -1374,7 +1436,7 @@ class File:
                         checked=True,
                     ),
                 )
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
 
@@ -1397,7 +1459,7 @@ class File:
                         cell_link="A1",
                     ),
                 )
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
 
@@ -1423,7 +1485,7 @@ class File:
                         horizontally=True,
                     ),
                 )
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -1464,7 +1526,7 @@ class File:
 
             try:
                 f = excelize.new_file()
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
                 exit()
             try:
@@ -1488,7 +1550,7 @@ class File:
                 ))
                 # Save the spreadsheet with the origin path.
                 f.save_as("Book1.xlsx")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             finally:
                 # Close the spreadsheet.
@@ -1540,7 +1602,7 @@ class File:
 
             try:
                 f = excelize.new_file()
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
                 exit()
             try:
@@ -1555,7 +1617,7 @@ class File:
                         ),
                     )
                 f.save_as("Book1.xlsx")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             finally:
                 err = f.close()
@@ -1635,7 +1697,7 @@ class File:
                     )
                 )
                 f.save_as("Book1.xlsx")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             finally:
                 err = f.close()
@@ -1917,7 +1979,7 @@ class File:
                     ),
                 )
                 f.save_as("Book1.xlsx")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             finally:
                 err = f.close()
@@ -1963,7 +2025,7 @@ class File:
                         height=200,
                     ),
                 )
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -2024,7 +2086,7 @@ class File:
                         markers=True,
                     ),
                 )
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -2060,7 +2122,7 @@ class File:
             ```python
             try:
                 f.add_table("Sheet1", excelize.Table(range="A1:D5"))
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -2199,7 +2261,7 @@ class File:
                 # Sheet1 already exists...
                 index = f.new_sheet("Sheet2")
                 f.copy_sheet(0, index)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -2274,7 +2336,7 @@ class File:
                     name="Amount",
                     scope="Sheet2",
                 ))
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -2361,7 +2423,7 @@ class File:
             ```python
             try:
                 f.duplicate_row("Sheet1", 2)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -2396,7 +2458,7 @@ class File:
             ```python
             try:
                 f.duplicate_row_to("Sheet1", 2, 7)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -2478,7 +2540,7 @@ class File:
             ```python
             try:
                 link, target = f.get_cell_hyperlink("Sheet1", "H6")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -2554,6 +2616,14 @@ class File:
             str: Return the cell value as a string if no error occurred,
             otherwise raise a RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, cell, opts[0]] if opts else [sheet, cell],
+            [
+                argsRule("sheet", [str]),
+                argsRule("cell", [str]),
+                argsRule("opts", [Options], True),
+            ],
+        )
         lib.GetCellValue.restype = types_go._StringErrorResult
         options = (
             byref(py_value_to_c(opts[0], types_go._Options()))
@@ -2587,7 +2657,7 @@ class File:
             ```python
             try:
                 level = f.get_row_outline_level("Sheet1", 5)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -2616,7 +2686,7 @@ class File:
             ```python
             try:
                 height = f.get_row_height("Sheet1", 5)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -2646,7 +2716,7 @@ class File:
             ```python
             try:
                 level = f.get_col_outline_level("Sheet1", "D")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -2696,7 +2766,7 @@ class File:
             ```python
             try:
                 visible = f.get_col_visible("Sheet1", "D")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -2727,7 +2797,7 @@ class File:
             ```python
             try:
                 width = f.get_col_width("Sheet1", "D")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -2790,7 +2860,7 @@ class File:
             ```python
             try:
                 visible = f.get_row_visible("Sheet1", 2)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -2918,13 +2988,13 @@ class File:
             ```python
             try:
                 f = excelize.open_file("Book1.xlsx")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
                 exit()
             try:
                 for index, name in f.get_sheet_map().items():
                     print(index, name)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             finally:
                 err = f.close()
@@ -2978,7 +3048,7 @@ class File:
             ```python
             try:
                 visible = f.get_sheet_visible("Sheet1")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -3099,7 +3169,7 @@ class File:
             ```python
             try:
                 f.insert_cols("Sheet1", "C", 2)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -3160,7 +3230,7 @@ class File:
             ```python
             try:
                 f.insert_rows("Sheet1", 3, 2)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -3196,7 +3266,7 @@ class File:
             ```python
             try:
                 f.merge_cell("Sheet1", "D3", "E9")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -3232,7 +3302,7 @@ class File:
             ```python
             try:
                 f.move_sheet("Sheet2", "Sheet1")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -3320,7 +3390,7 @@ class File:
                     sw.set_row(cell, row)
                 sw.flush()
                 f.save_as("Book1.xlsx")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             finally:
                 err = f.close()
@@ -3328,6 +3398,7 @@ class File:
                     print(err)
             ```
         """
+        prepare_args([sheet], [argsRule("sheet", [str])])
         lib.NewStreamWriter.restype = types_go._IntErrorResult
         res = lib.NewStreamWriter(self.file_index, sheet.encode(ENCODE))
         err = res.err.decode(ENCODE)
@@ -3365,7 +3436,7 @@ class File:
                     ]
                 ))
                 f.set_cell_style("Sheet1", "H9", "H9", style)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
 
@@ -3384,7 +3455,7 @@ class File:
                     )
                 )
                 f.set_cell_style("Sheet1", "H9", "H9", style)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
 
@@ -3398,7 +3469,7 @@ class File:
                     )
                 )
                 f.set_cell_style("Sheet1", "H9", "H9", style)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
 
@@ -3423,7 +3494,7 @@ class File:
                     )
                 )
                 f.set_cell_style("Sheet1", "H9", "H9s", style)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
 
@@ -3437,7 +3508,7 @@ class File:
                 f.set_col_width("Sheet1", "H", "H", 13)
                 style = f.new_style(excelize.Style(num_fmt=22))
                 f.set_cell_style("Sheet1", "H9", "H9", style)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
 
@@ -3458,7 +3529,7 @@ class File:
                     )
                 )
                 f.set_cell_style("Sheet1", "H9", "H9", style)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
 
@@ -3472,7 +3543,7 @@ class File:
                     )
                 )
                 f.set_cell_style("Sheet1", "H9", "H9", style)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -3512,7 +3583,7 @@ class File:
                     select_unlocked_cells=True,
                     edit_scenarios=True,
                 ))
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -3549,7 +3620,7 @@ class File:
                     password="password",
                     lock_structure=True,
                 ))
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -3581,7 +3652,7 @@ class File:
             ```python
             try:
                 f.remove_col("Sheet1", "C")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -3633,7 +3704,7 @@ class File:
             ```python
             try:
                 f.remove_row("Sheet1", 3)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -3668,7 +3739,7 @@ class File:
             ```python
             try:
                 result = f.search_sheet("Sheet1", "100")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
 
@@ -3678,7 +3749,7 @@ class File:
             ```python
             try:
                 result = f.search_sheet("Sheet1", "[0-9]", True)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -3837,7 +3908,7 @@ class File:
                     excelize.FormulaOpts(type="dataTable")
                 )
                 f.save_as("Book1.xlsx")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             finally:
                 err = f.close()
@@ -3910,7 +3981,7 @@ class File:
                     )
                 )
                 f.set_cell_style("Sheet1", "A3", "A3", style)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
 
@@ -4076,7 +4147,7 @@ class File:
                 )
                 f.set_cell_style("Sheet1", "A1", "A1", style)
                 f.save_as("Book1.xlsx")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             finally:
                 err = f.close()
@@ -4185,6 +4256,17 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, cell, value],
+            [
+                argsRule("sheet", [str]),
+                argsRule("cell", [str]),
+                argsRule(
+                    "value",
+                    [bool, float, int, str, date, datetime, type(None)],
+                ),
+            ],
+        )
         lib.SetCellValue.restype = c_char_p
         err = lib.SetCellValue(
             self.file_index,
@@ -4215,7 +4297,7 @@ class File:
             ```python
             try:
                 f.set_col_outline_level("Sheet1", "D", 2)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -4247,7 +4329,7 @@ class File:
             ```python
             try:
                 f.set_col_style("Sheet1", "H", style)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
 
@@ -4256,7 +4338,7 @@ class File:
             ```python
             try:
                 f.set_col_style("Sheet1", "C:F", style)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -4287,7 +4369,7 @@ class File:
             ```python
             try:
                 f.set_col_visible("Sheet1", "D", False)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
 
@@ -4296,7 +4378,7 @@ class File:
             ```python
             try:
                 f.set_col_visible("Sheet1", "D:F", False)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -4329,7 +4411,7 @@ class File:
             ```python
             try:
                 f.set_col_width("Sheet1", "A", "H", 20)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -4485,7 +4567,7 @@ class File:
                         version="1.0.0",
                     )
                 )
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -4525,7 +4607,7 @@ class File:
                         first_header="&CCenter &\"-,Bold\"Bold&\"-,Regular\"HeaderU+000A&D",
                     ),
                 )
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -4619,7 +4701,7 @@ class File:
             ```python
             try:
                 f.set_row_height("Sheet1", 1, 50)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -4650,7 +4732,7 @@ class File:
             ```python
             try:
                 f.set_row_outline_level("Sheet1", 2, 1)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -4683,7 +4765,7 @@ class File:
             ```python
             try:
                 f.set_row_style("Sheet1", 1, 1, style_id)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
 
@@ -4692,7 +4774,7 @@ class File:
             ```python
             try:
                 f.set_row_style("Sheet1", 1, 10, style_id)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -4727,7 +4809,7 @@ class File:
             ```python
             try:
                 f.set_row_visible("Sheet1", 2, False)
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -4819,7 +4901,7 @@ class File:
             ```python
             try:
                 f.set_sheet_col("Sheet1", "B6", ["1", None, 2])
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -4934,7 +5016,7 @@ class File:
             ```python
             try:
                 f.set_sheet_row("Sheet1", "B6", ["1", None, 2])
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """
@@ -5058,7 +5140,7 @@ class File:
             ```python
             try:
                 f.unmerge_cell("Sheet1", "D3", "E9")
-            except RuntimeError as err:
+            except (RuntimeError, TypeError) as err:
                 print(err)
             ```
         """

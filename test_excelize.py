@@ -23,6 +23,7 @@ from ctypes import (
 )
 import os
 import excelize
+from types_py import argsRule
 
 
 class TestExcelize(unittest.TestCase):
@@ -64,6 +65,10 @@ class TestExcelize(unittest.TestCase):
     def test_py_value_to_c(self):
         self.assertIsNone(excelize.py_value_to_c(None, None))
 
+    def test_prepare_args(self):
+        self.assertIsNone(excelize.prepare_args([], []))
+        self.assertIsNone(excelize.prepare_args([], [argsRule("test", [])]))
+
     def test_open_file(self):
         with self.assertRaises(RuntimeError) as context:
             excelize.open_file("Book1.xlsx")
@@ -83,6 +88,14 @@ class TestExcelize(unittest.TestCase):
 
     def test_stream_writer(self):
         f = excelize.new_file()
+
+        with self.assertRaises(TypeError) as context:
+            _ = f.new_stream_writer(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
+        )
+
         with self.assertRaises(RuntimeError) as context:
             _ = f.new_stream_writer("SheetN")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
@@ -90,7 +103,7 @@ class TestExcelize(unittest.TestCase):
 
         self.assertIsNone(sw.insert_page_break("A1"))
         self.assertIsNone(sw.merge_cell("D1", "E2"))
-        self.assertIsNone(sw.set_col_width(3, 2, 20))
+        self.assertIsNone(sw.set_col_width(3, 2, 20.0))
         self.assertIsNone(
             sw.set_panes(
                 excelize.Panes(
@@ -123,10 +136,22 @@ class TestExcelize(unittest.TestCase):
             str(context.exception),
             'cannot convert cell "A" to coordinates: invalid cell name "A"',
         )
+        with self.assertRaises(TypeError) as context:
+            sw.set_row("A1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type list for argument 'values', but got int",
+        )
         with self.assertRaises(RuntimeError) as context:
             excelize.coordinates_to_cell_name(0, 1, False)
         self.assertEqual(str(context.exception), "invalid cell reference [0, 1]")
 
+        with self.assertRaises(TypeError) as context:
+            sw.add_table(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type Table for argument 'table', but got int",
+        )
         self.assertIsNone(
             sw.add_table(
                 excelize.Table(
@@ -254,6 +279,15 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(
             f.set_cell_value("Sheet1", "A7", datetime.datetime(2016, 8, 30, 11, 51, 0))
         )
+
+        with self.assertRaises(TypeError) as context:
+            f.set_cell_value("Sheet1", "A8", excelize.RichTextRun())
+        self.assertEqual(
+            str(context.exception),
+            "expected type bool, float, int, str, date, datetime, or NoneType "
+            "for argument 'value', but got RichTextRun",
+        )
+
         self.assertIsNone(f.set_cell_value("Sheet1", "A8", datetime.date(2016, 8, 30)))
         self.assertIsNone(f.set_cell_bool("Sheet1", "A9", True))
         self.assertIsNone(f.set_cell_bool("Sheet1", "A10", False))
@@ -274,6 +308,13 @@ class TestExcelize(unittest.TestCase):
 
         val = f.get_cell_value("Sheet1", "A2")
         self.assertEqual("", val)
+
+        with self.assertRaises(TypeError) as context:
+            f.get_cell_value("Sheet1", True)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'cell', but got bool",
+        )
 
         val = f.get_cell_value("Sheet1", "A2")
         self.assertEqual("", val)
@@ -489,6 +530,12 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.update_linked_value())
         self.assertIsNone(f.save())
         self.assertIsNone(f.save(excelize.Options(password="")))
+        with self.assertRaises(TypeError) as context:
+            f.save(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type Options for argument 'opts', but got int",
+        )
         self.assertIsNone(f.close())
 
         with open(os.path.join("test", "TestStyle.xlsx"), "rb") as file:
@@ -566,15 +613,39 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             sw.insert_page_break("A1")
         self.assertEqual(str(context.exception), sw_expected)
+        with self.assertRaises(TypeError) as context:
+            sw.insert_page_break(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'cell', but got int",
+        )
         with self.assertRaises(RuntimeError) as context:
-            sw.set_col_width(1, 1, 20)
+            sw.set_col_width(1, 1, 20.0)
         self.assertEqual(str(context.exception), sw_expected)
+        with self.assertRaises(TypeError) as context:
+            sw.set_col_width(1, 1, 20)
+        self.assertEqual(
+            str(context.exception),
+            "expected type float for argument 'width', but got int",
+        )
         with self.assertRaises(RuntimeError) as context:
             sw.set_panes(excelize.Panes())
         self.assertEqual(str(context.exception), sw_expected)
+        with self.assertRaises(TypeError) as context:
+            sw.set_panes(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type Panes for argument 'opts', but got int",
+        )
         with self.assertRaises(RuntimeError) as context:
             sw.merge_cell("A1", "B2")
         self.assertEqual(str(context.exception), sw_expected)
+        with self.assertRaises(TypeError) as context:
+            sw.merge_cell("A1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'bottom_right_cell', but got int",
+        )
         with self.assertRaises(RuntimeError) as context:
             sw.flush()
         self.assertEqual(str(context.exception), sw_expected)

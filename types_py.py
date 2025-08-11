@@ -15,6 +15,21 @@ from enum import IntEnum
 from typing import List, Optional
 
 
+class argsRule:
+    """
+    argsRule defines a rule for validating function arguments.
+    """
+
+    name: str
+    types: List[type]
+    opts: bool
+
+    def __init__(self, name: str, types: List[type], opts: bool = False):
+        self.name = name
+        self.types = types
+        self.opts = opts
+
+
 class CultureName(IntEnum):
     """
     This section defines the currently supported country code types enumeration

@@ -44,9 +44,9 @@ try:
     f.set_cell_value("Sheet1", "B2", 100)
     # 设置工作簿的默认工作表
     f.set_active_sheet(index)
-    # 根据指定路径保存文件
+    # 根据指定路径保存工作簿
     f.save_as("Book1.xlsx")
-except RuntimeError as err:
+except (RuntimeError, TypeError) as err:
     print(err)
 finally:
     err = f.close()
@@ -63,7 +63,7 @@ import excelize
 
 try:
     f = excelize.open_file("Book1.xlsx")
-except RuntimeError as err:
+except (RuntimeError, TypeError) as err:
     print(err)
     exit()
 try:
@@ -76,7 +76,7 @@ try:
         for cell in row:
             print(f"{cell}\t", end="")
         print()
-except RuntimeError as err:
+except (RuntimeError, TypeError) as err:
     print(err)
 finally:
     # 关闭工作簿
@@ -129,7 +129,7 @@ try:
     f.add_chart("Sheet1", "E1", chart)
     # 根据指定路径保存文件
     f.save_as("Book1.xlsx")
-except RuntimeError as err:
+except (RuntimeError, TypeError) as err:
     print(err)
 finally:
     err = f.close()
@@ -144,7 +144,7 @@ import excelize
 
 try:
     f = excelize.open_file("Book1.xlsx")
-except RuntimeError as err:
+except (RuntimeError, TypeError) as err:
     print(err)
     exit()
 try:
@@ -165,7 +165,7 @@ try:
     ))
     # 保存工作簿
     f.save()
-except RuntimeError as err:
+except (RuntimeError, TypeError) as err:
     print(err)
 finally:
     # 关闭工作簿
