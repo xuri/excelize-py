@@ -481,7 +481,7 @@ def prepare_args(args: List, types: List[argsRule]):
             if len(names) == 1:
                 t = names[0]
             else:
-                t = ", ".join(names[:-1]) + f", or {names[-1]}"
+                t = ", ".join(names[:-1]) + f" or {names[-1]}"
             raise TypeError(
                 f"expected type {t} for argument "
                 f"'{excepted.name}', but got {received.__name__}"
@@ -1355,6 +1355,10 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, opts],
+            [argsRule("sheet", [str]), argsRule("opts", [Comment])],
+        )
         lib.AddComment.restype = c_char_p
         options = py_value_to_c(opts, types_go._Comment())
         err = lib.AddComment(
@@ -1489,6 +1493,10 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, opts],
+            [argsRule("sheet", [str]), argsRule("opts", [FormControl])],
+        )
         lib.AddFormControl.restype = c_char_p
         options = py_value_to_c(opts, types_go._FormControl())
         err = lib.AddFormControl(
@@ -1559,6 +1567,15 @@ class File:
                     print(err)
             ```
         """
+        prepare_args(
+            [sheet, cell, name, opts],
+            [
+                argsRule("sheet", [str]),
+                argsRule("cell", [str]),
+                argsRule("name", [str]),
+                argsRule("opts", [GraphicOptions, type(None)]),
+            ],
+        )
         lib.AddPicture.restype = c_char_p
         options = (
             byref(py_value_to_c(opts, types_go._GraphicOptions()))
@@ -1625,6 +1642,14 @@ class File:
                     print(err)
             ```
         """
+        prepare_args(
+            [sheet, cell, picture],
+            [
+                argsRule("sheet", [str]),
+                argsRule("cell", [str]),
+                argsRule("picture", [Picture]),
+            ],
+        )
         lib.AddPictureFromBytes.restype = c_char_p
         err = lib.AddPictureFromBytes(
             self.file_index,
@@ -1686,7 +1711,9 @@ class File:
                             excelize.PivotTableField(data="Type", default_subtotal=True),
                         ],
                         data=[
-                            excelize.PivotTableField(data="Sales", name="Summarize", subtotal="Sum"),
+                            excelize.PivotTableField(
+                                data="Sales", name="Summarize", subtotal="Sum",
+                            )
                         ],
                         row_grand_totals=True,
                         col_grand_totals=True,
@@ -1705,6 +1732,10 @@ class File:
                     print(err)
             ```
         """
+        prepare_args(
+            [opts],
+            [argsRule("opts", [PivotTableOptions, type(None)])],
+        )
         lib.AddPivotTable.restype = c_char_p
         err = lib.AddPivotTable(
             self.file_index,
@@ -1987,6 +2018,10 @@ class File:
                     print(err)
             ```
         """
+        prepare_args(
+            [sheet, opts],
+            [argsRule("sheet", [str]), argsRule("opts", [Shape])],
+        )
         lib.AddShape.restype = c_char_p
         options = py_value_to_c(opts, types_go._Shape())
         err = lib.AddShape(
@@ -2029,6 +2064,10 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, opts],
+            [argsRule("sheet", [str]), argsRule("opts", [SlicerOptions])],
+        )
         lib.AddSlicer.restype = c_char_p
         options = py_value_to_c(opts, types_go._SlicerOptions())
         err = lib.AddSlicer(
@@ -2090,6 +2129,10 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, opts],
+            [argsRule("sheet", [str]), argsRule("opts", [SparklineOptions])],
+        )
         lib.AddSparkline.restype = c_char_p
         options = py_value_to_c(opts, types_go._SparklineOptions())
         err = lib.AddSparkline(
@@ -2126,6 +2169,10 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, table],
+            [argsRule("sheet", [str]), argsRule("table", [Table])],
+        )
         lib.AddTable.restype = c_char_p
         options = py_value_to_c(table, types_go._Table())
         err = lib.AddTable(
@@ -2146,6 +2193,7 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args([file], [argsRule("file", [bytes])])
         lib.AddVBAProject.restype = c_char_p
         err = lib.AddVBAProject(
             self.file_index,
@@ -2183,6 +2231,14 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, range_ref, opts],
+            [
+                argsRule("sheet", [str]),
+                argsRule("range_ref", [str]),
+                argsRule("opts", [list]),
+            ],
+        )
         lib.AutoFilter.restype = c_char_p
         options = (types_go._AutoFilterOptions * len(opts))()
         for i, opt in enumerate(opts):
@@ -2213,6 +2269,14 @@ class File:
             str: Return the calculation result as a string if no
             error occurred, otherwise raise a RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, cell, opts[0]] if opts else [sheet, cell],
+            [
+                argsRule("sheet", [str]),
+                argsRule("cell", [str]),
+                argsRule("opts", [Options], opts=True),
+            ],
+        )
         lib.CalcCellValue.restype = types_go._StringErrorResult
         options = (
             byref(py_value_to_c(opts[0], types_go._Options()))
@@ -2265,6 +2329,7 @@ class File:
                 print(err)
             ```
         """
+        prepare_args([src, to], [argsRule("src", [int]), argsRule("to", [int])])
         err, lib.CopySheet.restype = None, c_char_p
         err = lib.CopySheet(self.file_index, src, to).decode(ENCODE)
         if err != "":
@@ -2282,6 +2347,10 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, cell],
+            [argsRule("sheet", [str]), argsRule("cell", [str])],
+        )
         err, lib.DeleteChart.restype = None, c_char_p
         err = lib.DeleteChart(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
@@ -2308,6 +2377,10 @@ class File:
             f.delete_comment("Sheet1", "A30")
             ```
         """
+        prepare_args(
+            [sheet, cell],
+            [argsRule("sheet", [str]), argsRule("cell", [str])],
+        )
         err, lib.DeleteComment.restype = None, c_char_p
         err = lib.DeleteComment(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
@@ -2340,6 +2413,7 @@ class File:
                 print(err)
             ```
         """
+        prepare_args([defined_name], [argsRule("defined_name", [DefinedName])])
         lib.DeleteDefinedName.restype = c_char_p
         options = py_value_to_c(defined_name, types_go._DefinedName())
         err = lib.DeleteDefinedName(self.file_index, byref(options)).decode(ENCODE)
@@ -2358,6 +2432,10 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, cell],
+            [argsRule("sheet", [str]), argsRule("cell", [str])],
+        )
         err, lib.DeletePicture.restype = None, c_char_p
         err = lib.DeletePicture(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
@@ -2380,6 +2458,7 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args([sheet], [argsRule("sheet", [str])])
         err, lib.DeleteSheet.restype = None, c_char_p
         err = lib.DeleteSheet(self.file_index, sheet.encode(ENCODE)).decode(ENCODE)
         if err != "":
@@ -2396,6 +2475,7 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args([name], [argsRule("name", [str])])
         err, lib.DeleteSlicer.restype = None, c_char_p
         err = lib.DeleteSlicer(self.file_index, name.encode(ENCODE)).decode(ENCODE)
         if err != "":
@@ -2427,6 +2507,10 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, row],
+            [argsRule("sheet", [str]), argsRule("row", [int])],
+        )
         err, lib.DuplicateRow.restype = None, c_char_p
         err = lib.DuplicateRow(self.file_index, sheet.encode(ENCODE), row).decode(
             ENCODE
@@ -2462,6 +2546,14 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, row, row2],
+            [
+                argsRule("sheet", [str]),
+                argsRule("row", [int]),
+                argsRule("row2", [int]),
+            ],
+        )
         err, lib.DuplicateRowTo.restype = None, c_char_p
         err = lib.DuplicateRowTo(
             self.file_index, sheet.encode(ENCODE), row, row2
@@ -2509,6 +2601,10 @@ class File:
             str: Return the cell formula string and an exception if no
             error occurred, otherwise raise a RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, cell],
+            [argsRule("sheet", [str]), argsRule("cell", [str])],
+        )
         lib.GetCellFormula.restype = types_go._StringErrorResult
         res = lib.GetCellFormula(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
@@ -2544,6 +2640,10 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, cell],
+            [argsRule("sheet", [str]), argsRule("cell", [str])],
+        )
         lib.GetCellHyperLink.restype = types_go._GetCellHyperLinkResult
         res = lib.GetCellHyperLink(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
@@ -2554,27 +2654,6 @@ class File:
                 res.link,
                 res.target.decode(ENCODE),
             )
-        raise RuntimeError(err)
-
-    def get_cell_style(self, sheet: str, cell: str) -> int:
-        """
-        Get cell style index by given worksheet name and cell reference.
-
-        Args:
-            sheet (str): The worksheet name
-            cell (str): The cell reference
-
-        Returns:
-            int:  Return the cell style ID if no error occurred, otherwise raise
-            a RuntimeError with the message.
-        """
-        lib.GetCellStyle.restype = types_go._IntErrorResult
-        res = lib.GetCellStyle(
-            self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
-        )
-        err = res.err.decode(ENCODE)
-        if not err:
-            return res.val
         raise RuntimeError(err)
 
     def get_cell_rich_text(self, sheet: str, cell: str) -> List[RichTextRun]:
@@ -2589,6 +2668,10 @@ class File:
             List[RichTextRun]: Return rich text runs if no error occurred,
             otherwise raise a RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, cell],
+            [argsRule("sheet", [str]), argsRule("cell", [str])],
+        )
         lib.GetCellRichText.restype = types_go._GetCellRichTextResult
         res = lib.GetCellRichText(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
@@ -2597,6 +2680,31 @@ class File:
         err = res.Err.decode(ENCODE)
         if not err:
             return runs if runs else []
+        raise RuntimeError(err)
+
+    def get_cell_style(self, sheet: str, cell: str) -> int:
+        """
+        Get cell style index by given worksheet name and cell reference.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+
+        Returns:
+            int:  Return the cell style ID if no error occurred, otherwise raise
+            a RuntimeError with the message.
+        """
+        prepare_args(
+            [sheet, cell],
+            [argsRule("sheet", [str]), argsRule("cell", [str])],
+        )
+        lib.GetCellStyle.restype = types_go._IntErrorResult
+        res = lib.GetCellStyle(
+            self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
+        )
+        err = res.err.decode(ENCODE)
+        if not err:
+            return res.val
         raise RuntimeError(err)
 
     def get_cell_value(self, sheet: str, cell: str, *opts: Options) -> str:
@@ -2638,65 +2746,6 @@ class File:
             return res.val.decode(ENCODE)
         raise RuntimeError(err)
 
-    def get_row_outline_level(self, sheet: str, row: int) -> int:
-        """
-        Get outline level of a single row by given worksheet name and row
-        number.
-
-        Args:
-            sheet (str): The worksheet name
-            row (int): The row number
-
-        Returns:
-            int: Return the row outline level if no error occurred, otherwise
-            raise a RuntimeError with the message.
-
-        Example:
-            For example, get outline level of row 5 in Sheet1:
-
-            ```python
-            try:
-                level = f.get_row_outline_level("Sheet1", 5)
-            except (RuntimeError, TypeError) as err:
-                print(err)
-            ```
-        """
-        lib.GetRowOutlineLevel.restype = types_go._IntErrorResult
-        res = lib.GetRowOutlineLevel(self.file_index, sheet.encode(ENCODE), row)
-        err = res.err.decode(ENCODE)
-        if not err:
-            return res.val
-        raise RuntimeError(err)
-
-    def get_row_height(self, sheet: str, row: int) -> float:
-        """
-        Get row height by given worksheet name and row number.
-
-        Args:
-            sheet (str): The worksheet name
-            row (int): The row number
-
-        Returns:
-            float: Return the row height if no error occurred, otherwise
-            raise a RuntimeError with the message.
-
-        Example:
-            For example, get height of row 5 in Sheet1:
-
-            ```python
-            try:
-                height = f.get_row_height("Sheet1", 5)
-            except (RuntimeError, TypeError) as err:
-                print(err)
-            ```
-        """
-        lib.GetRowHeight.restype = types_go._Float64ErrorResult
-        res = lib.GetRowHeight(self.file_index, sheet.encode(ENCODE), row)
-        err = res.err.decode(ENCODE)
-        if not err:
-            return res.val
-        raise RuntimeError(err)
-
     def get_col_outline_level(self, sheet: str, col: str) -> int:
         """
         Get outline level of a single column by given worksheet name and column
@@ -2720,6 +2769,10 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, col],
+            [argsRule("sheet", [str]), argsRule("col", [str])],
+        )
         lib.GetColOutlineLevel.restype = types_go._IntErrorResult
         res = lib.GetColOutlineLevel(
             self.file_index, sheet.encode(ENCODE), col.encode(ENCODE)
@@ -2741,6 +2794,10 @@ class File:
             int: Return the column style ID if no error occurred, otherwise
             raise a RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, col],
+            [argsRule("sheet", [str]), argsRule("col", [str])],
+        )
         lib.GetColStyle.restype = types_go._IntErrorResult
         res = lib.GetColStyle(self.file_index, sheet.encode(ENCODE), col.encode(ENCODE))
         err = res.err.decode(ENCODE)
@@ -2770,6 +2827,10 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, col],
+            [argsRule("sheet", [str]), argsRule("col", [str])],
+        )
         lib.GetColVisible.restype = types_go._BoolErrorResult
         res = lib.GetColVisible(
             self.file_index, sheet.encode(ENCODE), col.encode(ENCODE)
@@ -2801,6 +2862,10 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, col],
+            [argsRule("sheet", [str]), argsRule("col", [str])],
+        )
         lib.GetColWidth.restype = types_go._Float64ErrorResult
         res = lib.GetColWidth(self.file_index, sheet.encode(ENCODE), col.encode(ENCODE))
         err = res.err.decode(ENCODE)
@@ -2817,6 +2882,7 @@ class File:
             List[Comment]: Return the comment list if no error occurred,
             otherwise raise a RuntimeError with the message.
         """
+        prepare_args([sheet], [argsRule("sheet", [str])])
         lib.GetComments.restype = types_go._GetCommentsResult
         res = lib.GetComments(self.file_index, sheet.encode(ENCODE))
         result = c_value_to_py(res, GetCommentsResult())
@@ -2842,6 +2908,73 @@ class File:
             return res.val.decode(ENCODE)
         raise RuntimeError(err)
 
+    def get_row_height(self, sheet: str, row: int) -> float:
+        """
+        Get row height by given worksheet name and row number.
+
+        Args:
+            sheet (str): The worksheet name
+            row (int): The row number
+
+        Returns:
+            float: Return the row height if no error occurred, otherwise
+            raise a RuntimeError with the message.
+
+        Example:
+            For example, get height of row 5 in Sheet1:
+
+            ```python
+            try:
+                height = f.get_row_height("Sheet1", 5)
+            except (RuntimeError, TypeError) as err:
+                print(err)
+            ```
+        """
+        prepare_args(
+            [sheet, row],
+            [argsRule("sheet", [str]), argsRule("row", [int])],
+        )
+        lib.GetRowHeight.restype = types_go._Float64ErrorResult
+        res = lib.GetRowHeight(self.file_index, sheet.encode(ENCODE), row)
+        err = res.err.decode(ENCODE)
+        if not err:
+            return res.val
+        raise RuntimeError(err)
+
+    def get_row_outline_level(self, sheet: str, row: int) -> int:
+        """
+        Get outline level of a single row by given worksheet name and row
+        number.
+
+        Args:
+            sheet (str): The worksheet name
+            row (int): The row number
+
+        Returns:
+            int: Return the row outline level if no error occurred, otherwise
+            raise a RuntimeError with the message.
+
+        Example:
+            For example, get outline level of row 5 in Sheet1:
+
+            ```python
+            try:
+                level = f.get_row_outline_level("Sheet1", 5)
+            except (RuntimeError, TypeError) as err:
+                print(err)
+            ```
+        """
+        prepare_args(
+            [sheet, row],
+            [argsRule("sheet", [str]), argsRule("row", [int])],
+        )
+        lib.GetRowOutlineLevel.restype = types_go._IntErrorResult
+        res = lib.GetRowOutlineLevel(self.file_index, sheet.encode(ENCODE), row)
+        err = res.err.decode(ENCODE)
+        if not err:
+            return res.val
+        raise RuntimeError(err)
+
     def get_row_visible(self, sheet: str, row: int) -> bool:
         """
         Get visible of a single row by given worksheet name and Excel row number.
@@ -2864,6 +2997,10 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, row],
+            [argsRule("sheet", [str]), argsRule("row", [int])],
+        )
         lib.GetRowVisible.restype = types_go._BoolErrorResult
         res = lib.GetRowVisible(self.file_index, sheet.encode(ENCODE), c_int(row))
         err = res.err.decode(ENCODE)
@@ -2902,6 +3039,10 @@ class File:
                 print()
             ```
         """
+        prepare_args(
+            [sheet, opts[0]] if opts else [sheet],
+            [argsRule("sheet", [str]), argsRule("opts", [Options], True)],
+        )
         lib.GetRows.restype = types_go._GetRowsResult
         rows = []
         options = (
@@ -2932,6 +3073,7 @@ class File:
             str: Return the sheet dimension if no error occurred, otherwise
             raise a RuntimeError with the message.
         """
+        prepare_args([sheet], [argsRule("sheet", [str])])
         lib.GetSheetDimension.restype = types_go._StringErrorResult
         res = lib.GetSheetDimension(self.file_index, sheet.encode(ENCODE))
         err = res.err.decode(ENCODE)
@@ -2952,6 +3094,7 @@ class File:
             int: Return the sheet index if no error occurred, otherwise raise
             a RuntimeError with the message.
         """
+        prepare_args([sheet], [argsRule("sheet", [str])])
         lib.GetSheetIndex.restype = types_go._IntErrorResult
         res = lib.GetSheetIndex(self.file_index, sheet.encode(ENCODE))
         err = res.err.decode(ENCODE)
@@ -3024,11 +3167,28 @@ class File:
             str: Return the sheet name if the index is valid and if no
             error occurred, otherwise raise a RuntimeError with the message.
         """
+        prepare_args([sheet], [argsRule("sheet", [int])])
         lib.GetSheetName.restype = types_go._StringErrorResult
         res = lib.GetSheetName(self.file_index, c_int(sheet))
         err = res.err.decode(ENCODE)
         if not err:
             return res.val.decode(ENCODE)
+        raise RuntimeError(err)
+
+    def get_sheet_props(self, sheet_name: str) -> Optional[SheetPropsOptions]:
+        """
+        Get worksheet properties.
+
+        Returns:
+            Optional[SheetPropsOptions]: Return the sheet property options if no
+            error occurred, otherwise raise a RuntimeError with the message.
+        """
+        prepare_args([sheet_name], [argsRule("sheet_name", [str])])
+        lib.GetSheetProps.restype = types_go._GetSheetPropsResult
+        res = lib.GetSheetProps(self.file_index, sheet_name.encode(ENCODE))
+        err = res.err.decode(ENCODE)
+        if not err:
+            return c_value_to_py(res.opts, SheetPropsOptions())
         raise RuntimeError(err)
 
     def get_sheet_visible(self, sheet: str) -> bool:
@@ -3052,6 +3212,7 @@ class File:
                 print(err)
             ```
         """
+        prepare_args([sheet], [argsRule("sheet", [str])])
         lib.GetSheetVisible.restype = types_go._BoolErrorResult
         res = lib.GetSheetVisible(self.file_index, sheet.encode(ENCODE))
         err = res.err.decode(ENCODE)
@@ -3070,6 +3231,7 @@ class File:
             Optional[Style]: Return the style object if no error occurred,
             otherwise raise a RuntimeError with the message.
         """
+        prepare_args([style_id], [argsRule("style_id", [int])])
         lib.GetStyle.restype = types_go._GetStyleResult
         res = lib.GetStyle(self.file_index, c_int(style_id))
         err = res.err.decode(ENCODE)
@@ -3088,6 +3250,7 @@ class File:
             List[Table]: Return the table list if no error occurred, otherwise
             raise a RuntimeError with the message.
         """
+        prepare_args([sheet], [argsRule("sheet", [str])])
         lib.GetTables.restype = types_go._GetTablesResult
         res = lib.GetTables(self.file_index, sheet.encode(ENCODE))
         tables = c_value_to_py(res, GetTablesResult()).tables
@@ -3111,21 +3274,6 @@ class File:
             return c_value_to_py(res.opts, WorkbookPropsOptions())
         raise RuntimeError(err)
 
-    def get_sheet_props(self, sheet_name: str) -> Optional[SheetPropsOptions]:
-        """
-        Get worksheet properties.
-
-        Returns:
-            Optional[SheetPropsOptions]: Return the sheet property options if no
-            error occurred, otherwise raise a RuntimeError with the message.
-        """
-        lib.GetSheetProps.restype = types_go._GetSheetPropsResult
-        res = lib.GetSheetProps(self.file_index, sheet_name.encode(ENCODE))
-        err = res.err.decode(ENCODE)
-        if not err:
-            return c_value_to_py(res.opts, SheetPropsOptions())
-        raise RuntimeError(err)
-
     def group_sheets(self, sheets: List[str]) -> None:
         """
         Group worksheets by given worksheets name. Group worksheets must contain
@@ -3138,6 +3286,7 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args([sheets], [argsRule("sheets", [list])])
         lib.GroupSheets.restype = c_char_p
         array = (c_char_p * len(sheets))()
         for i, value in enumerate(sheets):
@@ -3173,6 +3322,14 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, col, n],
+            [
+                argsRule("sheet", [str]),
+                argsRule("col", [str]),
+                argsRule("n", [int]),
+            ],
+        )
         lib.InsertCols.restype = c_char_p
         err = lib.InsertCols(
             self.file_index,
@@ -3198,6 +3355,10 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, cell],
+            [argsRule("sheet", [str]), argsRule("cell", [str])],
+        )
         lib.InsertPageBreak.restype = c_char_p
         err = lib.InsertPageBreak(
             self.file_index,
@@ -3234,6 +3395,14 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, row, n],
+            [
+                argsRule("sheet", [str]),
+                argsRule("cell", [int]),
+                argsRule("n", [int]),
+            ],
+        )
         lib.InsertRows.restype = c_char_p
         err = lib.InsertRows(
             self.file_index,
@@ -3270,6 +3439,14 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, top_left_cell, bottom_right_cell],
+            [
+                argsRule("sheet", [str]),
+                argsRule("top_left_cell", [str]),
+                argsRule("bottom_right_cell", [str]),
+            ],
+        )
         lib.MergeCell.restype = c_char_p
         err = lib.MergeCell(
             self.file_index,
@@ -3306,6 +3483,10 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [source, target],
+            [argsRule("source", [str]), argsRule("target", [str])],
+        )
         lib.MoveSheet.restype = c_char_p
         err = lib.MoveSheet(
             self.file_index,
@@ -3327,6 +3508,7 @@ class File:
             int: Return the style index if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args([style], [argsRule("style", [Style])])
         lib.NewConditionalStyle.restype = types_go._IntErrorResult
         options = py_value_to_c(style, types_go._Style())
         res = lib.NewConditionalStyle(self.file_index, byref(options))
@@ -3348,6 +3530,7 @@ class File:
             int: Return the index of the new sheet if no error occurred,
             otherwise raise a RuntimeError with the message.
         """
+        prepare_args([sheet], [argsRule("sheet", [str])])
         lib.NewSheet.restype = types_go._IntErrorResult
         res = lib.NewSheet(self.file_index, sheet.encode(ENCODE))
         err = res.err.decode(ENCODE)
@@ -3547,6 +3730,7 @@ class File:
                 print(err)
             ```
         """
+        prepare_args([style], [argsRule("style", [Style])])
         lib.NewStyle.restype = types_go._IntErrorResult
         options = py_value_to_c(style, types_go._Style())
         res = lib.NewStyle(self.file_index, byref(options))
@@ -3587,6 +3771,13 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, opts],
+            [
+                argsRule("sheet", [str]),
+                argsRule("opts", [SheetProtectionOptions]),
+            ],
+        )
         lib.ProtectSheet.restype = c_char_p
         options = py_value_to_c(opts, types_go._SheetProtectionOptions())
         err = lib.ProtectSheet(
@@ -3624,6 +3815,7 @@ class File:
                 print(err)
             ```
         """
+        prepare_args([opts], [argsRule("opts", [WorkbookProtectionOptions])])
         lib.ProtectWorkbook.restype = c_char_p
         options = py_value_to_c(opts, types_go._WorkbookProtectionOptions())
         err = lib.ProtectWorkbook(self.file_index, byref(options)).decode(ENCODE)
@@ -3656,6 +3848,10 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, col],
+            [argsRule("sheet", [str]), argsRule("col", [str])],
+        )
         lib.RemoveCol.restype = c_char_p
         err = lib.RemoveCol(
             self.file_index, sheet.encode(ENCODE), col.encode(ENCODE)
@@ -3675,6 +3871,10 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, cell],
+            [argsRule("sheet", [str]), argsRule("cell", [str])],
+        )
         lib.RemovePageBreak.restype = c_char_p
         err = lib.RemovePageBreak(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
@@ -3708,6 +3908,10 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, row],
+            [argsRule("sheet", [str]), argsRule("row", [int])],
+        )
         lib.RemoveRow.restype = c_char_p
         err = lib.RemoveRow(self.file_index, sheet.encode(ENCODE), c_int(row)).decode(
             ENCODE
@@ -3753,6 +3957,14 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, value, reg[0]] if reg else [sheet, value],
+            [
+                argsRule("sheet", [str]),
+                argsRule("value", [str]),
+                argsRule("reg", [bool], True),
+            ],
+        )
         lib.SearchSheet.restype = types_go._StringArrayErrorResult
         res = lib.SearchSheet(
             self.file_index,
@@ -3780,6 +3992,7 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args([index], [argsRule("index", [int])])
         err, lib.SetActiveSheet.restype = None, c_char_p
         err = lib.SetActiveSheet(self.file_index, index).decode(ENCODE)
         if err != "":
@@ -3799,6 +4012,10 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, cell],
+            [argsRule("sheet", [str]), argsRule("cell", [str])],
+        )
         err, lib.SetCellBool.restype = None, c_char_p
         err = lib.SetCellBool(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE), value
@@ -3916,6 +4133,15 @@ class File:
                     print(err)
             ```
         """
+        prepare_args(
+            [sheet, cell, formula, opts[0]] if opts else [sheet, cell, formula],
+            [
+                argsRule("sheet", [str]),
+                argsRule("cell", [str]),
+                argsRule("formula", [str]),
+                argsRule("opts", [FormulaOpts], True),
+            ],
+        )
         err, lib.SetCellFormula.restype = None, c_char_p
         options = (
             byref(py_value_to_c(opts[0], types_go._FormulaOpts()))
@@ -4382,6 +4608,14 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, columns, visible],
+            [
+                argsRule("sheet", [str]),
+                argsRule("columns", [str]),
+                argsRule("visible", [bool]),
+            ],
+        )
         lib.SetColVisible.restype = c_char_p
         err = lib.SetColVisible(
             self.file_index, sheet.encode(ENCODE), columns.encode(ENCODE), visible

@@ -210,6 +210,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             _ = f.get_cell_style("SheetN", "A1")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.get_cell_style("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'cell', but got int",
+        )
         with self.assertRaises(RuntimeError) as context:
             f.set_cell_style("SheetN", "A1", "B2", style_id)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
@@ -221,16 +227,34 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.get_col_style("SheetN", "H")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.get_col_style("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'col', but got int",
+        )
 
         self.assertIsNone(f.set_col_visible("Sheet1", "D:F", False))
         with self.assertRaises(RuntimeError) as context:
             f.set_col_visible("SheetN", "D:F", False)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.set_col_visible("Sheet1", "D:F", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type bool for argument 'visible', but got int",
+        )
         self.assertFalse(f.get_col_visible("Sheet1", "E"))
         self.assertTrue(f.get_col_visible("Sheet1", "G"))
         with self.assertRaises(RuntimeError) as context:
             f.get_col_visible("SheetN", "A")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.get_col_visible("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'col', but got int",
+        )
 
         self.assertIsNone(f.set_row_style("Sheet1", 1, 1, style_id))
         with self.assertRaises(RuntimeError) as context:
@@ -247,10 +271,22 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             _ = f.get_row_visible("SheetN", 1)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            _ = f.get_row_visible("Sheet1", "1")
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'row', but got str",
+        )
 
         with self.assertRaises(RuntimeError) as context:
-            style = f.get_style(2)
+            _ = f.get_style(2)
         self.assertEqual(str(context.exception), "invalid style ID 2")
+        with self.assertRaises(TypeError) as context:
+            _ = f.get_style(None)
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'style_id', but got NoneType",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestStyle.xlsx")))
         self.assertIsNone(
             f.save_as(os.path.join("test", "TestStyle.xlsx")),
@@ -284,7 +320,7 @@ class TestExcelize(unittest.TestCase):
             f.set_cell_value("Sheet1", "A8", excelize.RichTextRun())
         self.assertEqual(
             str(context.exception),
-            "expected type bool, float, int, str, date, datetime, or NoneType "
+            "expected type bool, float, int, str, date, datetime or NoneType "
             "for argument 'value', but got RichTextRun",
         )
 
@@ -342,28 +378,67 @@ class TestExcelize(unittest.TestCase):
             result = f.search_sheet("SheetN", "H", False)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
+        with self.assertRaises(TypeError) as context:
+            _ = f.search_sheet("Sheet1", "100", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type bool for argument 'reg', but got int",
+        )
+
         self.assertIsNone(f.duplicate_row("Sheet1", 20))
         with self.assertRaises(RuntimeError) as context:
             f.duplicate_row("SheetN", 1)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+
+        with self.assertRaises(TypeError) as context:
+            f.duplicate_row("Sheet1", "1")
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'row', but got str",
+        )
 
         self.assertIsNone(f.duplicate_row_to("Sheet1", 20, 20))
         with self.assertRaises(RuntimeError) as context:
             f.duplicate_row_to("SheetN", 1, 1)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
+        with self.assertRaises(TypeError) as context:
+            f.duplicate_row_to("Sheet1", "1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'row', but got str",
+        )
+
         self.assertIsNone(f.insert_cols("Sheet1", "C", 2))
         with self.assertRaises(RuntimeError) as context:
             f.insert_cols("SheetN", "C", 2)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.insert_cols("Sheet1", "C", "2")
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'n', but got str",
+        )
         self.assertIsNone(f.insert_rows("Sheet1", 20, 2))
         with self.assertRaises(RuntimeError) as context:
             f.insert_rows("SheetN", 20, 2)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.insert_rows("Sheet1", 20, "2")
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'n', but got str",
+        )
         self.assertIsNone(f.merge_cell("Sheet1", "A1", "B2"))
         with self.assertRaises(RuntimeError) as context:
             f.merge_cell("SheetN", "A1", "B2")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.merge_cell("Sheet1", "A1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'bottom_right_cell', but got int",
+        )
         self.assertIsNone(f.unmerge_cell("Sheet1", "A1", "B2"))
         with self.assertRaises(RuntimeError) as context:
             f.unmerge_cell("SheetN", "A1", "B2")
@@ -378,6 +453,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             _ = f.get_sheet_index("")
         self.assertEqual(str(context.exception), "the sheet name can not be blank")
+        with self.assertRaises(TypeError) as context:
+            _ = f.get_sheet_index(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
+        )
         self.assertEqual(f.get_sheet_list(), ["Sheet1", "Sheet2"])
         self.assertEqual(len(f.get_sheet_map()), 2)
         self.assertEqual(f.get_sheet_name(index), "Sheet2")
@@ -388,8 +469,14 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         self.assertEqual(f.get_col_outline_level("Sheet1", "D"), 2)
         with self.assertRaises(RuntimeError) as context:
-            _ = f.get_col_outline_level("SheetN", "D")
+            f.get_col_outline_level("SheetN", "D")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.get_col_outline_level("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'col', but got int",
+        )
 
         self.assertIsNone(f.set_row_outline_level("Sheet1", 2, 1))
         with self.assertRaises(RuntimeError) as context:
@@ -397,8 +484,14 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         self.assertEqual(f.get_row_outline_level("Sheet1", 2), 1)
         with self.assertRaises(RuntimeError) as context:
-            _ = f.get_row_outline_level("SheetN", 2)
+            f.get_row_outline_level("SheetN", 2)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.get_row_outline_level("Sheet1", "1")
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'row', but got str",
+        )
 
         self.assertIsNone(f.set_sheet_background("Sheet2", "chart.png"))
         with self.assertRaises(RuntimeError) as context:
@@ -411,11 +504,24 @@ class TestExcelize(unittest.TestCase):
             str(context.exception),
             "the sheet name length exceeds the 31 characters limit",
         )
+        with self.assertRaises(TypeError) as context:
+            _ = f.new_sheet(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
+        )
 
         self.assertIsNone(f.copy_sheet(1, f.new_sheet("Sheet3")))
         with self.assertRaises(RuntimeError) as context:
             f.copy_sheet(1, 4)
         self.assertEqual(str(context.exception), "invalid worksheet index")
+
+        with self.assertRaises(TypeError) as context:
+            f.copy_sheet("Sheet1", 4)
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'src', but got str",
+        )
 
         self.assertIsNone(f.delete_sheet("Sheet3"))
         with self.assertRaises(RuntimeError) as context:
@@ -425,21 +531,56 @@ class TestExcelize(unittest.TestCase):
             "the sheet can not contain any of the characters :\\/?*[or]",
         )
 
+        with self.assertRaises(TypeError) as context:
+            f.delete_sheet(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
+        )
+
         with self.assertRaises(RuntimeError) as context:
             f.delete_chart("SheetN", "A1")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+
+        with self.assertRaises(TypeError) as context:
+            f.delete_chart("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'cell', but got int",
+        )
 
         with self.assertRaises(RuntimeError) as context:
             f.delete_comment("SheetN", "A1")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
+        with self.assertRaises(TypeError) as context:
+            f.delete_comment("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'cell', but got int",
+        )
+
         with self.assertRaises(RuntimeError) as context:
             f.delete_picture("SheetN", "A1")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
+        with self.assertRaises(TypeError) as context:
+            f.delete_picture("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'cell', but got int",
+        )
+
         with self.assertRaises(RuntimeError) as context:
             f.delete_slicer("x")
         self.assertEqual(str(context.exception), "slicer x does not exist")
+
+        with self.assertRaises(TypeError) as context:
+            f.delete_slicer(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'name', but got int",
+        )
 
         rows = f.get_rows("Sheet1")
         self.assertEqual(
@@ -476,6 +617,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             _ = f.get_rows("SheetN")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            _ = f.get_rows("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type Options for argument 'opts', but got int",
+        )
         self.assertIsNone(
             f.protect_sheet(
                 "Sheet1",
@@ -491,6 +638,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.protect_sheet("SheetN", excelize.SheetProtectionOptions())
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.protect_sheet("SheetN", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type SheetProtectionOptions for argument 'opts', but got int",
+        )
 
         with self.assertRaises(RuntimeError) as context:
             f.unprotect_sheet("SheetN")
@@ -518,14 +671,32 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.move_sheet("SheetN", "Sheet1")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.move_sheet("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'target', but got int",
+        )
         self.assertIsNone(f.remove_col("Sheet1", "Z"))
         with self.assertRaises(RuntimeError) as context:
             f.remove_col("SheetN", "Z")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.remove_col("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'col', but got int",
+        )
         self.assertIsNone(f.remove_row("Sheet1", 100))
         with self.assertRaises(RuntimeError) as context:
             f.remove_row("SheetN", 100)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.remove_row("Sheet1", "100")
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'row', but got str",
+        )
         self.assertIsNone(f.ungroup_sheets())
         self.assertIsNone(f.update_linked_value())
         self.assertIsNone(f.save())
@@ -552,8 +723,14 @@ class TestExcelize(unittest.TestCase):
         f.file_index = 100
         expected = "can not find file pointer"
         with self.assertRaises(RuntimeError) as context:
-            f.add_vba_project("")
+            f.add_vba_project("".encode("utf-8"))
         self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(TypeError) as context:
+            f.add_vba_project("")
+        self.assertEqual(
+            str(context.exception),
+            "expected type bytes for argument 'file', but got str",
+        )
         with self.assertRaises(RuntimeError) as context:
             f.get_app_props()
         self.assertEqual(str(context.exception), expected)
@@ -563,21 +740,51 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.get_sheet_name(0)
         self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(TypeError) as context:
+            _ = f.get_sheet_name("Sheet1")
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'sheet', but got str",
+        )
         with self.assertRaises(RuntimeError) as context:
             f.get_workbook_props()
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
-            f.new_conditional_style(excelize.Style())
+            _ = f.new_conditional_style(excelize.Style())
         self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(TypeError) as context:
+            _ = f.new_conditional_style(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type Style for argument 'style', but got int",
+        )
         with self.assertRaises(RuntimeError) as context:
             f.new_style(excelize.Style())
         self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(TypeError) as context:
+            _ = f.new_style(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type Style for argument 'style', but got int",
+        )
         with self.assertRaises(RuntimeError) as context:
             f.protect_workbook(excelize.WorkbookProtectionOptions())
         self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(TypeError) as context:
+            f.protect_workbook(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type WorkbookProtectionOptions for argument 'opts', but got int",
+        )
         with self.assertRaises(RuntimeError) as context:
             f.set_active_sheet(0)
         self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(TypeError) as context:
+            f.set_active_sheet("Sheet1")
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'index', but got str",
+        )
         with self.assertRaises(RuntimeError) as context:
             f.set_default_font("")
         self.assertEqual(str(context.exception), expected)
@@ -671,7 +878,12 @@ class TestExcelize(unittest.TestCase):
             str(context.exception),
             "the sheet can not contain any of the characters :\\/?*[or]",
         )
-
+        with self.assertRaises(TypeError) as context:
+            f.group_sheets("Sheet1")
+        self.assertEqual(
+            str(context.exception),
+            "expected type list for argument 'sheets', but got str",
+        )
         self.assertIsNone(f.group_sheets(["Sheet1", "Sheet2"]))
 
         self.assertIsNone(f.save_as(os.path.join("test", "TestGroupSheets.xlsx")))
@@ -696,10 +908,22 @@ class TestExcelize(unittest.TestCase):
             str(context.exception),
             "the sheet can not contain any of the characters :\\/?*[or]",
         )
+        with self.assertRaises(TypeError) as context:
+            f.insert_page_break("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'cell', but got int",
+        )
         self.assertIsNone(f.remove_page_break("Sheet1", "A1"))
         with self.assertRaises(RuntimeError) as context:
             f.remove_page_break("SheetN", "A1")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.remove_page_break("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'cell', but got int",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestPageBreak.xlsx")))
 
     def test_add_chart(self):
@@ -840,6 +1064,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.add_comment("SheetN", comment)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.add_comment("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type Comment for argument 'opts', but got int",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestComment.xlsx")))
         self.assertIsNone(f.close())
 
@@ -921,14 +1151,26 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.add_form_control("SheetN", excelize.FormControl())
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.add_form_control("Sheet1", excelize.Shape())
+        self.assertEqual(
+            str(context.exception),
+            "expected type FormControl for argument 'opts', but got Shape",
+        )
         self.assertIsNone(
             f.set_sheet_props("Sheet1", excelize.SheetPropsOptions(code_name="Sheet1"))
         )
         props = f.get_sheet_props("Sheet1")
         self.assertEqual(props.code_name, "Sheet1")
         with self.assertRaises(RuntimeError) as context:
-            f.get_sheet_props("SheetN")
+            _ = f.get_sheet_props("SheetN")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            _ = f.get_sheet_props(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet_name', but got int",
+        )
         with self.assertRaises(RuntimeError) as context:
             f.set_sheet_props("SheetN", excelize.SheetPropsOptions(code_name="Sheet1"))
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
@@ -1106,6 +1348,12 @@ class TestExcelize(unittest.TestCase):
             str(context.exception),
             "parameter 'PivotTableRange' parsing error: parameter is required",
         )
+        with self.assertRaises(TypeError) as context:
+            f.add_pivot_table(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type PivotTableOptions or NoneType for argument 'opts', but got int",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestAddPivotTable.xlsx")))
         self.assertIsNone(f.close())
 
@@ -1146,6 +1394,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.add_shape("Sheet1", excelize.Shape())
         self.assertEqual(str(context.exception), "parameter is invalid")
+        with self.assertRaises(TypeError) as context:
+            f.add_shape("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type Shape for argument 'opts', but got int",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestAddShape.xlsx")))
         self.assertIsNone(f.close())
 
@@ -1163,6 +1417,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.add_table("SheetN", excelize.Table())
         self.assertEqual(str(context.exception), "parameter is invalid")
+        with self.assertRaises(TypeError) as context:
+            f.add_table("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type Table for argument 'table', but got int",
+        )
         tables = f.get_tables("Sheet1")
         self.assertEqual(len(tables), 1)
         self.assertEqual(tables[0].name, "Table1")
@@ -1182,9 +1442,21 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.add_slicer("Sheet1", excelize.SlicerOptions())
         self.assertEqual(str(context.exception), "parameter is invalid")
+        with self.assertRaises(TypeError) as context:
+            f.add_slicer("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type SlicerOptions for argument 'opts', but got int",
+        )
         with self.assertRaises(RuntimeError) as context:
-            tables = f.get_tables("SheetN")
+            _ = f.get_tables("SheetN")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            _ = f.get_tables(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestAddSlicer.xlsx")))
         self.assertIsNone(f.close())
 
@@ -1203,6 +1475,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.add_sparkline("SheetN", excelize.SparklineOptions())
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.add_sparkline("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type SparklineOptions for argument 'opts', but got int",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestAddSparkline.xlsx")))
         self.assertIsNone(f.close())
 
@@ -1230,6 +1508,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.auto_filter("SheetN", "A1:D2", [])
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.auto_filter("SheetN", "A1:D2", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type list for argument 'opts', but got int",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestAutoFilter.xlsx")))
         self.assertIsNone(f.close())
 
@@ -1246,6 +1530,13 @@ class TestExcelize(unittest.TestCase):
             f.get_cell_formula("SheetN", "C1")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
+        with self.assertRaises(TypeError) as context:
+            f.get_cell_formula("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'cell', but got int",
+        )
+
         self.assertIsNone(
             f.set_cell_formula(
                 "Sheet1",
@@ -1260,6 +1551,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.set_cell_formula("SheetN", "C1", "A1+B1")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.set_cell_formula("Sheet1", "C1", "A1+B1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type FormulaOpts for argument 'opts', but got int",
+        )
         val = f.calc_cell_value("Sheet1", "C1")
         self.assertEqual(val, "3")
         val = f.calc_cell_value("Sheet1", "D2")
@@ -1267,6 +1564,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             _ = f.calc_cell_value("SheetN", "A1")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.calc_cell_value("Sheet1", "A1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type Options for argument 'opts', but got int",
+        )
 
     def test_cell_name_to_coordinates(self):
         col, row = excelize.cell_name_to_coordinates("Z3")
@@ -1314,6 +1617,13 @@ class TestExcelize(unittest.TestCase):
             _, _ = f.get_cell_hyperlink("SheetN", "A3")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
+        with self.assertRaises(TypeError) as context:
+            f.get_cell_hyperlink("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'cell', but got int",
+        )
+
         self.assertIsNone(f.save_as(os.path.join("test", "TestCellHyperLink.xlsx")))
         self.assertIsNone(f.close())
 
@@ -1324,6 +1634,13 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.get_row_height("SheetN", 1)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+
+        with self.assertRaises(TypeError) as context:
+            f.get_row_height("Sheet1", "1")
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'row', but got str",
+        )
 
         with self.assertRaises(RuntimeError) as context:
             f.set_row_height("Sheet1", 0, 35)
@@ -1337,6 +1654,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.get_col_width("SheetN", "A")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.get_col_width("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'col', but got int",
+        )
 
         expected = [
             excelize.RichTextRun(
@@ -1428,6 +1751,14 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             _ = f.get_cell_rich_text("SheetN", "A1")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+
+        with self.assertRaises(TypeError) as context:
+            f.get_cell_rich_text("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'cell', but got int",
+        )
+
         self.assertIsNone(f.save_as(os.path.join("test", "TestCellRichText.xlsx")))
         self.assertIsNone(f.close())
 
@@ -1496,6 +1827,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.add_picture("SheetN", "A1", "chart.png", None)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.add_picture("Sheet1", "A1", "chart.png", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type GraphicOptions or NoneType for argument 'opts', but got int",
+        )
         with open("chart.png", "rb") as file:
             self.assertIsNone(
                 f.add_picture_from_bytes(
@@ -1517,6 +1854,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.add_picture_from_bytes("SheetN", "A1", excelize.Picture())
         self.assertEqual(str(context.exception), "unsupported image extension")
+        with self.assertRaises(TypeError) as context:
+            f.add_picture_from_bytes("Sheet1", "A1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type Picture for argument 'picture', but got int",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestAddPicture.xlsx")))
         self.assertIsNone(f.close())
 
@@ -1543,6 +1886,13 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.delete_defined_name(excelize.DefinedName())
         self.assertEqual(str(context.exception), "no defined name on the scope")
+
+        with self.assertRaises(TypeError) as context:
+            f.delete_defined_name(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type DefinedName for argument 'defined_name', but got int",
+        )
 
         self.assertIsNone(f.save_as(os.path.join("test", "TestSetDefinedName.xlsx")))
         self.assertIsNone(f.close())
@@ -1603,6 +1953,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             _ = f.get_sheet_dimension("SheetN")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            _ = f.get_sheet_dimension(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
+        )
         self.assertIsNone(f.set_sheet_name("Sheet1", "SheetN"))
         with self.assertRaises(RuntimeError) as context:
             f.set_sheet_name(
@@ -1650,10 +2006,16 @@ class TestExcelize(unittest.TestCase):
         self.assertTrue(f.get_sheet_visible("Sheet1"))
         self.assertFalse(f.get_sheet_visible("Sheet2"))
         with self.assertRaises(RuntimeError) as context:
-            f.get_sheet_visible("Sheet:1")
+            _ = f.get_sheet_visible("Sheet:1")
         self.assertEqual(
             str(context.exception),
             "the sheet can not contain any of the characters :\\/?*[or]",
+        )
+        with self.assertRaises(TypeError) as context:
+            _ = f.get_sheet_visible(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
         )
         self.assertIsNone(f.save_as(os.path.join("test", "TestSheetVisible.xlsx")))
         self.assertIsNone(f.close())
