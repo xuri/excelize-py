@@ -9,7 +9,7 @@ jobs:
   test:
     strategy:
       matrix:
-        go-version: [1.24.x]
+        go-version: [1.25.x]
         os: [ubuntu-24.04, macos-latest, windows-latest]
         python-version: ["3.9", "3.10", "3.11", "3.12", "3.13"]
         targetplatform: [x64]
@@ -110,9 +110,9 @@ jobs:
             /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
             brew tap messense/macos-cross-toolchains
             brew install FiloSottile/musl-cross/musl-cross mingw-w64
-            wget https://github.com/mstorsjo/llvm-mingw/releases/download/20250613/llvm-mingw-20250613-ucrt-macos-universal.tar.xz
-            tar -xzf llvm-mingw-20250613-ucrt-macos-universal.tar.xz
-            export PATH="$(pwd)/llvm-mingw-20250613-ucrt-macos-universal/bin:$PATH"
+            wget https://github.com/mstorsjo/llvm-mingw/releases/download/20250709/llvm-mingw-20250709-ucrt-macos-universal.tar.xz
+            tar -xzf llvm-mingw-20250709-ucrt-macos-universal.tar.xz
+            export PATH="$(pwd)/llvm-mingw-20250709-ucrt-macos-universal/bin:$PATH"
             CC=aarch64-linux-musl-gcc GOOS=linux GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.arm64.linux.so main.go
             CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.amd64.windows.dll main.go
             CC=i686-w64-mingw32-gcc GOOS=windows GOARCH=386 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.386.windows.dll main.go

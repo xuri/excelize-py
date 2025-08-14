@@ -4939,6 +4939,14 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, row, height],
+            [
+                argsRule("sheet", [str]),
+                argsRule("row", [int]),
+                argsRule("height", [float]),
+            ],
+        )
         lib.SetRowHeight.restype = c_char_p
         err = lib.SetRowHeight(
             self.file_index, sheet.encode(ENCODE), c_int(row), c_double(height)
@@ -4970,6 +4978,14 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, row, level],
+            [
+                argsRule("sheet", [str]),
+                argsRule("row", [int]),
+                argsRule("level", [int]),
+            ],
+        )
         lib.SetRowOutlineLevel.restype = c_char_p
         err = lib.SetRowOutlineLevel(
             self.file_index, sheet.encode(ENCODE), c_int(row), c_int(level)
@@ -5012,6 +5028,15 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, start, end, style_id],
+            [
+                argsRule("sheet", [str]),
+                argsRule("start", [int]),
+                argsRule("end", [int]),
+                argsRule("style_id", [int]),
+            ],
+        )
         lib.SetRowStyle.restype = c_char_p
         err = lib.SetRowStyle(
             self.file_index,
@@ -5047,6 +5072,14 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, row, visible],
+            [
+                argsRule("sheet", [str]),
+                argsRule("row", [int]),
+                argsRule("visible", [bool]),
+            ],
+        )
         lib.SetRowVisible.restype = c_char_p
         err = lib.SetRowVisible(
             self.file_index,
@@ -5071,6 +5104,10 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, picture],
+            [argsRule("sheet", [str]), argsRule("picture", [str])],
+        )
         lib.SetSheetBackground.restype = c_char_p
         err = lib.SetSheetBackground(
             self.file_index,
@@ -5097,6 +5134,14 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, extension, picture],
+            [
+                argsRule("sheet", [str]),
+                argsRule("extension", [str]),
+                argsRule("picture", [bytes]),
+            ],
+        )
         lib.SetSheetBackgroundFromBytes.restype = c_char_p
         err = lib.SetSheetBackgroundFromBytes(
             self.file_index,
@@ -5139,6 +5184,14 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, cell, values],
+            [
+                argsRule("sheet", [str]),
+                argsRule("cell", [str]),
+                argsRule("values", [list]),
+            ],
+        )
         lib.SetSheetCol.restype = c_char_p
         vals = (types_go._Interface * len(values))()
         for i, value in enumerate(values):
@@ -5169,6 +5222,10 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, range_ref],
+            [argsRule("sheet", [str]), argsRule("range_ref", [str])],
+        )
         lib.SetSheetDimension.restype = c_char_p
         err = lib.SetSheetDimension(
             self.file_index,
@@ -5194,6 +5251,10 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [source, target],
+            [argsRule("source", [str]), argsRule("target", [str])],
+        )
         lib.SetSheetName.restype = c_char_p
         err = lib.SetSheetName(
             self.file_index,
@@ -5215,6 +5276,10 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, opts],
+            [argsRule("sheet", [str]), argsRule("opts", [SheetPropsOptions])],
+        )
         lib.SetSheetProps.restype = c_char_p
         options = py_value_to_c(opts, types_go._SheetPropsOptions())
         err = lib.SetSheetProps(
@@ -5254,6 +5319,14 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, cell, values],
+            [
+                argsRule("sheet", [str]),
+                argsRule("cell", [str]),
+                argsRule("values", [list]),
+            ],
+        )
         lib.SetSheetRow.restype = c_char_p
         vals = (types_go._Interface * len(values))()
         for i, value in enumerate(values):
@@ -5282,6 +5355,14 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, view_index, opts],
+            [
+                argsRule("sheet", [str]),
+                argsRule("view_index", [int]),
+                argsRule("opts", [ViewOptions]),
+            ],
+        )
         lib.SetSheetView.restype = c_char_p
         options = py_value_to_c(opts, types_go._ViewOptions())
         err = lib.SetSheetView(
@@ -5313,6 +5394,14 @@ class File:
             f.set_sheet_visible("Sheet1", False)
             ```
         """
+        prepare_args(
+            [sheet, visible, very_hidden[0]] if very_hidden else [sheet, visible],
+            [
+                argsRule("sheet", [str]),
+                argsRule("visible", [bool]),
+                argsRule("very_hidden", [bool], True),
+            ],
+        )
         lib.SetSheetVisible.restype = c_char_p
         vh = False
         if len(very_hidden) > 0:
@@ -5334,6 +5423,7 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args([opts], [argsRule("opts", [WorkbookPropsOptions])])
         lib.SetWorkbookProps.restype = c_char_p
         options = py_value_to_c(opts, types_go._WorkbookPropsOptions())
         err = lib.SetWorkbookProps(self.file_index, byref(options)).decode(ENCODE)
@@ -5378,6 +5468,14 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, top_left_cell, bottom_right_cell],
+            [
+                argsRule("sheet", [str]),
+                argsRule("top_left_cell", [str]),
+                argsRule("bottom_right_cell", [str]),
+            ],
+        )
         lib.UnmergeCell.restype = c_char_p
         err = lib.UnmergeCell(
             self.file_index,
@@ -5401,6 +5499,10 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, password[0]] if password else [sheet],
+            [argsRule("sheet", [str]), argsRule("password", [str], True)],
+        )
         lib.UnprotectSheet.restype = c_char_p
         passwd = password[0] if len(password) > 0 else ""
         err = lib.UnprotectSheet(
@@ -5425,6 +5527,10 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [password[0]] if password else [],
+            [argsRule("password", [str], True)],
+        )
         lib.UnprotectWorkbook.restype = c_char_p
         passwd = password[0] if len(password) > 0 else ""
         err = lib.UnprotectWorkbook(
@@ -5464,6 +5570,7 @@ def cell_name_to_coordinates(cell: str) -> Tuple[int, int]:
         Tuple[int, int]: Return a tuple containing the column number, row number
         if no error occurred, otherwise raise a RuntimeError with the message.
     """
+    prepare_args([cell], [argsRule("cell", [str])])
     lib.CellNameToCoordinates.restype = types_go._CellNameToCoordinatesResult
     res = lib.CellNameToCoordinates(cell.encode(ENCODE))
     err = res.err.decode(ENCODE)
@@ -5484,6 +5591,7 @@ def column_name_to_number(name: str) -> int:
         int: Return the column number as a integer if no error occurred,
         otherwise raise a RuntimeError with the message.
     """
+    prepare_args([name], [argsRule("name", [str])])
     lib.ColumnNameToNumber.restype = types_go._IntErrorResult
     res = lib.ColumnNameToNumber(name.encode(ENCODE))
     err = res.err.decode(ENCODE)
@@ -5503,6 +5611,7 @@ def column_number_to_name(num: int) -> str:
         str: Return the column name as a string if no error occurred, otherwise
         raise a RuntimeError with the message.
     """
+    prepare_args([num], [argsRule("num", [int])])
     lib.ColumnNumberToName.restype = types_go._StringErrorResult
     res = lib.ColumnNumberToName(c_int(num))
     err = res.err.decode(ENCODE)
@@ -5526,6 +5635,14 @@ def coordinates_to_cell_name(col: int, row: int, *is_absolute: bool) -> str:
         str: Return the cell name as a string if no error occurred, otherwise
         raise a RuntimeError with the message.
     """
+    prepare_args(
+        [col, row, is_absolute[0]] if is_absolute else [col, row],
+        [
+            argsRule("col", [int]),
+            argsRule("row", [int]),
+            argsRule("is_absolute", [bool], True),
+        ],
+    )
     lib.CoordinatesToCellName.restype = types_go._StringErrorResult
     options = False
     if len(is_absolute) > 0:
@@ -5560,6 +5677,13 @@ def open_file(filename: str, *opts: Options) -> File:
         File: Return a File object if if no error occurred, otherwise raise a
         RuntimeError with the message.
     """
+    prepare_args(
+        [filename, opts[0]] if opts else [filename],
+        [
+            argsRule("filename", [str]),
+            argsRule("opts", [Options], True),
+        ],
+    )
     lib.OpenFile.restype, options = types_go._IntErrorResult, None
     if len(opts) > 0:
         options = byref(py_value_to_c(opts[0], types_go._Options()))
@@ -5582,6 +5706,13 @@ def open_reader(buffer: bytes, *opts: Options) -> Optional[File]:
         Tuple[Optional[File], Optional[Exception]]: A tuple containing a File
         object if successful, or None and an Exception if an error occurred.
     """
+    prepare_args(
+        [buffer, opts[0]] if opts else [buffer],
+        [
+            argsRule("buffer", [bytes]),
+            argsRule("opts", [Options], True),
+        ],
+    )
     lib.OpenReader.restype, options = types_go._IntErrorResult, None
     if len(opts) > 0:
         options = byref(py_value_to_c(opts[0], types_go._Options()))
