@@ -4248,6 +4248,14 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, cell, value],
+            [
+                argsRule("sheet", [str]),
+                argsRule("cell", [str]),
+                argsRule("value", [int]),
+            ],
+        )
         lib.SetCellInt.restype = c_char_p
         err = lib.SetCellInt(
             self.file_index,
@@ -4381,6 +4389,14 @@ class File:
                     print(err)
             ```
         """
+        prepare_args(
+            [sheet, cell, runs],
+            [
+                argsRule("sheet", [str]),
+                argsRule("cell", [str]),
+                argsRule("runs", [list]),
+            ],
+        )
         lib.SetCellRichText.restype = c_char_p
         vals = (types_go._RichTextRun * len(runs))()
         for i, value in enumerate(runs):
@@ -4409,6 +4425,14 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, cell, value],
+            [
+                argsRule("sheet", [str]),
+                argsRule("cell", [str]),
+                argsRule("value", [str]),
+            ],
+        )
         lib.SetCellStr.restype = c_char_p
         err = lib.SetCellStr(
             self.file_index,
@@ -4444,6 +4468,15 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, top_left_cell, bottom_right_cell, style_id],
+            [
+                argsRule("sheet", [str]),
+                argsRule("top_left_cell", [str]),
+                argsRule("bottom_right_cell", [str]),
+                argsRule("style_id", [int]),
+            ],
+        )
         lib.SetCellStyle.restype = c_char_p
         err = lib.SetCellStyle(
             self.file_index,
@@ -4527,6 +4560,14 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, col, level],
+            [
+                argsRule("sheet", [str]),
+                argsRule("col", [str]),
+                argsRule("level", [int]),
+            ],
+        )
         lib.SetColOutlineLevel.restype = c_char_p
         err = lib.SetColOutlineLevel(
             self.file_index, sheet.encode(ENCODE), col.encode(ENCODE), level
@@ -4568,6 +4609,14 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, columns, style_id],
+            [
+                argsRule("sheet", [str]),
+                argsRule("columns", [str]),
+                argsRule("style_id", [int]),
+            ],
+        )
         lib.SetColStyle.restype = c_char_p
         err = lib.SetColStyle(
             self.file_index, sheet.encode(ENCODE), columns.encode(ENCODE), style_id
@@ -4649,6 +4698,15 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, start_col, end_col, width],
+            [
+                argsRule("sheet", [str]),
+                argsRule("start_col", [str]),
+                argsRule("end_col", [str]),
+                argsRule("width", [float]),
+            ],
+        )
         lib.SetColWidth.restype = c_char_p
         err = lib.SetColWidth(
             self.file_index,
@@ -4680,6 +4738,14 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, range_ref, opts],
+            [
+                argsRule("sheet", [str]),
+                argsRule("range_ref", [str]),
+                argsRule("opts", [list]),
+            ],
+        )
         lib.SetConditionalFormat.restype = c_char_p
         vals = (types_go._ConditionalFormatOptions * len(opts))()
         for i, value in enumerate(opts):
@@ -4706,6 +4772,7 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args([font_name], [argsRule("font_name", [str])])
         lib.SetDefaultFont.restype = c_char_p
         err = lib.SetDefaultFont(self.file_index, font_name.encode(ENCODE)).decode(
             ENCODE
@@ -4761,6 +4828,10 @@ class File:
             ))
             ```
         """
+        prepare_args(
+            [defined_name],
+            [argsRule("defined_name", [DefinedName])],
+        )
         lib.SetDefinedName.restype = c_char_p
         options = py_value_to_c(defined_name, types_go._DefinedName())
         err = lib.SetDefinedName(self.file_index, byref(options)).decode(ENCODE)
@@ -4805,6 +4876,10 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [doc_properties],
+            [argsRule("doc_properties", [DocProperties])],
+        )
         lib.SetDocProps.restype = c_char_p
         options = py_value_to_c(doc_properties, types_go._DocProperties())
         err = lib.SetDocProps(self.file_index, byref(options)).decode(ENCODE)
@@ -4845,6 +4920,13 @@ class File:
                 print(err)
             ```
         """
+        prepare_args(
+            [sheet, opts],
+            [
+                argsRule("sheet", [str]),
+                argsRule("opts", [HeaderFooterOptions]),
+            ],
+        )
         lib.SetHeaderFooter.restype = c_char_p
         options = py_value_to_c(opts, types_go._HeaderFooterOptions())
         err = lib.SetHeaderFooter(
@@ -4865,6 +4947,13 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, opts],
+            [
+                argsRule("sheet", [str]),
+                argsRule("opts", [PageLayoutOptions]),
+            ],
+        )
         lib.SetPageLayout.restype = c_char_p
         options = py_value_to_c(opts, types_go._PageLayoutOptions())
         err = lib.SetPageLayout(
@@ -4885,6 +4974,13 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, opts],
+            [
+                argsRule("sheet", [str]),
+                argsRule("opts", [PageLayoutMarginsOptions]),
+            ],
+        )
         lib.SetPageMargins.restype = c_char_p
         options = py_value_to_c(opts, types_go._PageLayoutMarginsOptions())
         err = lib.SetPageMargins(
@@ -4906,6 +5002,10 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
+        prepare_args(
+            [sheet, opts],
+            [argsRule("sheet", [str]), argsRule("opts", [Panes])],
+        )
         lib.SetPanes.restype = c_char_p
         options = py_value_to_c(opts, types_go._Panes())
         err = lib.SetPanes(

@@ -234,9 +234,21 @@ class TestExcelize(unittest.TestCase):
             f.set_cell_style("SheetN", "A1", "B2", style_id)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         self.assertIsNone(f.set_col_style("Sheet1", "H", style_id))
+        with self.assertRaises(TypeError) as context:
+            f.set_cell_style("SheetN", "A1", "B2", True)
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'style_id', but got bool",
+        )
         with self.assertRaises(RuntimeError) as context:
             f.set_col_style("SheetN", "H", style_id)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.set_col_style("Sheet1", "H", True)
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'style_id', but got bool",
+        )
         self.assertEqual(f.get_col_style("Sheet1", "H"), style_id)
         with self.assertRaises(RuntimeError) as context:
             f.get_col_style("SheetN", "H")
@@ -366,10 +378,22 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.set_cell_int("SheetN", "A10", 100)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.set_cell_int("Sheet1", "A1", True)
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'value', but got bool",
+        )
         self.assertIsNone(f.set_cell_str("Sheet1", "A12", "Hello"))
         with self.assertRaises(RuntimeError) as context:
             f.set_cell_str("SheetN", "A12", "Hello")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.set_cell_str("SheetN1", "A12", excelize.RichTextRun())
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'value', but got RichTextRun",
+        )
         with self.assertRaises(RuntimeError) as context:
             f.set_cell_value("SheetN", "A9", None)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
@@ -505,6 +529,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.set_col_outline_level("SheetN", "D", 2)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.set_col_outline_level("SheetN", "D", True)
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'level', but got bool",
+        )
         self.assertEqual(f.get_col_outline_level("Sheet1", "D"), 2)
         with self.assertRaises(RuntimeError) as context:
             f.get_col_outline_level("SheetN", "D")
@@ -858,12 +888,30 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.set_default_font("")
         self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(TypeError) as context:
+            f.set_default_font(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'font_name', but got int",
+        )
         with self.assertRaises(RuntimeError) as context:
             f.set_defined_name(excelize.DefinedName())
         self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(TypeError) as context:
+            f.set_defined_name(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type DefinedName for argument 'defined_name', but got int",
+        )
         with self.assertRaises(RuntimeError) as context:
             f.set_doc_props(excelize.DocProperties())
         self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(TypeError) as context:
+            f.set_doc_props(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type DocProperties for argument 'doc_properties', but got int",
+        )
         with self.assertRaises(RuntimeError) as context:
             f.set_workbook_props(excelize.WorkbookPropsOptions())
         self.assertEqual(str(context.exception), expected)
@@ -1280,6 +1328,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.set_header_footer("SheetN", excelize.HeaderFooterOptions())
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.set_header_footer("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type HeaderFooterOptions for argument 'opts', but got int",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestHeaderFooter.xlsx")))
         self.assertIsNone(f.close())
 
@@ -1303,6 +1357,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.set_page_layout("SheetN", excelize.PageLayoutOptions())
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.set_page_layout("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type PageLayoutOptions for argument 'opts', but got int",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestPageLayout.xlsx")))
         self.assertIsNone(f.close())
 
@@ -1326,6 +1386,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.set_page_margins("SheetN", excelize.PageLayoutMarginsOptions())
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.set_page_margins("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type PageLayoutMarginsOptions for argument 'opts', but got int",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestPageMargins.xlsx")))
         self.assertIsNone(f.close())
 
@@ -1354,6 +1420,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.set_panes("SheetN", excelize.Panes())
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.set_panes("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type Panes for argument 'opts', but got int",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestPanes.xlsx")))
         self.assertIsNone(f.close())
 
@@ -1749,8 +1821,14 @@ class TestExcelize(unittest.TestCase):
 
         self.assertIsNone(f.set_col_width("Sheet1", "A", "A", 44.5))
         with self.assertRaises(RuntimeError) as context:
-            f.set_col_width("SheetN", "A", "A", 44)
+            f.set_col_width("SheetN", "A", "A", 44.0)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.set_col_width("Sheet1", "A", "A", 44)
+        self.assertEqual(
+            str(context.exception),
+            "expected type float for argument 'width', but got int",
+        )
         self.assertEqual(f.get_col_width("Sheet1", "A"), 44.5)
         with self.assertRaises(RuntimeError) as context:
             f.get_col_width("SheetN", "A")
@@ -1842,6 +1920,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.set_cell_rich_text("SheetN", "A1", expected)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.set_cell_rich_text("Sheet1", "A1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type list for argument 'runs', but got int",
+        )
         style = f.new_style(
             excelize.Style(alignment=excelize.Alignment(wrap_text=True))
         )
@@ -1889,6 +1973,12 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.set_conditional_format("SheetN", "A1:A10", [])
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.set_conditional_format("Sheet1", "A1:A10", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type list for argument 'opts', but got int",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestConditionalFormat.xlsx")))
         self.assertIsNone(f.close())
 
