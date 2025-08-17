@@ -285,6 +285,7 @@ class Fill:
     pattern: int = 0
     color: Optional[List[str]] = None
     shading: int = 0
+    transparency: int = 0
 
 
 @dataclass

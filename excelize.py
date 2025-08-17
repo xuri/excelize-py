@@ -4217,6 +4217,20 @@ class File:
             f.set_cell_hyperlink("Sheet1", "A3", "Sheet1!A40", "Location")
             ```
         """
+        prepare_args(
+            (
+                [sheet, cell, link, link_type, opts[0]]
+                if opts
+                else [sheet, cell, link, link_type]
+            ),
+            [
+                argsRule("sheet", [str]),
+                argsRule("cell", [str]),
+                argsRule("link", [str]),
+                argsRule("link_type", [str]),
+                argsRule("opts", [HyperlinkOpts], True),
+            ],
+        )
         err, lib.SetCellHyperLink.restype = None, c_char_p
         options = (
             byref(py_value_to_c(opts[0], types_go._HyperlinkOpts()))

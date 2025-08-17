@@ -140,6 +140,7 @@ struct Fill
     int ColorLen;
     char **Color;
     int Shading;
+    int Transparency;
 };
 
 // Font directly maps the font settings of the fonts.

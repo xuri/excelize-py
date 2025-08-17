@@ -1764,13 +1764,14 @@ class TestExcelize(unittest.TestCase):
             )
         )
         with self.assertRaises(RuntimeError) as context:
-            f.set_cell_hyperlink(
-                "SheetN",
-                "A3",
-                display,
-                "External",
-            )
+            f.set_cell_hyperlink("SheetN", "A3", display, "External")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.set_cell_hyperlink("Sheet1", "A3", display, "External", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type HyperlinkOpts for argument 'opts', but got int",
+        )
         # Set underline and font color style for the cell.
         style = f.new_style(
             excelize.Style(font=excelize.Font(color="1265BE", underline="single"))

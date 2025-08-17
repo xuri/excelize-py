@@ -112,6 +112,7 @@ class _Fill(Structure):
         ("ColorLen", c_int),
         ("Color", POINTER(POINTER(c_char))),
         ("Shading", c_int),
+        ("Transparency", c_int),
     ]
 
 
