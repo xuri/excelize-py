@@ -21,6 +21,7 @@ from ctypes import (
     c_char,
     c_double,
     c_int,
+    c_longlong,
     c_ubyte,
     cast,
     CDLL,
@@ -584,7 +585,9 @@ class StreamWriter:
         if err != "":
             raise RuntimeError(err)
 
-    def set_col_width(self, start_col: int, end_col: int, width: float) -> None:
+    def set_col_width(
+        self, start_col: int, end_col: int, width: Union[int, float]
+    ) -> None:
         """
         Set the width of a single column or multiple columns for the stream
         writer. Note that you must call the `set_col_width` function before the
@@ -593,7 +596,7 @@ class StreamWriter:
         Args:
             start_col (int): The start column number
             end_col (int): The end column number
-            width (float): The column width
+            width (Union[int, float]): The column width
 
         Returns:
             None: Return None if no error occurred, otherwise raise a
@@ -614,12 +617,12 @@ class StreamWriter:
             [
                 argsRule("start_col", [int]),
                 argsRule("end_col", [int]),
-                argsRule("width", [float]),
+                argsRule("width", [int, float]),
             ],
         )
         lib.StreamSetColWidth.restype = c_char_p
         err = lib.StreamSetColWidth(
-            self.sw_index, c_int(start_col), c_int(end_col), c_double(width)
+            self.sw_index, c_longlong(start_col), c_longlong(end_col), c_double(width)
         ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -2331,7 +2334,9 @@ class File:
         """
         prepare_args([src, to], [argsRule("src", [int]), argsRule("to", [int])])
         err, lib.CopySheet.restype = None, c_char_p
-        err = lib.CopySheet(self.file_index, src, to).decode(ENCODE)
+        err = lib.CopySheet(self.file_index, c_longlong(src), c_longlong(to)).decode(
+            ENCODE
+        )
         if err != "":
             raise RuntimeError(err)
 
@@ -2512,9 +2517,9 @@ class File:
             [argsRule("sheet", [str]), argsRule("row", [int])],
         )
         err, lib.DuplicateRow.restype = None, c_char_p
-        err = lib.DuplicateRow(self.file_index, sheet.encode(ENCODE), row).decode(
-            ENCODE
-        )
+        err = lib.DuplicateRow(
+            self.file_index, sheet.encode(ENCODE), c_longlong(row)
+        ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
 
@@ -2556,7 +2561,7 @@ class File:
         )
         err, lib.DuplicateRowTo.restype = None, c_char_p
         err = lib.DuplicateRowTo(
-            self.file_index, sheet.encode(ENCODE), row, row2
+            self.file_index, sheet.encode(ENCODE), c_longlong(row), c_longlong(row2)
         ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -2935,7 +2940,7 @@ class File:
             [argsRule("sheet", [str]), argsRule("row", [int])],
         )
         lib.GetRowHeight.restype = types_go._Float64ErrorResult
-        res = lib.GetRowHeight(self.file_index, sheet.encode(ENCODE), row)
+        res = lib.GetRowHeight(self.file_index, sheet.encode(ENCODE), c_longlong(row))
         err = res.err.decode(ENCODE)
         if not err:
             return res.val
@@ -2969,7 +2974,9 @@ class File:
             [argsRule("sheet", [str]), argsRule("row", [int])],
         )
         lib.GetRowOutlineLevel.restype = types_go._IntErrorResult
-        res = lib.GetRowOutlineLevel(self.file_index, sheet.encode(ENCODE), row)
+        res = lib.GetRowOutlineLevel(
+            self.file_index, sheet.encode(ENCODE), c_longlong(row)
+        )
         err = res.err.decode(ENCODE)
         if not err:
             return res.val
@@ -3002,7 +3009,7 @@ class File:
             [argsRule("sheet", [str]), argsRule("row", [int])],
         )
         lib.GetRowVisible.restype = types_go._BoolErrorResult
-        res = lib.GetRowVisible(self.file_index, sheet.encode(ENCODE), c_int(row))
+        res = lib.GetRowVisible(self.file_index, sheet.encode(ENCODE), c_longlong(row))
         err = res.err.decode(ENCODE)
         if not err:
             return res.val
@@ -3169,7 +3176,7 @@ class File:
         """
         prepare_args([sheet], [argsRule("sheet", [int])])
         lib.GetSheetName.restype = types_go._StringErrorResult
-        res = lib.GetSheetName(self.file_index, c_int(sheet))
+        res = lib.GetSheetName(self.file_index, c_longlong(sheet))
         err = res.err.decode(ENCODE)
         if not err:
             return res.val.decode(ENCODE)
@@ -3233,7 +3240,7 @@ class File:
         """
         prepare_args([style_id], [argsRule("style_id", [int])])
         lib.GetStyle.restype = types_go._GetStyleResult
-        res = lib.GetStyle(self.file_index, c_int(style_id))
+        res = lib.GetStyle(self.file_index, c_longlong(style_id))
         err = res.err.decode(ENCODE)
         if not err:
             return c_value_to_py(res.style, Style())
@@ -3291,7 +3298,9 @@ class File:
         array = (c_char_p * len(sheets))()
         for i, value in enumerate(sheets):
             array[i] = value.encode(ENCODE)
-        err = lib.GroupSheets(self.file_index, array, c_int(len(sheets))).decode(ENCODE)
+        err = lib.GroupSheets(self.file_index, array, c_longlong(len(sheets))).decode(
+            ENCODE
+        )
         if err != "":
             raise RuntimeError(err)
 
@@ -3335,7 +3344,7 @@ class File:
             self.file_index,
             sheet.encode(ENCODE),
             col.encode(ENCODE),
-            c_int(n),
+            c_longlong(n),
         ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -3407,8 +3416,8 @@ class File:
         err = lib.InsertRows(
             self.file_index,
             sheet.encode(ENCODE),
-            c_int(row),
-            c_int(n),
+            c_longlong(row),
+            c_longlong(n),
         ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -3913,9 +3922,9 @@ class File:
             [argsRule("sheet", [str]), argsRule("row", [int])],
         )
         lib.RemoveRow.restype = c_char_p
-        err = lib.RemoveRow(self.file_index, sheet.encode(ENCODE), c_int(row)).decode(
-            ENCODE
-        )
+        err = lib.RemoveRow(
+            self.file_index, sheet.encode(ENCODE), c_longlong(row)
+        ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
 
@@ -3994,7 +4003,7 @@ class File:
         """
         prepare_args([index], [argsRule("index", [int])])
         err, lib.SetActiveSheet.restype = None, c_char_p
-        err = lib.SetActiveSheet(self.file_index, index).decode(ENCODE)
+        err = lib.SetActiveSheet(self.file_index, c_longlong(index)).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
 
@@ -4275,7 +4284,7 @@ class File:
             self.file_index,
             sheet.encode(ENCODE),
             cell.encode(ENCODE),
-            value,
+            c_longlong(value),
         ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -4497,7 +4506,7 @@ class File:
             sheet.encode(ENCODE),
             top_left_cell.encode(ENCODE),
             bottom_right_cell.encode(ENCODE),
-            style_id,
+            c_longlong(style_id),
         ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -4584,7 +4593,7 @@ class File:
         )
         lib.SetColOutlineLevel.restype = c_char_p
         err = lib.SetColOutlineLevel(
-            self.file_index, sheet.encode(ENCODE), col.encode(ENCODE), level
+            self.file_index, sheet.encode(ENCODE), col.encode(ENCODE), c_longlong(level)
         ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -4633,7 +4642,10 @@ class File:
         )
         lib.SetColStyle.restype = c_char_p
         err = lib.SetColStyle(
-            self.file_index, sheet.encode(ENCODE), columns.encode(ENCODE), style_id
+            self.file_index,
+            sheet.encode(ENCODE),
+            columns.encode(ENCODE),
+            c_longlong(style_id),
         ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -4687,7 +4699,7 @@ class File:
             raise RuntimeError(err)
 
     def set_col_width(
-        self, sheet: str, start_col: str, end_col: str, width: float
+        self, sheet: str, start_col: str, end_col: str, width: Union[float, int]
     ) -> None:
         """
         Set the width of a single column or multiple columns.
@@ -4696,7 +4708,7 @@ class File:
             sheet (str): The worksheet name
             start_col (str): The start column name
             end_col (str): The end column name
-            width (float): The column width
+            width (Union[float, int]): The column width
 
         Returns:
             None: Return None if no error occurred, otherwise raise a
@@ -4718,7 +4730,7 @@ class File:
                 argsRule("sheet", [str]),
                 argsRule("start_col", [str]),
                 argsRule("end_col", [str]),
-                argsRule("width", [float]),
+                argsRule("width", [int, float]),
             ],
         )
         lib.SetColWidth.restype = c_char_p
@@ -5028,7 +5040,7 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
-    def set_row_height(self, sheet: str, row: int, height: float) -> None:
+    def set_row_height(self, sheet: str, row: int, height: Union[int, float]) -> None:
         """
         Set the height of a single row. If the value of height is 0, will hide
         the specified row, if the value of height is -1, will unset the custom
@@ -5037,7 +5049,7 @@ class File:
         Args:
             sheet (str): The worksheet name
             row (int): The row number
-            height (float): The row height
+            height (Union[int, float]): The row height
 
         Returns:
             None: Return None if no error occurred, otherwise raise a
@@ -5058,12 +5070,12 @@ class File:
             [
                 argsRule("sheet", [str]),
                 argsRule("row", [int]),
-                argsRule("height", [float]),
+                argsRule("height", [int, float]),
             ],
         )
         lib.SetRowHeight.restype = c_char_p
         err = lib.SetRowHeight(
-            self.file_index, sheet.encode(ENCODE), c_int(row), c_double(height)
+            self.file_index, sheet.encode(ENCODE), c_longlong(row), c_double(height)
         ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -5102,7 +5114,7 @@ class File:
         )
         lib.SetRowOutlineLevel.restype = c_char_p
         err = lib.SetRowOutlineLevel(
-            self.file_index, sheet.encode(ENCODE), c_int(row), c_int(level)
+            self.file_index, sheet.encode(ENCODE), c_longlong(row), c_longlong(level)
         ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -5155,9 +5167,9 @@ class File:
         err = lib.SetRowStyle(
             self.file_index,
             sheet.encode(ENCODE),
-            c_int(start),
-            c_int(end),
-            c_int(style_id),
+            c_longlong(start),
+            c_longlong(end),
+            c_longlong(style_id),
         ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -5198,7 +5210,7 @@ class File:
         err = lib.SetRowVisible(
             self.file_index,
             sheet.encode(ENCODE),
-            c_int(row),
+            c_longlong(row),
             c_bool(visible),
         ).decode(ENCODE)
         if err != "":
@@ -5480,7 +5492,10 @@ class File:
         lib.SetSheetView.restype = c_char_p
         options = py_value_to_c(opts, types_go._ViewOptions())
         err = lib.SetSheetView(
-            self.file_index, sheet.encode(ENCODE), view_index, byref(options)
+            self.file_index,
+            sheet.encode(ENCODE),
+            c_longlong(view_index),
+            byref(options),
         ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -5727,7 +5742,7 @@ def column_number_to_name(num: int) -> str:
     """
     prepare_args([num], [argsRule("num", [int])])
     lib.ColumnNumberToName.restype = types_go._StringErrorResult
-    res = lib.ColumnNumberToName(c_int(num))
+    res = lib.ColumnNumberToName(c_longlong(num))
     err = res.err.decode(ENCODE)
     if not err:
         return res.val.decode(ENCODE)
@@ -5761,7 +5776,7 @@ def coordinates_to_cell_name(col: int, row: int, *is_absolute: bool) -> str:
     options = False
     if len(is_absolute) > 0:
         options = is_absolute[0]
-    res = lib.CoordinatesToCellName(col, row, options)
+    res = lib.CoordinatesToCellName(c_longlong(col), c_longlong(row), options)
     err = res.err.decode(ENCODE)
     if not err:
         return res.val.decode(ENCODE)

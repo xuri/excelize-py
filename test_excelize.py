@@ -951,13 +951,13 @@ class TestExcelize(unittest.TestCase):
             "expected type str for argument 'cell', but got int",
         )
         with self.assertRaises(RuntimeError) as context:
-            sw.set_col_width(1, 1, 20.0)
+            sw.set_col_width(1, 1, 20)
         self.assertEqual(str(context.exception), sw_expected)
         with self.assertRaises(TypeError) as context:
-            sw.set_col_width(1, 1, 20)
+            sw.set_col_width(1, 1, "20")
         self.assertEqual(
             str(context.exception),
-            "expected type float for argument 'width', but got int",
+            "expected type int or float for argument 'width', but got str",
         )
         with self.assertRaises(RuntimeError) as context:
             sw.set_panes(excelize.Panes())
@@ -1797,7 +1797,7 @@ class TestExcelize(unittest.TestCase):
 
     def test_cell_rich_text(self):
         f = excelize.new_file()
-        self.assertIsNone(f.set_row_height("Sheet1", 1, 35.0))
+        self.assertIsNone(f.set_row_height("Sheet1", 1, 35))
         self.assertEqual(f.get_row_height("Sheet1", 1), 35)
         with self.assertRaises(RuntimeError) as context:
             f.get_row_height("SheetN", 1)
@@ -1814,21 +1814,21 @@ class TestExcelize(unittest.TestCase):
             f.set_row_height("Sheet1", 0, 35.0)
         self.assertEqual(str(context.exception), "invalid row number 0")
         with self.assertRaises(TypeError) as context:
-            f.set_row_height("Sheet1", 1, 35)
+            f.set_row_height("Sheet1", 1, "35")
         self.assertEqual(
             str(context.exception),
-            "expected type float for argument 'height', but got int",
+            "expected type int or float for argument 'height', but got str",
         )
 
         self.assertIsNone(f.set_col_width("Sheet1", "A", "A", 44.5))
         with self.assertRaises(RuntimeError) as context:
-            f.set_col_width("SheetN", "A", "A", 44.0)
+            f.set_col_width("SheetN", "A", "A", 44)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
         with self.assertRaises(TypeError) as context:
-            f.set_col_width("Sheet1", "A", "A", 44)
+            f.set_col_width("Sheet1", "A", "A", "44")
         self.assertEqual(
             str(context.exception),
-            "expected type float for argument 'width', but got int",
+            "expected type int or float for argument 'width', but got str",
         )
         self.assertEqual(f.get_col_width("Sheet1", "A"), 44.5)
         with self.assertRaises(RuntimeError) as context:
