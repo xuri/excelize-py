@@ -5835,3 +5835,141 @@ def open_reader(buffer: bytes, *opts: Options) -> Optional[File]:
     if err == "":
         return File(res.val)
     raise RuntimeError(err)
+
+# ==========================================================
+# constant definition
+# ==========================================================
+LIB_PATHS = {
+    "Windows": "excelize_cgo.dll",
+    "Darwin": "libexcelize_cgo.dylib",
+    "Linux": "libexcelize_cgo.so"
+}
+
+# ==========================================================
+# Excelize class definition
+# ==========================================================
+class Excelize:
+    def __init__(self):
+
+        self._lib = self._load_library()
+        if self._lib is None:
+            raise RuntimeError("Failed to load Excelize C library")
+        
+        self._setup_function_prototypes()
+
+        self._file = None
+    
+    # ==========================================================
+    # Internal auxiliary method
+    # ==========================================================
+    def _load_library(self):
+        """加载C语言库"""
+        system = platform.system()
+        if system not in LIB_PATHS:
+            raise RuntimeError(f"Unsupported operating system: {system}")
+        
+        lib_path = os.path.join(os.path.dirname(__file__), LIB_PATHS[system])
+        try:
+            return ctypes.CDLL(lib_path)
+        except OSError as e:
+            raise RuntimeError(f"Failed to load library {lib_path}: {e}")
+    
+    def _setup_function_prototypes(self):
+        """设置函数原型"""
+
+        self._lib.go_new_file.restype = ctypes.c_void_p
+        
+        self._lib.go_open_file.restype = ctypes.c_void_p
+        self._lib.go_open_file.argtypes = [ctypes.c_char_p]
+        
+        self._lib.go_close_file.restype = ctypes.c_int
+        self._lib.go_close_file.argtypes = [ctypes.c_void_p]
+        
+        self._lib.go_save_file.restype = ctypes.c_int
+        self._lib.go_save_file.argtypes = [ctypes.c_void_p]
+        
+        self._lib.go_save_as_file.restype = ctypes.c_int
+        self._lib.go_save_as_file.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
+
+        self._lib.go_unset_conditional_format.restype = ctypes.c_int
+        self._lib.go_unset_conditional_format.argtypes = [ctypes.c_void_p, ctypes.c_char_p, ctypes.c_char_p]
+        
+        self._lib.go_clear_all_conditional_formats.restype = ctypes.c_int
+        self._lib.go_clear_all_conditional_formats.argtypes = [ctypes.c_void_p, ctypes.c_char_p]
+    
+    def _check_error(self, result):
+        """检查操作结果并获取错误信息"""
+        if result != 0:
+            raise RuntimeError(f"Excelize operation failed with error code: {result}")
+    
+    # ==========================================================
+    # File operation methods
+    # ==========================================================
+    def new_file(self):
+        """创建一个新的Excel文件"""
+        self._file = self._lib.go_new_file()
+        if self._file is None:
+            raise RuntimeError("Failed to create new file")
+        return self
+    
+    def open_file(self, filename):
+        """打开一个已有的Excel文件"""
+        self._file = self._lib.go_open_file(filename.encode('utf-8'))
+        if self._file is None:
+            raise RuntimeError(f"Failed to open file {filename}")
+        return self
+    
+    def close(self):
+        """关闭Excel文件"""
+        if self._file is not None:
+            self._check_error(self._lib.go_close_file(self._file))
+            self._file = None
+    
+    def save(self):
+        """保存Excel文件"""
+        if self._file is None:
+            raise RuntimeError("No file opened")
+        self._check_error(self._lib.go_save_file(self._file))
+    
+    def save_as(self, filename):
+        """另存为Excel文件"""
+        if self._file is None:
+            raise RuntimeError("No file opened")
+        self._check_error(self._lib.go_save_as_file(self._file, filename.encode('utf-8')))
+    
+    # ==========================================================
+    # Conditional Formatting Method
+    # ==========================================================
+    def unset_conditional_format(self, sheet, cell_range):
+        """清除指定工作表和区域的条件格式"""
+        if self._file is None:
+            raise RuntimeError("No file opened")
+        self._check_error(self._lib.go_unset_conditional_format(
+            self._file,
+            sheet.encode('utf-8'),
+            cell_range.encode('utf-8') if cell_range else None
+        ))
+    
+    def clear_all_conditional_formats(self, sheet):
+        """清除工作表所有条件格式"""
+        if self._file is None:
+            raise RuntimeError("No file opened")
+        self._check_error(self._lib.go_clear_all_conditional_formats(
+            self._file,
+            sheet.encode('utf-8')
+        ))
+
+# ==========================================================
+# Factory Function 
+# With an API style consistent with excelize-py
+# ==========================================================
+
+def new_file():
+    """创建一个新的Excel文件"""
+    f = Excelize()
+    return f.new_file()
+
+def open_file(filename):
+    """打开一个已有的Excel文件"""
+    f = Excelize()
+    return f.open_file(filename)
