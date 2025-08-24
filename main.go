@@ -2807,6 +2807,21 @@ func UnprotectWorkbook(idx int, password *C.char, verify bool) *C.char {
 	return C.CString(emptyString)
 }
 
+// UnsetConditionalFormat provides a function to unset the conditional format
+// by given worksheet name and range reference.
+//
+//export UnsetConditionalFormat
+func UnsetConditionalFormat(idx int, sheet, rangeRef *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).UnsetConditionalFormat(C.GoString(sheet), C.GoString(rangeRef)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
 // UpdateLinkedValue fix linked values within a spreadsheet are not updating in
 // Office Excel application. This function will be remove value tag when met a
 // cell have a linked value.

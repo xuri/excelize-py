@@ -5668,6 +5668,30 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
+    def unset_conditional_format(self, sheet: str, range_ref: str) -> None:
+        """
+        Unset the conditional format by given worksheet name and range
+        reference.
+
+        Args:
+            sheet (str): The worksheet name
+            range_ref (str): The top-left and right-bottom cell range reference
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+        """
+        prepare_args(
+            [sheet, range_ref],
+            [argsRule("sheet", [str]), argsRule("range_ref", [str])],
+        )
+        lib.UnsetConditionalFormat.restype = c_char_p
+        err = lib.UnsetConditionalFormat(
+            self.file_index, sheet.encode(ENCODE), range_ref.encode(ENCODE)
+        ).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
     def update_linked_value(self) -> None:
         """
         Fix linked values within a spreadsheet are not updating in Office Excel

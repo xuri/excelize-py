@@ -1980,6 +1980,17 @@ class TestExcelize(unittest.TestCase):
             str(context.exception),
             "expected type list for argument 'opts', but got int",
         )
+
+        self.assertIsNone(f.unset_conditional_format("Sheet1", "A1:A10"))
+        with self.assertRaises(RuntimeError) as context:
+            f.unset_conditional_format("SheetN", "A1:A10")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.unset_conditional_format("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'range_ref', but got int",
+        )
         self.assertIsNone(f.save_as(os.path.join("test", "TestConditionalFormat.xlsx")))
         self.assertIsNone(f.close())
 
