@@ -2807,6 +2807,21 @@ func UnprotectWorkbook(idx int, password *C.char, verify bool) *C.char {
 	return C.CString(emptyString)
 }
 
+// UnsetConditionalFormat provides a function to unset the conditional format
+// by given worksheet name and range reference.
+//
+//export UnsetConditionalFormat
+func UnsetConditionalFormat(idx int, sheet, rangeRef *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).UnsetConditionalFormat(C.GoString(sheet), C.GoString(rangeRef)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
 // UpdateLinkedValue fix linked values within a spreadsheet are not updating in
 // Office Excel application. This function will be remove value tag when met a
 // cell have a linked value.
@@ -2825,111 +2840,3 @@ func UpdateLinkedValue(idx int) *C.char {
 
 func main() {
 }
-
-// ==========================================================
-// File operation function - Additional implementation
-// ==========================================================
-
-//export go_new_file
-func go_new_file() C.intptr_t {
-	f := excelize.NewFile()
-	if f == nil {
-
-		return 0
-	}
-
-	return C.intptr_t(uintptr(unsafe.Pointer(f)))
-}
-
-func go_open_file(filename *C.char) C.intptr_t {
-	go_filename := C.GoString(filename)
-	f, err := excelize.OpenFile(go_filename)
-	if err != nil {
-
-		return 0
-	}
-
-	return C.intptr_t(uintptr(unsafe.Pointer(f)))
-}
-
-func go_close_file(file_ptr C.intptr_t) C.int {
-	f := (*excelize.File)(unsafe.Pointer(uintptr(file_ptr)))
-	err := f.Close()
-	if err != nil {
-
-		return -1
-	}
-	return 0
-}
-
-func go_save_file(file_ptr C.intptr_t) C.int {
-	f := (*excelize.File)(unsafe.Pointer(uintptr(file_ptr)))
-	err := f.Save()
-	if err != nil {
-
-		return -1
-	}
-	return 0
-}
-
-func go_save_as_file(file_ptr C.intptr_t, filename *C.char) C.int {
-	f := (*excelize.File)(unsafe.Pointer(uintptr(file_ptr)))
-	go_filename := C.GoString(filename)
-	err := f.SaveAs(go_filename)
-	if err != nil {
-
-		return -1
-	}
-	return 0
-}
-
-// ==========================================================
-// Conditional Formatting Operation Functions - Additional Implementations
-// ==========================================================
-
-//export go_unset_conditional_format
-func go_unset_conditional_format(file_ptr C.intptr_t, sheet *C.char, cell_range *C.char) C.int {
-	f := (*excelize.File)(unsafe.Pointer(uintptr(file_ptr)))
-	go_sheet := C.GoString(sheet)
-	go_range := C.GoString(cell_range)
-
-	err := f.UnsetConditionalFormat(go_sheet, go_range)
-	if err != nil {
-
-		return -1
-	}
-	return 0
-}
-
-func go_clear_all_conditional_formats(file_ptr C.intptr_t, sheet *C.char) C.int {
-	f := (*excelize.File)(unsafe.Pointer(uintptr(file_ptr)))
-	go_sheet := C.GoString(sheet)
-
-	err := f.UnsetConditionalFormat(go_sheet, "")
-	if err != nil {
-
-		return -1
-	}
-
-	return 0
-}
-
-// ==========================================================
-// Auxiliary Definition
-// ==========================================================
-
-type File struct {
-	*excelize.File
-}
-
-// The main function has been defined at the beginning of the file
-
-// Note: The following C code section should be placed within the CGO comment block.
-// However, since the main.go file already contains the CGO comment block, only the Go function implementation is added here.
-// The complete C code implementation should be in a separate C file.
-
-// Due to the complexity of mixing Go and C code, it is recommended that in actual projects,
-// the C code section be placed separately in the excelize_cgo.c file,
-// and then in the Go code, these functions can be correctly referenced through CGO.
-
-// Note: The following is merely illustrative code. During actual compilation, further adjustments may be necessary.

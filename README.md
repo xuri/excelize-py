@@ -174,60 +174,6 @@ finally:
         print(err)
 ```
 
-### Add conditional format to spreadsheet
-
-```python
-import excelize
-
-f = excelize.new_file()
-try:
-    # Create a new sheet
-    index = f.new_sheet("Sheet2")
-    
-    # Set value of a cell
-    f.set_cell_value("Sheet2", "A2", 100)
-    f.set_cell_value("Sheet2", "A3", 120)
-    f.set_cell_value("Sheet2", "A4", 90)
-    f.set_cell_value("Sheet2", "A5", 150)
-    
-    # Create a conditional style
-    style = excelize.Style(
-        fill=excelize.Fill(
-            type="pattern",
-            pattern=1,
-            color=["#FFEBEE", ""],
-        ),
-        font=excelize.Font(
-            color="#B71C1C",
-            bold=True,
-        ),
-    )
-    style_id = f.new_conditional_style(style)
-    
-    # Apply conditional format
-    f.set_conditional_format(
-        "Sheet2",
-        "A2:A5",
-        [
-            excelize.ConditionalFormatOptions(
-                type="cell",
-                criteria=">",
-                value="100",
-                format=style_id,
-            ),
-        ],
-    )
-    
-    # Save spreadsheet by the given path
-    f.save_as("Book1.xlsx")
-except (RuntimeError, TypeError) as err:
-    print(err)
-finally:
-    err = f.close()
-    if err:
-        print(err)
-```
-
 ## Contributing
 
 Contributions are welcome! Open a pull request to fix a bug, or open an issue to discuss a new feature or change.
