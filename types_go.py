@@ -394,6 +394,23 @@ class _ChartDimension(Structure):
     ]
 
 
+class _ChartLine(Structure):
+    _fields_ = [
+        ("Type", c_uint),
+        ("Dash", c_uint),
+        ("Fill", _Fill),
+        ("Smooth", c_bool),
+        ("Width", c_double),
+    ]
+
+
+class _ChartUpDownBar(Structure):
+    _fields_ = [
+        ("Fill", _Fill),
+        ("Border", _ChartLine),
+    ]
+
+
 class _ChartPlotArea(Structure):
     _fields_ = [
         ("SecondPlotValues", c_int),
@@ -406,6 +423,8 @@ class _ChartPlotArea(Structure):
         ("ShowSerName", c_bool),
         ("ShowVal", c_bool),
         ("Fill", _Fill),
+        ("UpBars", _ChartUpDownBar),
+        ("DownBars", _ChartUpDownBar),
         ("NumFmt", _ChartNumFmt),
     ]
 
@@ -415,16 +434,6 @@ class _ChartLegend(Structure):
         ("Position", c_char_p),
         ("ShowLegendKey", c_bool),
         ("Font", POINTER(_Font)),
-    ]
-
-
-class _ChartLine(Structure):
-    _fields_ = [
-        ("Type", c_uint),
-        ("Dash", c_uint),
-        ("Fill", _Fill),
-        ("Smooth", c_bool),
-        ("Width", c_double),
     ]
 
 

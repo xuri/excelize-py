@@ -164,6 +164,8 @@ class ChartType(IntEnum):
     WireframeContour = 52
     Bubble = 53
     Bubble3D = 54
+    StockHighLowClose = 55
+    StockOpenHighLowClose = 56
 
 
 class ChartDataLabelPositionType(IntEnum):
@@ -557,6 +559,21 @@ class ChartDimension:
 
 
 @dataclass
+class ChartLine:
+    type: ChartLineType = ChartLineType.ChartLineUnset
+    dash: ChartDashType = ChartDashType.ChartDashUnset
+    fill: Fill = Fill
+    smooth: bool = False
+    width: float = 0
+
+
+@dataclass
+class ChartUpDownBar:
+    fill: Fill = Fill
+    border: ChartLine = ChartLine
+
+
+@dataclass
 class ChartPlotArea:
     second_plot_values: int = 0
     show_bubble_size: bool = False
@@ -568,6 +585,8 @@ class ChartPlotArea:
     show_ser_name: bool = False
     show_val: bool = False
     fill: Fill = Fill
+    up_bars: ChartUpDownBar = ChartUpDownBar
+    down_bars: ChartUpDownBar = ChartUpDownBar
     num_fmt: ChartNumFmt = ChartNumFmt
 
 
@@ -576,15 +595,6 @@ class ChartLegend:
     position: str = ""
     show_legend_key: bool = False
     font: Optional[Font] = None
-
-
-@dataclass
-class ChartLine:
-    type: ChartLineType = ChartLineType.ChartLineUnset
-    dash: ChartDashType = ChartDashType.ChartDashUnset
-    fill: Fill = Fill
-    smooth: bool = False
-    width: float = 0
 
 
 @dataclass

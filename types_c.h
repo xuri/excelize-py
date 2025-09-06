@@ -422,6 +422,24 @@ struct ChartDimension
     unsigned int Height;
 };
 
+// ChartLine directly maps the format settings of the chart line.
+struct ChartLine
+{
+    unsigned char Type;
+    unsigned char Dash;
+    struct Fill Fill;
+    bool Smooth;
+    double Width;
+};
+
+// ChartUpDownBar directly maps the format settings of the stock chart up bars
+// and down bars.
+struct ChartUpDownBar
+{
+    struct Fill Fill;
+    struct ChartLine Border;
+};
+
 // ChartPlotArea directly maps the format settings of the plot area.
 struct ChartPlotArea
 {
@@ -435,6 +453,8 @@ struct ChartPlotArea
     bool ShowSerName;
     bool ShowVal;
     struct Fill Fill;
+    struct ChartUpDownBar UpBars;
+    struct ChartUpDownBar DownBars;
     struct ChartNumFmt NumFmt;
 };
 
@@ -444,16 +464,6 @@ struct ChartLegend
     char *Position;
     bool ShowLegendKey;
     struct Font *Font;
-};
-
-// ChartLine directly maps the format settings of the chart line.
-struct ChartLine
-{
-    unsigned char Type;
-	unsigned char Dash;
-	struct Fill Fill;
-    bool Smooth;
-    double Width;
 };
 
 // ChartMarker directly maps the format settings of the chart marker.
@@ -754,7 +764,8 @@ struct StringArrayErrorResult
     char *Err;
 };
 
-struct IntStringResult {
+struct IntStringResult
+{
     int K;
     char *V;
 };
@@ -824,13 +835,15 @@ struct GetSheetPropsResult
     char *err;
 };
 
-struct GetSheetMapResult {
+struct GetSheetMapResult
+{
     int ArrLen;
     struct IntStringResult *Arr;
     char *Err;
 };
 
-struct GetCommentsResult {
+struct GetCommentsResult
+{
     int CommentsLen;
     struct Comment *Comments;
     char *Err;

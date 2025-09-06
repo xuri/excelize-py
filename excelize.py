@@ -250,7 +250,7 @@ def c_value_to_py(ctypes_instance, py_instance):
                                     else c_array[i].contents.value
                                 )
                         else:
-                            #  Pointer array of the Go struct, for example: []*excelize.Options
+                            # Pointer array of the Go struct, for example: []*excelize.Options
                             for i in range(l):
                                 py_list.append(
                                     c_value_to_py(
@@ -419,7 +419,7 @@ def py_value_to_c(py_instance, ctypes_instance):
                                     py_to_base_ctype(py_list[i], c_type)
                                 )
                         else:
-                            #  Pointer array of the Go struct, for example: []*excelize.Options
+                            # Pointer array of the Go struct, for example: []*excelize.Options
                             for i in range(l):
                                 c_array[i] = pointer(
                                     py_value_to_c(py_list[i], c_type())
@@ -835,6 +835,8 @@ class File:
         | 52  | WireframeContour            | Wireframe contour chart                  |
         | 53  | Bubble                      | Bubble chart                             |
         | 54  | Bubble3D                    | 3D bubble chart                          |
+        | 55  | StockHighLowClose           | High-Low-Close stock chart               |
+        | 56  | StockOpenHighLowClose       | Open-High-Low-Close stock chart          |
 
         In Excel a chart series is a collection of information that defines
         which data is plotted such as values, axis labels and formatting.
