@@ -1507,10 +1507,7 @@ func GetDefinedName(idx int) C.struct_GetDefinedNameResult {
 	if !ok {
 		return C.struct_GetDefinedNameResult{Err: C.CString(errFilePtr)}
 	}
-	definedNames, err := f.(*excelize.File).GetDefinedName()
-	if err != nil {
-		return C.struct_GetDefinedNameResult{Err: C.CString(err.Error())}
-	}
+	definedNames := f.(*excelize.File).GetDefinedName()
 	cArray := C.malloc(C.size_t(len(definedNames)) * C.size_t(unsafe.Sizeof(C.struct_DefinedName{})))
 	for i, dn := range definedNames {
 		cVal, err := goValueToC(reflect.ValueOf(dn), reflect.ValueOf(&C.struct_DefinedName{}))
