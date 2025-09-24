@@ -848,3 +848,10 @@ struct GetCommentsResult
     struct Comment *Comments;
     char *Err;
 };
+
+struct GetDefinedNameResult
+{
+    int DefinedNamesLen;
+    struct DefinedName *DefinedNames;
+    char *Err;
+};

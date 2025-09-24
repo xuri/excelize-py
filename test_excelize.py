@@ -2092,6 +2092,9 @@ class TestExcelize(unittest.TestCase):
                 )
             )
         )
+        # get defined names and validate
+        names = f.get_defined_name()
+        self.assertTrue(any(dn.name == "Amount" and dn.scope == "Sheet1" for dn in names))
         self.assertIsNone(
             f.delete_defined_name(
                 excelize.DefinedName(
