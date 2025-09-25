@@ -1229,6 +1229,27 @@ func GetDefaultFont(idx int) C.struct_StringErrorResult {
 	return C.struct_StringErrorResult{val: C.CString(val), err: C.CString(emptyString)}
 }
 
+// GetDefinedName provides a function to get the defined names of the workbook
+// or worksheet.
+//
+//export GetDefinedName
+func GetDefinedName(idx int) C.struct_GetDefinedNameResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetDefinedNameResult{Err: C.CString(errFilePtr)}
+	}
+	definedNames := f.(*excelize.File).GetDefinedName()
+	cArray := C.malloc(C.size_t(len(definedNames)) * C.size_t(unsafe.Sizeof(C.struct_DefinedName{})))
+	for i, dn := range definedNames {
+		cVal, err := goValueToC(reflect.ValueOf(dn), reflect.ValueOf(&C.struct_DefinedName{}))
+		if err != nil {
+			return C.struct_GetDefinedNameResult{Err: C.CString(err.Error())}
+		}
+		*(*C.struct_DefinedName)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(C.struct_DefinedName{}))) = cVal.Elem().Interface().(C.struct_DefinedName)
+	}
+	return C.struct_GetDefinedNameResult{DefinedNamesLen: C.int(len(definedNames)), DefinedNames: (*C.struct_DefinedName)(cArray), Err: C.CString(emptyString)}
+}
+
 // GetRowHeight provides a function to get row height by given worksheet name
 // and row number.
 //
@@ -1496,27 +1517,6 @@ func GetTables(idx int, sheet *C.char) C.struct_GetTablesResult {
 		*(*C.struct_Table)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(C.struct_Table{}))) = cVal.Elem().Interface().(C.struct_Table)
 	}
 	return C.struct_GetTablesResult{TablesLen: C.int(len(tables)), Tables: (*C.struct_Table)(cArray), Err: C.CString(emptyString)}
-}
-
-// GetDefinedName provides a function to get the defined names of the workbook
-// or worksheet.
-//
-//export GetDefinedName
-func GetDefinedName(idx int) C.struct_GetDefinedNameResult {
-	f, ok := files.Load(idx)
-	if !ok {
-		return C.struct_GetDefinedNameResult{Err: C.CString(errFilePtr)}
-	}
-	definedNames := f.(*excelize.File).GetDefinedName()
-	cArray := C.malloc(C.size_t(len(definedNames)) * C.size_t(unsafe.Sizeof(C.struct_DefinedName{})))
-	for i, dn := range definedNames {
-		cVal, err := goValueToC(reflect.ValueOf(dn), reflect.ValueOf(&C.struct_DefinedName{}))
-		if err != nil {
-			return C.struct_GetDefinedNameResult{Err: C.CString(err.Error())}
-		}
-		*(*C.struct_DefinedName)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(C.struct_DefinedName{}))) = cVal.Elem().Interface().(C.struct_DefinedName)
-	}
-	return C.struct_GetDefinedNameResult{DefinedNamesLen: C.int(len(definedNames)), DefinedNames: (*C.struct_DefinedName)(cArray), Err: C.CString(emptyString)}
 }
 
 // GetWorkbookProps provides a function to gets workbook properties.

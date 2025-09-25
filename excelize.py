@@ -2915,6 +2915,37 @@ class File:
             return res.val.decode(ENCODE)
         raise RuntimeError(err)
 
+    def get_defined_name(self) -> List[DefinedName]:
+        """
+        Get the defined names of the workbook or worksheet.
+
+        Returns:
+            List[DefinedName]: Return the defined names list if no error
+            occurred, otherwise raise a RuntimeError with the message.
+
+        Example:
+            For example:
+
+            ```python
+            try:
+                names = f.get_defined_name()
+                for dn in names:
+                    print(dn.name, dn.refers_to, dn.scope, dn.comment)
+            except (RuntimeError, TypeError) as err:
+                print(err)
+            ```
+        """
+        lib.GetDefinedName.restype = types_go._GetDefinedNameResult
+        res = lib.GetDefinedName(self.file_index)
+        err = res.Err.decode(ENCODE)
+        if err == "":
+            arr = []
+            if res.DefinedNames:
+                for i in range(res.DefinedNamesLen):
+                    arr.append(c_value_to_py(res.DefinedNames[i], DefinedName()))
+            return arr
+        raise RuntimeError(err)
+
     def get_row_height(self, sheet: str, row: int) -> float:
         """
         Get row height by given worksheet name and row number.
@@ -4865,37 +4896,6 @@ class File:
         err = lib.SetDefinedName(self.file_index, byref(options)).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
-
-    def get_defined_name(self) -> List[DefinedName]:
-        """
-        Get the defined names of the workbook or worksheet.
-
-        Returns:
-            List[DefinedName]: Return the defined names list if no error
-            occurred, otherwise raise a RuntimeError with the message.
-
-        Example:
-            For example:
-
-            ```python
-            try:
-                names = f.get_defined_name()
-                for dn in names:
-                    print(dn.name, dn.refers_to, dn.scope, dn.comment)
-            except (RuntimeError, TypeError) as err:
-                print(err)
-            ```
-        """
-        lib.GetDefinedName.restype = types_go._GetDefinedNameResult
-        res = lib.GetDefinedName(self.file_index)
-        err = res.Err.decode(ENCODE)
-        if err == "":
-            arr = []
-            if res.DefinedNames:
-                for i in range(res.DefinedNamesLen):
-                    arr.append(c_value_to_py(res.DefinedNames[i], DefinedName()))
-            return arr
-        raise RuntimeError(err)
 
     def set_doc_props(self, doc_properties: DocProperties) -> None:
         """
