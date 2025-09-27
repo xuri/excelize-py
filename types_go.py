@@ -835,3 +835,11 @@ class _GetCommentsResult(Structure):
         ("Comments", POINTER(_Comment)),
         ("Err", c_char_p),
     ]
+
+
+class _GetDefinedNameResult(Structure):
+    _fields_ = [
+        ("DefinedNamesLen", c_int),
+        ("DefinedNames", POINTER(_DefinedName)),
+        ("Err", c_char_p),
+    ]

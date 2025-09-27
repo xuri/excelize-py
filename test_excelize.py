@@ -838,6 +838,9 @@ class TestExcelize(unittest.TestCase):
             f.get_default_font()
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
+            f.get_defined_name()
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
             f.get_sheet_name(0)
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(TypeError) as context:
@@ -2082,16 +2085,14 @@ class TestExcelize(unittest.TestCase):
 
     def test_defined_name(self):
         f = excelize.new_file()
-        self.assertIsNone(
-            f.set_defined_name(
-                excelize.DefinedName(
-                    name="Amount",
-                    refers_to="Sheet1!$A$2:$D$5",
-                    comment="defined name comment",
-                    scope="Sheet1",
-                )
-            )
+        df = excelize.DefinedName(
+            name="Amount",
+            refers_to="Sheet1!$A$2:$D$5",
+            comment="defined name comment",
+            scope="Sheet1",
         )
+        self.assertIsNone(f.set_defined_name(df))
+        self.assertEqual(f.get_defined_name(), [df])
         self.assertIsNone(
             f.delete_defined_name(
                 excelize.DefinedName(
