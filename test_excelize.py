@@ -96,6 +96,8 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(f.get_app_props(), expected)
         self.assertIsNone(f.save_as(os.path.join("test", "TestAppProps.xlsx")))
         self.assertIsNone(f.close())
+        with self.assertRaises(RuntimeError):
+            f.set_app_props(expected)
 
     def test_default_font(self):
         f = excelize.new_file()
