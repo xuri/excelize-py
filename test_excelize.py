@@ -80,11 +80,22 @@ class TestExcelize(unittest.TestCase):
             str(context.exception),
             "expected type str for argument 'filename', but got int",
         )
-
+   
     def test_app_props(self):
         f = excelize.new_file()
-        props = f.get_app_props()
-        self.assertEqual(props.application, "Go Excelize")
+        expected = excelize.AppProperties(
+            application="excelize-py",
+            scale_crop=False,
+            doc_security=0,
+            company="Excelize",
+            links_up_to_date=False,
+            hyperlinks_changed=False,
+            app_version="1.0.0",
+    )
+        self.assertIsNone(f.set_app_props(expected))
+        self.assertEqual(f.get_app_props(), expected)
+        self.assertIsNone(f.save_as(os.path.join("test", "TestAppProps.xlsx")))
+        self.assertIsNone(f.close())
 
     def test_default_font(self):
         f = excelize.new_file()

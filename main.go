@@ -2091,6 +2091,25 @@ func SetActiveSheet(idx, index int) *C.char {
 	return C.CString(emptyString)
 }
 
+// SetAppProps provides a function to set document application properties.
+//
+//export SetAppProps
+func SetAppProps(idx int, opts *C.struct_AppProperties) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.AppProperties{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	appProps := goVal.Elem().Interface().(excelize.AppProperties)
+	if err := f.(*excelize.File).SetAppProps(&appProps); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
 // SetCellBool provides a function to set bool type value of a cell by given
 // worksheet name, cell reference and cell value.
 //

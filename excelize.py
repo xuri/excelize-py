@@ -4009,6 +4009,27 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
+    def set_app_props(self, app_properties: AppProperties) -> None:
+        """
+        Set document application properties.
+
+        Args:
+            app_properties (AppProperties): The application properties
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+        """
+        prepare_args(
+            [app_properties],
+            [argsRule("app_properties", [AppProperties])],
+        )
+        lib.SetAppProps.restype = c_char_p
+        options = py_value_to_c(app_properties, types_go._AppProperties())
+        err = lib.SetAppProps(self.file_index, byref(options)).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
     def set_cell_bool(self, sheet: str, cell: str, value: bool) -> None:
         """
         Set bool type value of a cell by given worksheet name, cell reference
