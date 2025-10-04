@@ -4040,6 +4040,78 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
+    def set_app_props(self, app_properties: AppProperties) -> None:
+        """
+        Set document application properties. The properties that can be set are:
+
+        application: The name of the application that created this document.
+
+        scale_crop: Indicates the display mode of the document thumbnail. Set
+        this element to `true` to enable scaling of the document thumbnail to
+        the display. Set this element to `false` to enable cropping of the
+        document thumbnail to show only sections that will fit the display.
+
+        doc_security: Security level of a document as a numeric value. Document
+        security is defined as:
+            1 - Document is password protected.
+            2 - Document is recommended to be opened as read-only.
+            3 - Document is enforced to be opened as read-only.
+            4 - Document is locked for annotation.
+
+        company: The name of a company associated with the document.
+
+        links_up_to_date: Indicates whether hyperlinks in a document are
+        up-to-date. Set this element to `true` to indicate that hyperlinks are
+        updated. Set this element to `false` to indicate that hyperlinks are
+        outdated.
+
+        hyperlinks_changed: Specifies that one or more hyperlinks in this part
+        were updated exclusively in this part by a producer. The next producer
+        to open this document shall update the hyperlink relationships with the
+        new hyperlinks specified in this part.
+
+        app_version: Specifies the version of the application which produced
+        this document. The content of this element shall be of the form XX.YYYY
+        where X and Y represent numerical values, or the document shall be
+        considered non-conformant.
+
+        Args:
+            app_properties (AppProperties): The application properties
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+
+        Example:
+            For example:
+
+            ```python
+            try:
+                f.set_app_props(
+                    excelize.AppProperties(
+                        application: "Microsoft Excel",
+                        scale_crop: true,
+                        doc_security: 3,
+                        company: "Company Name",
+                        links_up_to_date: true,
+                        hyperlinks_changed: true,
+                        app_version: "16.0000",
+                    )
+                )
+            except (RuntimeError, TypeError) as err:
+                print(err)
+            ```
+        """
+        prepare_args(
+            [app_properties],
+            [argsRule("app_properties", [AppProperties])],
+        )
+        lib.SetAppProps.restype = c_char_p
+        options = py_value_to_c(app_properties, types_go._AppProperties())
+        err = lib.SetAppProps(self.file_index, byref(options)).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
     def set_cell_bool(self, sheet: str, cell: str, value: bool) -> None:
         """
         Set bool type value of a cell by given worksheet name, cell reference
