@@ -46,7 +46,7 @@ body:
       label: Python version
       description: |
         Output of `python --version`:
-      placeholder: e.g. 3.8.10
+      placeholder: e.g. 3.14.0
     validations:
       required: true
 

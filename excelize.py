@@ -91,7 +91,7 @@ def load_lib() -> Optional[str]:
 
 lib = CDLL(os.path.join(os.path.dirname(__file__), load_lib()))
 ENCODE = "utf-8"
-__version__ = "0.0.4"
+__version__ = "0.0.5"
 uppercase_words = ["id", "rgb", "sq", "xml"]
 
 
@@ -142,8 +142,8 @@ def snake_to_pascal(snake_str: str) -> str:
 
 def c_value_to_py(ctypes_instance, py_instance):
     """
-    Convert a ctypes instance to a Python instance by mapping fields from the
-    to the corresponding fields in the Python instance.
+    Convert a ctypes instance to a Python instance by mapping fields to the
+    corresponding fields in the Python instance.
 
     Args:
         ctypes_instance: The ctypes instance representing the Go data structure.
