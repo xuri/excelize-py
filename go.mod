@@ -3,7 +3,7 @@ module github.com/xuri/excelize-py
 go 1.24.0
 
 require (
-	github.com/xuri/excelize/v2 v2.10.0
+	github.com/xuri/excelize/v2 v2.10.1-0.20251029022420-541ca7c1b9ea
 	golang.org/x/image v0.32.0
 )
 

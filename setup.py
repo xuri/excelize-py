@@ -42,7 +42,7 @@ class CustomInstallCommand(install):
 
 setup(
     name="excelize",
-    version="0.0.5",
+    version="0.0.6",
     license="BSD 3-Clause",
     license_files=("LICENSE"),
     description="A Python build of the Go Excelize library for reading and writing Microsoft Excel™ (XLAM / XLSM / XLSX / XLTM / XLTX) spreadsheets",
@@ -55,7 +55,7 @@ setup(
     zip_safe=False,
     project_urls={
         "Source": "https://github.com/xuri/excelize-py",
-        "Documentation": "https://xuri.me/excelize",
+        "Documentation": "https://xuri.me/excelize-py",
     },
     cmdclass={"install": CustomInstallCommand},
     py_modules=[
@@ -88,5 +88,7 @@ setup(
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
         "Programming Language :: Python :: 3.13",
+        "Programming Language :: Python :: 3.14",
+        "Programming Language :: Python :: 3.15",
     ],
 )

@@ -10,7 +10,7 @@ jobs:
       matrix:
         go-version: [1.25.x]
         os: [ubuntu-24.04, macos-latest, windows-latest]
-        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14"]
+        python-version: ["3.9", "3.10", "3.11", "3.12", "3.13", "3.14", "3.15.0-alpha.1"]
         targetplatform: [x64]
 
     runs-on: ${{ matrix.os }}
@@ -70,7 +70,7 @@ jobs:
     if: github.event_name == 'release' && github.event.action == 'published'
     strategy:
       matrix:
-        os: [ubuntu-24.04, macos-latest]
+        os: [ubuntu-24.04, ubuntu-24.04-arm, macos-latest]
 
     steps:
       - name: Install Go
@@ -92,32 +92,64 @@ jobs:
           env GO111MODULE=on go vet ./...
           pip install coverage
 
-      - name: Build Shared Library
+      - name: Build Linux Shared Library
+        if: matrix.os == 'ubuntu-24.04'
         env:
           CGO_ENABLED: 1
         run: |
-          if [[ "$RUNNER_OS" == "Linux" ]]; then
-            sudo dpkg --add-architecture i386
-            sudo apt update
-            sudo apt install -y gcc-multilib g++-multilib libc6-dev-i386
-            CC="gcc -m32" GOOS=linux GOARCH=386 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.386.linux.so main.go
-            GOOS=linux GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.amd64.linux.so main.go
+          docker run --rm -v $PWD:/src -w /src quay.io/pypa/manylinux2014_x86_64 bash -c "
+            yum install -y wget || true
+            wget https://go.dev/dl/go1.25.3.linux-amd64.tar.gz && \
+            tar -C /usr/local -xzf go1.25.3.linux-amd64.tar.gz && \
+            export PATH=/usr/local/go/bin:\$PATH && \
+            CGO_ENABLED=1 CC=gcc GOOS=linux GOARCH=amd64 \
+            go build -buildmode=c-shared -ldflags='-s -w' -trimpath \
+            -o libexcelize.amd64.linux.so main.go && \
             rm -f libexcelize.*.h
-          elif [[ "$RUNNER_OS" == "macOS" ]]; then
-            /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-            brew tap messense/macos-cross-toolchains
-            brew install FiloSottile/musl-cross/musl-cross mingw-w64
-            wget https://github.com/mstorsjo/llvm-mingw/releases/download/20250709/llvm-mingw-20250709-ucrt-macos-universal.tar.xz
-            tar -xzf llvm-mingw-20250709-ucrt-macos-universal.tar.xz
-            export PATH="$(pwd)/llvm-mingw-20250709-ucrt-macos-universal/bin:$PATH"
-            CC=aarch64-linux-musl-gcc GOOS=linux GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.arm64.linux.so main.go
-            CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.amd64.windows.dll main.go
-            CC=i686-w64-mingw32-gcc GOOS=windows GOARCH=386 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.386.windows.dll main.go
-            CC=aarch64-w64-mingw32-gcc GOOS=windows GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.arm64.windows.dll main.go
-            CC=gcc GOOS=darwin GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.arm64.darwin.dylib main.go
-            CC=gcc GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -o libexcelize.amd64.darwin.dylib main.go
+          "
+
+          docker run --rm -v $PWD:/src -w /src quay.io/pypa/manylinux2014_i686 bash -c "
+            yum install -y wget || true
+            wget https://go.dev/dl/go1.25.3.linux-386.tar.gz && \
+            tar -C /usr/local -xzf go1.25.3.linux-386.tar.gz && \
+            export PATH=/usr/local/go/bin:\$PATH && \
+            CGO_ENABLED=1 CC=gcc GOOS=linux GOARCH=386 \
+            go build -buildmode=c-shared -ldflags='-s -w' -trimpath \
+            -o libexcelize.386.linux.so main.go && \
             rm -f libexcelize.*.h
-          fi
+          "
+
+      - name: Build Linux ARM64 Shared Library
+        if: matrix.os == 'ubuntu-24.04-arm'
+        env:
+          CGO_ENABLED: 1
+        run: |
+          docker run --rm -v $PWD:/src -w /src quay.io/pypa/manylinux2014_aarch64 bash -c "
+            yum install -y wget || true
+            wget https://go.dev/dl/go1.25.3.linux-arm64.tar.gz && \
+            tar -C /usr/local -xzf go1.25.3.linux-arm64.tar.gz && \
+            export PATH=/usr/local/go/bin:\$PATH && \
+            CGO_ENABLED=1 CC=gcc GOOS=linux GOARCH=arm64 \
+            go build -buildmode=c-shared -ldflags='-s -w' -trimpath \
+            -o libexcelize.arm64.linux.so main.go && \
+            rm -f libexcelize.*.h
+          "
+
+      - name: Build Shared Library
+        if: matrix.os == 'macos-latest'
+        env:
+          CGO_ENABLED: 1
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20250709/llvm-mingw-20250709-ucrt-macos-universal.tar.xz
+          tar -xzf llvm-mingw-20250709-ucrt-macos-universal.tar.xz
+          export PATH="$(pwd)/llvm-mingw-20250709-ucrt-macos-universal/bin:$PATH"
+          CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -trimpath -o libexcelize.amd64.windows.dll main.go
+          CC=i686-w64-mingw32-gcc GOOS=windows GOARCH=386 go build -ldflags "-s -w" -buildmode=c-shared -trimpath -o libexcelize.386.windows.dll main.go
+          CC=aarch64-w64-mingw32-gcc GOOS=windows GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -trimpath -o libexcelize.arm64.windows.dll main.go
+          CC=gcc GOOS=darwin GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -trimpath -o libexcelize.arm64.darwin.dylib main.go
+          CC=gcc GOOS=darwin GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -trimpath -o libexcelize.amd64.darwin.dylib main.go
+          rm -f libexcelize.*.h
 
       - name: Upload Linux Artifacts
         if: matrix.os == 'ubuntu-24.04'
@@ -128,13 +160,20 @@ jobs:
             libexcelize.386.linux.so
             libexcelize.amd64.linux.so
 
+      - name: Upload Linux ARM64 Artifacts
+        if: matrix.os == 'ubuntu-24.04-arm'
+        uses: actions/upload-artifact@v4
+        with:
+          name: linux-arm64-artifacts
+          path: |
+            libexcelize.arm64.linux.so
+
       - name: Upload Darwin Artifacts
         if: matrix.os == 'macos-latest'
         uses: actions/upload-artifact@v4
         with:
           name: darwin-artifacts
           path: |
-            libexcelize.arm64.linux.so
             libexcelize.amd64.windows.dll
             libexcelize.386.windows.dll
             libexcelize.arm64.windows.dll

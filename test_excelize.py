@@ -34,30 +34,48 @@ class TestExcelize(unittest.TestCase):
         unittest (unittest.TestCase): unittest class.
     """
 
-    @patch("platform.architecture")
-    def test_platform_architecture(self, mock_architecture):
-        mock_architecture.return_value = ("unknown", "ELF")
-        with self.assertRaises(SystemExit):
-            excelize.load_lib()
-
     @patch("platform.machine")
-    def test_platform_machine(self, mock_machine):
+    @patch("platform.python_compiler")
+    @patch("platform.system")
+    def test_python_compiler(self, mock_system, mock_python_compiler, mock_machine):
+        mock_system.return_value = "unknown"
+        mock_python_compiler.return_value = "unknown"
         mock_machine.return_value = "unknown"
         with self.assertRaises(SystemExit):
             excelize.load_lib()
 
-    @patch("platform.machine")
+    @patch("struct.calcsize")
+    @patch("platform.python_compiler")
     @patch("platform.system")
-    def test_platform_machine_arm64(self, mock_machine, mock_system):
-        mock_machine.return_value = "darwin"
-        mock_system.return_value = "arm64"
+    def test_python_compiler_386(
+        self, mock_system, mock_python_compiler, mock_calcsize
+    ):
+        mock_system.return_value = "windows"
+        mock_python_compiler.return_value = "i386"
+        mock_calcsize.return_value = 4
         excelize.load_lib()
 
+    @patch("struct.calcsize")
+    @patch("platform.python_compiler")
     @patch("platform.system")
-    def test_platform_system(self, mock_system):
-        mock_system.return_value = "unknown"
-        with self.assertRaises(SystemExit):
-            excelize.load_lib()
+    def test_python_compiler_arm64(
+        self, mock_system, mock_python_compiler, mock_calcsize
+    ):
+        mock_system.return_value = "windows"
+        mock_python_compiler.return_value = "arm64"
+        mock_calcsize.return_value = 8
+        excelize.load_lib()
+
+    @patch("struct.calcsize")
+    @patch("platform.python_compiler")
+    @patch("platform.system")
+    def test_python_compiler_amd64(
+        self, mock_system, mock_python_compiler, mock_calcsize
+    ):
+        mock_system.return_value = "windows"
+        mock_python_compiler.return_value = "amd64"
+        mock_calcsize.return_value = 8
+        excelize.load_lib()
 
     def test_c_value_to_py(self):
         self.assertIsNone(excelize.c_value_to_py(None, None))
@@ -903,7 +921,7 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(
             str(context.exception),
             "expected type AppProperties for argument 'app_properties', but got int",
-        )       
+        )
         with self.assertRaises(RuntimeError) as context:
             f.set_default_font("")
         self.assertEqual(str(context.exception), expected)

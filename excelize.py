@@ -33,6 +33,7 @@ from ctypes import (
 import os
 import platform
 import sys
+import struct
 import types_go
 from types_py import *
 
@@ -42,8 +43,15 @@ def load_lib() -> Optional[str]:
     Load the shared library based on the current platform and architecture.
     """
     system = platform.system().lower()
-    arch = platform.architecture()[0]
-    machine = platform.machine().lower()
+    compiler = platform.python_compiler().lower()
+    bit = "64bit" if struct.calcsize("P") * 8 == 64 else "32bit"
+    arch = platform.machine().lower()
+    if "aarch" in compiler or "arm" in compiler:
+        arch = "arm64"
+    elif "amd64" in compiler or "x86_64" in compiler or "64" in compiler:
+        arch = "amd64"
+    elif "i386" in compiler or "i686" in compiler or "32" in compiler:
+        arch = "x86"
     ext_map = {"linux": ".so", "darwin": ".dylib", "windows": ".dll"}
     arch_map = {
         "linux": {
@@ -80,8 +88,8 @@ def load_lib() -> Optional[str]:
             },
         },
     }
-    if system in ext_map and arch in arch_map.get(system, {}):
-        arch_name = arch_map[system][arch].get(machine)
+    if system in ext_map and bit in arch_map.get(system, {}):
+        arch_name = arch_map[system][bit].get(arch)
         if arch_name:
             return f"libexcelize.{arch_name}.{system}{ext_map[system]}"
 
@@ -91,7 +99,7 @@ def load_lib() -> Optional[str]:
 
 lib = CDLL(os.path.join(os.path.dirname(__file__), load_lib()))
 ENCODE = "utf-8"
-__version__ = "0.0.5"
+__version__ = "0.0.6"
 uppercase_words = ["id", "rgb", "sq", "xml"]
 
 

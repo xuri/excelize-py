@@ -1750,8 +1750,8 @@ func StreamAddTable(swIdx int, table *C.struct_Table) *C.char {
 // break on another.
 //
 //export StreamInsertPageBreak
-func StreamInsertPageBreak(swIDx int, cell *C.char) *C.char {
-	streamWriter, ok := sw.Load(swIDx)
+func StreamInsertPageBreak(swIdx int, cell *C.char) *C.char {
+	streamWriter, ok := sw.Load(swIdx)
 	if !ok {
 		return C.CString(errStreamWriterPtr)
 	}
@@ -1766,8 +1766,8 @@ func StreamInsertPageBreak(swIDx int, cell *C.char) *C.char {
 // existing merged cell.
 //
 //export StreamMergeCell
-func StreamMergeCell(swIDx int, topLeftCell, bottomRightCell *C.char) *C.char {
-	streamWriter, ok := sw.Load(swIDx)
+func StreamMergeCell(swIdx int, topLeftCell, bottomRightCell *C.char) *C.char {
+	streamWriter, ok := sw.Load(swIdx)
 	if !ok {
 		return C.CString(errStreamWriterPtr)
 	}
@@ -1782,8 +1782,8 @@ func StreamMergeCell(swIDx int, topLeftCell, bottomRightCell *C.char) *C.char {
 // the 'StreamSetColWidth' function before the 'StreamSetRow' function.
 //
 //export StreamSetColWidth
-func StreamSetColWidth(swIDx int, minVal, maxVal int, width float64) *C.char {
-	streamWriter, ok := sw.Load(swIDx)
+func StreamSetColWidth(swIdx int, minVal, maxVal int, width float64) *C.char {
+	streamWriter, ok := sw.Load(swIdx)
 	if !ok {
 		return C.CString(errStreamWriterPtr)
 	}
@@ -1798,13 +1798,13 @@ func StreamSetColWidth(swIDx int, minVal, maxVal int, width float64) *C.char {
 // call the 'StreamSetPanes' function before the 'StreamSetRow' function.
 //
 //export StreamSetPanes
-func StreamSetPanes(swIDx int, opts *C.struct_Panes) *C.char {
+func StreamSetPanes(swIdx int, opts *C.struct_Panes) *C.char {
 	var options excelize.Panes
 	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.Panes{}))
 	if err != nil {
 		return C.CString(err.Error())
 	}
-	streamWriter, ok := sw.Load(swIDx)
+	streamWriter, ok := sw.Load(swIdx)
 	if !ok {
 		return C.CString(errStreamWriterPtr)
 	}
@@ -1820,8 +1820,8 @@ func StreamSetPanes(swIDx int, opts *C.struct_Panes) *C.char {
 // function to end the streaming writing process.
 //
 //export StreamSetRow
-func StreamSetRow(swIDx int, cell *C.char, row *C.struct_Interface, length int) *C.char {
-	streamWriter, ok := sw.Load(swIDx)
+func StreamSetRow(swIdx int, cell *C.char, row *C.struct_Interface, length int) *C.char {
+	streamWriter, ok := sw.Load(swIdx)
 	if !ok {
 		return C.CString(errStreamWriterPtr)
 	}
@@ -1838,8 +1838,8 @@ func StreamSetRow(swIDx int, cell *C.char, row *C.struct_Interface, length int) 
 // StreamFlush ending the streaming writing process.
 //
 //export StreamFlush
-func StreamFlush(swIDx int, sheet *C.char) *C.char {
-	streamWriter, ok := sw.Load(swIDx)
+func StreamFlush(swIdx int) *C.char {
+	streamWriter, ok := sw.Load(swIdx)
 	if !ok {
 		return C.CString(errStreamWriterPtr)
 	}
