@@ -784,6 +784,21 @@ class _GetRowsResult(Structure):
     ]
 
 
+class _MergeCell(Structure):
+    _fields_ = [
+        ("Ref", c_char_p),
+        ("Value", c_char_p),
+    ]
+
+
+class _GetMergeCellsResult(Structure):
+    _fields_ = [
+        ("MergeCellsLen", c_int),
+        ("MergeCells", POINTER(_MergeCell)),
+        ("Err", c_char_p),
+    ]
+
+
 class _GetCellRichTextResult(Structure):
     _fields_ = [
         ("RunsLen", c_int),

@@ -398,6 +398,17 @@ class GraphicOptions:
 
 
 @dataclass
+class MergeCell:
+    ref: str = ""
+    value: str = ""
+
+
+@dataclass
+class GetMergeCellsResult:
+    merge_cells: Optional[List[MergeCell]] = None
+
+
+@dataclass
 class PageLayoutMarginsOptions:
     bottom: Optional[float] = None
     footer: Optional[float] = None

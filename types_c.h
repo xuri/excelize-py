@@ -803,6 +803,19 @@ struct GetRowsResult
     char *err;
 };
 
+struct MergeCell
+{
+    char *Ref;
+    char *Value;
+};
+
+struct GetMergeCellsResult
+{
+    int MergeCellsLen;
+    struct MergeCell *MergeCells;
+    char *Err;
+};
+
 struct GetCellRichTextResult
 {
     int RunsLen;

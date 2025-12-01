@@ -3110,6 +3110,35 @@ class File:
             return rows
         raise RuntimeError(err)
 
+    def get_merge_cells(self, sheet: str) -> List[MergeCell]:
+        """
+        Get merged cell ranges in a worksheet by given worksheet name.
+
+        Args
+        ----
+        sheet : str
+            The worksheet name.
+
+        Returns
+        -------
+        List[MergeCell]
+            List of merged cell ranges, each with ``ref`` (e.g. "A1:B2") and
+            ``value`` (the merged cell's value).
+        """
+        prepare_args([sheet], [argsRule("sheet", [str])])
+        lib.GetMergeCells.restype = types_go._GetMergeCellsResult
+        res = lib.GetMergeCells(self.file_index, sheet.encode(ENCODE))
+        err = res.Err.decode(ENCODE) if res.Err else ""
+
+        merged: List[MergeCell] = []
+        result = c_value_to_py(res, GetMergeCellsResult()).merge_cells
+        if result:
+            merged.extend(result)
+
+        if not err:
+            return merged
+        raise RuntimeError(err)
+
     def get_sheet_dimension(self, sheet: str) -> str:
         """
         Get style definition by given style index.

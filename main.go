@@ -1519,6 +1519,46 @@ func GetTables(idx int, sheet *C.char) C.struct_GetTablesResult {
 	return C.struct_GetTablesResult{TablesLen: C.int(len(tables)), Tables: (*C.struct_Table)(cArray), Err: C.CString(emptyString)}
 }
 
+// GetMergeCells provides the method to get all merged cell ranges in a worksheet
+// by given worksheet name.
+//
+//export GetMergeCells
+func GetMergeCells(idx int, sheet *C.char) C.struct_GetMergeCellsResult {
+	type MergeCell struct {
+		Ref   string
+		Value string
+	}
+	type GetMergeCellsResult struct {
+		MergeCells []MergeCell
+	}
+
+	var result GetMergeCellsResult
+
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetMergeCellsResult{Err: C.CString(errFilePtr)}
+	}
+
+	mergedCells, err := f.(*excelize.File).GetMergeCells(C.GoString(sheet))
+	if err != nil {
+		return C.struct_GetMergeCellsResult{Err: C.CString(err.Error())}
+	}
+
+	for _, mc := range mergedCells {
+		ref := mc.GetStartAxis() + ":" + mc.GetEndAxis()
+		value := mc.GetCellValue()
+		result.MergeCells = append(result.MergeCells, MergeCell{Ref: ref, Value: value})
+	}
+
+	cVal, err := goValueToC(reflect.ValueOf(result), reflect.ValueOf(&C.struct_GetMergeCellsResult{}))
+	if err != nil {
+		return C.struct_GetMergeCellsResult{Err: C.CString(err.Error())}
+	}
+	ret := cVal.Elem().Interface().(C.struct_GetMergeCellsResult)
+	ret.Err = C.CString(emptyString)
+	return ret
+}
+
 // GetWorkbookProps provides a function to gets workbook properties.
 //
 //export GetWorkbookProps

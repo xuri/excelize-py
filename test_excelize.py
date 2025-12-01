@@ -2242,6 +2242,21 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.save_as(os.path.join("test", "TestSetSheetCol.xlsx")))
         self.assertIsNone(f.close())
 
+    def test_get_merge_cells(self):
+        f = excelize.new_file()
+
+        self.assertIsNone(f.set_cell_value("Sheet1", "A1", "Merged"))
+        self.assertIsNone(f.set_cell_value("Sheet1", "B1", "Merged"))
+        self.assertIsNone(f.set_cell_value("Sheet1", "A2", "Merged"))
+        self.assertIsNone(f.set_cell_value("Sheet1", "B2", "Merged"))
+        self.assertIsNone(f.merge_cell("Sheet1", "A1", "B2"))
+
+        merged = f.get_merge_cells("Sheet1")
+        self.assertEqual(len(merged), 1)
+        self.assertEqual(merged[0].ref, "A1:B2")
+        self.assertEqual(merged[0].value, "Merged")
+        self.assertIsNone(f.close())
+
     def test_sheet_view(self):
         f = excelize.new_file()
         expected = excelize.ViewOptions(
