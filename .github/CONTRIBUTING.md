@@ -157,11 +157,11 @@ suggested modifications and push additional commits to your feature branch. Post
 a comment after pushing. New commits show up in the pull request automatically,
 but the reviewers are notified only when you comment.
 
-Pull requests must be cleanly rebased on top of master without multiple branches
+Pull requests must be cleanly rebased on top of main without multiple branches
 mixed into the PR.
 
-**Git tip**: If your PR no longer merges cleanly, use `rebase master` in your
-feature branch to update your pull request rather than `merge master`.
+**Git tip**: If your PR no longer merges cleanly, use `rebase main` in your
+feature branch to update your pull request rather than `merge main`.
 
 Before you make a pull request, squash your commits into logical units of work
 using `git rebase -i` and `git push -f`. A logical unit of work is a consistent

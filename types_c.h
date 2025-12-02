@@ -475,6 +475,13 @@ struct ChartMarker
     int Size;
 };
 
+// ChartDataPoint directly maps the format settings of the chart data point for
+// doughnut, pie and 3D pie charts.
+struct ChartDataPoint {
+    int Index;
+    struct Fill Fill;
+};
+
 // ChartSeries directly maps the format settings of the chart series.
 struct ChartSeries
 {
@@ -488,6 +495,8 @@ struct ChartSeries
     struct ChartMarker Marker;
     struct ChartDataLabel DataLabel;
     unsigned char DataLabelPosition;
+    int DataPointLen;
+    struct ChartDataPoint *DataPoint;
 };
 
 // Chart directly maps the format settings of the chart.

@@ -28,7 +28,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Get dependencies
         run: |
@@ -85,7 +85,7 @@ jobs:
           python-version: "3.9"
 
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Get dependencies
         run: |
@@ -99,8 +99,8 @@ jobs:
         run: |
           docker run --rm -v $PWD:/src -w /src quay.io/pypa/manylinux2014_x86_64 bash -c "
             yum install -y wget || true
-            wget https://go.dev/dl/go1.25.3.linux-amd64.tar.gz && \
-            tar -C /usr/local -xzf go1.25.3.linux-amd64.tar.gz && \
+            wget https://go.dev/dl/go1.25.4.linux-amd64.tar.gz && \
+            tar -C /usr/local -xzf go1.25.4.linux-amd64.tar.gz && \
             export PATH=/usr/local/go/bin:\$PATH && \
             CGO_ENABLED=1 CC=gcc GOOS=linux GOARCH=amd64 \
             go build -buildmode=c-shared -ldflags='-s -w' -trimpath \
@@ -110,8 +110,8 @@ jobs:
 
           docker run --rm -v $PWD:/src -w /src quay.io/pypa/manylinux2014_i686 bash -c "
             yum install -y wget || true
-            wget https://go.dev/dl/go1.25.3.linux-386.tar.gz && \
-            tar -C /usr/local -xzf go1.25.3.linux-386.tar.gz && \
+            wget https://go.dev/dl/go1.25.4.linux-386.tar.gz && \
+            tar -C /usr/local -xzf go1.25.4.linux-386.tar.gz && \
             export PATH=/usr/local/go/bin:\$PATH && \
             CGO_ENABLED=1 CC=gcc GOOS=linux GOARCH=386 \
             go build -buildmode=c-shared -ldflags='-s -w' -trimpath \
@@ -126,8 +126,8 @@ jobs:
         run: |
           docker run --rm -v $PWD:/src -w /src quay.io/pypa/manylinux2014_aarch64 bash -c "
             yum install -y wget || true
-            wget https://go.dev/dl/go1.25.3.linux-arm64.tar.gz && \
-            tar -C /usr/local -xzf go1.25.3.linux-arm64.tar.gz && \
+            wget https://go.dev/dl/go1.25.4.linux-arm64.tar.gz && \
+            tar -C /usr/local -xzf go1.25.4.linux-arm64.tar.gz && \
             export PATH=/usr/local/go/bin:\$PATH && \
             CGO_ENABLED=1 CC=gcc GOOS=linux GOARCH=arm64 \
             go build -buildmode=c-shared -ldflags='-s -w' -trimpath \
@@ -140,10 +140,9 @@ jobs:
         env:
           CGO_ENABLED: 1
         run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20250709/llvm-mingw-20250709-ucrt-macos-universal.tar.xz
-          tar -xzf llvm-mingw-20250709-ucrt-macos-universal.tar.xz
-          export PATH="$(pwd)/llvm-mingw-20250709-ucrt-macos-universal/bin:$PATH"
+          wget https://github.com/mstorsjo/llvm-mingw/releases/download/20251118/llvm-mingw-20251118-ucrt-macos-universal.tar.xz
+          tar -xzf llvm-mingw-20251118-ucrt-macos-universal.tar.xz
+          export PATH="$(pwd)/llvm-mingw-20251118-ucrt-macos-universal/bin:$PATH"
           CC=x86_64-w64-mingw32-gcc GOOS=windows GOARCH=amd64 go build -ldflags "-s -w" -buildmode=c-shared -trimpath -o libexcelize.amd64.windows.dll main.go
           CC=i686-w64-mingw32-gcc GOOS=windows GOARCH=386 go build -ldflags "-s -w" -buildmode=c-shared -trimpath -o libexcelize.386.windows.dll main.go
           CC=aarch64-w64-mingw32-gcc GOOS=windows GOARCH=arm64 go build -ldflags "-s -w" -buildmode=c-shared -trimpath -o libexcelize.arm64.windows.dll main.go
@@ -153,7 +152,7 @@ jobs:
 
       - name: Upload Linux Artifacts
         if: matrix.os == 'ubuntu-24.04'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: linux-artifacts
           path: |
@@ -162,7 +161,7 @@ jobs:
 
       - name: Upload Linux ARM64 Artifacts
         if: matrix.os == 'ubuntu-24.04-arm'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: linux-arm64-artifacts
           path: |
@@ -170,7 +169,7 @@ jobs:
 
       - name: Upload Darwin Artifacts
         if: matrix.os == 'macos-latest'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v5
         with:
           name: darwin-artifacts
           path: |
@@ -197,10 +196,10 @@ jobs:
           python-version: "3.9"
 
       - name: Checkout code
-        uses: actions/checkout@v5
+        uses: actions/checkout@v6
 
       - name: Download Artifacts
-        uses: actions/download-artifact@v5
+        uses: actions/download-artifact@v6
         with:
           merge-multiple: true
           path: ./

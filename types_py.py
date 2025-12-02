@@ -606,6 +606,12 @@ class ChartMarker:
 
 
 @dataclass
+class ChartDataPoint:
+    index: int = 0
+    fill: Fill = Fill
+
+
+@dataclass
 class ChartSeries:
     name: str = ""
     categories: str = ""
@@ -619,6 +625,7 @@ class ChartSeries:
     data_label_position: ChartDataLabelPositionType = (
         ChartDataLabelPositionType.ChartDataLabelsPositionUnset
     )
+    data_point: Optional[List[ChartDataPoint]] = None
 
 
 @dataclass

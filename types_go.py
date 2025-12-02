@@ -446,6 +446,13 @@ class _ChartMarker(Structure):
     ]
 
 
+class _ChartDataPoint(Structure):
+    _fields_ = [
+        ("Index", c_int),
+        ("Fill", _Fill),
+    ]
+
+
 class _ChartSeries(Structure):
     _fields_ = [
         ("Name", c_char_p),
@@ -458,6 +465,8 @@ class _ChartSeries(Structure):
         ("Marker", _ChartMarker),
         ("DataLabel", _ChartDataLabel),
         ("DataLabelPosition", c_uint),
+        ("DataPointLen", c_int),
+        ("DataPoint", POINTER(_ChartDataPoint)),
     ]
 
 
