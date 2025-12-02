@@ -2174,6 +2174,43 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.save_as(os.path.join("test", "TestDocProps.xlsx")))
         self.assertIsNone(f.close())
 
+    def test_merge_cell(self):
+        f = excelize.new_file()
+        self.assertIsNone(f.set_sheet_row("Sheet1", "A1", ["A1", "B1"]))
+        self.assertIsNone(f.set_sheet_row("Sheet1", "A2", ["A2", "B2"]))
+        self.assertIsNone(f.set_sheet_row("Sheet1", "A3", [None, "B3", "C3"]))
+        self.assertIsNone(f.set_sheet_row("Sheet1", "A4", [None, "B4", "C4"]))
+        self.assertIsNone(f.merge_cell("Sheet1", "A1", "B2"))
+        self.assertIsNone(f.merge_cell("Sheet1", "B3", "C4"))
+        merged_cells = f.get_merge_cells("Sheet1")
+        self.assertEqual(len(merged_cells), 2)
+        self.assertEqual(merged_cells[0].get_cell_value(), "A1")
+        self.assertEqual(merged_cells[1].get_cell_value(), "B3")
+        self.assertEqual(merged_cells[0].get_start_axis(), "A1")
+        self.assertEqual(merged_cells[0].get_end_axis(), "B2")
+        self.assertEqual(merged_cells[1].get_start_axis(), "B3")
+        self.assertEqual(merged_cells[1].get_end_axis(), "C4")
+        merged_cells = f.get_merge_cells("Sheet1", True)
+        self.assertEqual(len(merged_cells), 2)
+        self.assertEqual(merged_cells[0].get_cell_value(), "")
+        self.assertEqual(merged_cells[1].get_cell_value(), "")
+        self.assertEqual(merged_cells[0].get_start_axis(), "A1")
+        self.assertEqual(merged_cells[0].get_end_axis(), "B2")
+        self.assertEqual(merged_cells[1].get_start_axis(), "B3")
+        self.assertEqual(merged_cells[1].get_end_axis(), "C4")
+
+        with self.assertRaises(RuntimeError) as context:
+            f.get_merge_cells("SheetN")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.get_merge_cells("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type bool for argument 'without_values', but got int",
+        )
+        self.assertIsNone(f.save_as(os.path.join("test", "TestMergeCell.xlsx")))
+        self.assertIsNone(f.close())
+
     def test_set_sheet_col(self):
         f = excelize.new_file()
         self.assertIsNone(
@@ -2240,21 +2277,6 @@ class TestExcelize(unittest.TestCase):
             "expected type str for argument 'target', but got int",
         )
         self.assertIsNone(f.save_as(os.path.join("test", "TestSetSheetCol.xlsx")))
-        self.assertIsNone(f.close())
-
-    def test_get_merge_cells(self):
-        f = excelize.new_file()
-
-        self.assertIsNone(f.set_cell_value("Sheet1", "A1", "Merged"))
-        self.assertIsNone(f.set_cell_value("Sheet1", "B1", "Merged"))
-        self.assertIsNone(f.set_cell_value("Sheet1", "A2", "Merged"))
-        self.assertIsNone(f.set_cell_value("Sheet1", "B2", "Merged"))
-        self.assertIsNone(f.merge_cell("Sheet1", "A1", "B2"))
-
-        merged = f.get_merge_cells("Sheet1")
-        self.assertEqual(len(merged), 1)
-        self.assertEqual(merged[0].ref, "A1:B2")
-        self.assertEqual(merged[0].value, "Merged")
         self.assertIsNone(f.close())
 
     def test_sheet_view(self):

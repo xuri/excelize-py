@@ -497,6 +497,46 @@ def prepare_args(args: List, types: List[argsRule]):
             )
 
 
+class MergeCell:
+    """
+    MergeCell define a merged cell data. It consists of the following structure.
+    Example: `["D4:E10", "cell value"]`
+    """
+
+    arr: List[str]
+
+    def __init__(self, arr: List[str]):
+        self.arr = arr
+
+    def get_cell_value(self) -> str:
+        """
+        Returns merged cell value.
+
+        Returns:
+            str: The cell value of the merged cell range.
+        """
+        return self.arr[1]
+
+    def get_start_axis(self) -> str:
+        """
+        Returns the top left cell reference of merged range, for example: `C2`.
+
+        Returns:
+            str: The top left cell reference of the merged cell range.
+        """
+        return self.arr[0].split(":")[0]
+
+    def get_end_axis(self) -> str:
+        """
+        Returns the bottom right cell reference of merged range, for example:
+        `D4`.
+
+        Returns:
+            str: The bottom right cell of the merged cell range.
+        """
+        return self.arr[0].split(":")[1]
+
+
 class StreamWriter:
     """
     StreamWriter is a streaming writer for writing large amounts of data to a
@@ -859,6 +899,7 @@ class File:
             marker
             data_label
             data_label_position
+            data_point
 
         name: Set the name for the series. The name is displayed in the chart
         legend and in the formula bar. The 'name' property is optional and if it
@@ -911,6 +952,10 @@ class File:
 
         data_label_position: This sets the position of the chart series data
         label.
+
+        data_point: This sets the format for individual data points in a
+        doughnut, pie or 3D pie chart series. The 'data_point' property is
+        optional.
 
         Set properties of the chart legend. The options that can be set are:
 
@@ -2276,7 +2321,7 @@ class File:
         Args:
             sheet (str): The worksheet name
             cell (str): The cell reference
-            *opts (Options): Optional parameters for get cell value
+            *opts (Options): Optional parameters for calculate cell value
 
         Returns:
             str: Return the calculation result as a string if no
@@ -2954,6 +2999,55 @@ class File:
             return arr
         raise RuntimeError(err)
 
+    def get_merge_cells(self, sheet: str, *without_values: bool) -> List[MergeCell]:
+        """
+        Get all merged cells from a specific worksheet. If the `without_values`
+        parameter is set to true, it will not return the cell values of merged
+        cells, only the range reference will be returned.
+
+        Args:
+            sheet (str): The worksheet name
+            *without_values (bool): Optional parameter to exclude cell values
+
+        Returns:
+            List[MergeCell]: Return all the merged cells if no error occurred,
+            otherwise raise a RuntimeError with the message.
+
+        Example:
+            For example get all merged cells on `Sheet1`:
+
+            ```python
+            merge_cells = f.get_merge_cells("Sheet1")
+            ```
+
+            If you want to get merged cells without cell values, you can use the
+            following code:
+
+            ```python
+            merge_cells = f.get_merge_cells("Sheet1", True)
+            ```
+        """
+        prepare_args(
+            [sheet, without_values[0]] if without_values else [sheet],
+            [argsRule("sheet", [str]), argsRule("without_values", [bool], True)],
+        )
+        lib.GetMergeCells.restype = types_go._GetRowsResult
+        merge_cells = []
+        res = lib.GetMergeCells(
+            self.file_index,
+            sheet.encode(ENCODE),
+            without_values[0] if without_values else False,
+        )
+        err = res.err.decode(ENCODE)
+        result = c_value_to_py(res, GetRowsResult()).row
+        if result:
+            for row in result:
+                if row.cell:
+                    merge_cells.append(MergeCell([cell for cell in row.cell]))
+        if not err:
+            return merge_cells
+        raise RuntimeError(err)
+
     def get_row_height(self, sheet: str, row: int) -> float:
         """
         Get row height by given worksheet name and row number.
@@ -3101,42 +3195,12 @@ class File:
         res = lib.GetRows(self.file_index, sheet.encode(ENCODE), options)
         err = res.err.decode(ENCODE)
         result = c_value_to_py(res, GetRowsResult()).row
-
         if result:
             for row in result:
                 if row.cell:
                     rows.append([cell for cell in row.cell])
         if not err:
             return rows
-        raise RuntimeError(err)
-
-    def get_merge_cells(self, sheet: str) -> List[MergeCell]:
-        """
-        Get merged cell ranges in a worksheet by given worksheet name.
-
-        Args
-        ----
-        sheet : str
-            The worksheet name.
-
-        Returns
-        -------
-        List[MergeCell]
-            List of merged cell ranges, each with ``ref`` (e.g. "A1:B2") and
-            ``value`` (the merged cell's value).
-        """
-        prepare_args([sheet], [argsRule("sheet", [str])])
-        lib.GetMergeCells.restype = types_go._GetMergeCellsResult
-        res = lib.GetMergeCells(self.file_index, sheet.encode(ENCODE))
-        err = res.Err.decode(ENCODE) if res.Err else ""
-
-        merged: List[MergeCell] = []
-        result = c_value_to_py(res, GetMergeCellsResult()).merge_cells
-        if result:
-            merged.extend(result)
-
-        if not err:
-            return merged
         raise RuntimeError(err)
 
     def get_sheet_dimension(self, sheet: str) -> str:
@@ -5361,8 +5425,8 @@ class File:
     def set_sheet_background(self, sheet: str, picture: str) -> None:
         """
         Set background picture by given worksheet name and file path. Supported
-        image types: BMP, EMF, EMZ, GIF, JPEG, JPG, PNG, SVG, TIF, TIFF, WMF,
-        and WMZ.
+        image types: BMP, EMF, EMZ, GIF, ICO, JPEG, JPG, PNG, SVG, TIF, TIFF,
+        WMF, and WMZ.
 
         Args:
             sheet (str): The worksheet name
@@ -5390,8 +5454,8 @@ class File:
     ) -> None:
         """
         Set background picture by given worksheet name, extension name and image
-        data. Supported image types: BMP, EMF, EMZ, GIF, JPEG, JPG, PNG, SVG,
-        TIF, TIFF, WMF, and WMZ.
+        data. Supported image types: BMP, EMF, EMZ, GIF, ICO, JPEG, JPG, PNG,
+        SVG, TIF, TIFF, WMF, and WMZ.
 
         Args:
             sheet (str): The worksheet name

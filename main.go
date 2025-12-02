@@ -35,6 +35,13 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
+type Row struct {
+	Cell []string
+}
+type GetRowsResult struct {
+	Row []Row
+}
+
 const (
 	Nil     C.int = 0
 	Int     C.int = 1
@@ -550,8 +557,8 @@ func AddFormControl(idx int, sheet *C.char, opts *C.struct_FormControl) *C.char 
 
 // AddPicture add picture in a sheet by given picture format set (such as
 // offset, scale, aspect ratio setting and print settings) and file path,
-// supported image types: BMP, EMF, EMZ, GIF, JPEG, JPG, PNG, SVG, TIF, TIFF,
-// WMF, and WMZ.
+// supported image types: BMP, EMF, EMZ, GIF, ICO, JPEG, JPG, PNG, SVG, TIF,
+// TIFF, WMF and WMZ.
 //
 //export AddPicture
 func AddPicture(idx int, sheet, cell, name *C.char, opts *C.struct_GraphicOptions) *C.char {
@@ -1250,6 +1257,36 @@ func GetDefinedName(idx int) C.struct_GetDefinedNameResult {
 	return C.struct_GetDefinedNameResult{DefinedNamesLen: C.int(len(definedNames)), DefinedNames: (*C.struct_DefinedName)(cArray), Err: C.CString(emptyString)}
 }
 
+// GetMergeCells provides a function to get all merged cells from a specific
+// worksheet. If the `withoutValues` parameter is set to true, it will not
+// return the cell values of merged cells, only the range reference will be
+// returned.
+//
+//export GetMergeCells
+func GetMergeCells(idx int, sheet *C.char, withoutValues bool) C.struct_GetRowsResult {
+	var result GetRowsResult
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetRowsResult{err: C.CString(errFilePtr)}
+	}
+	rows, err := f.(*excelize.File).GetMergeCells(C.GoString(sheet), withoutValues)
+	if err != nil {
+		return C.struct_GetRowsResult{err: C.CString(err.Error())}
+	}
+	for _, row := range rows {
+		var r Row
+		r.Cell = append(r.Cell, row...)
+		result.Row = append(result.Row, r)
+	}
+	cVal, err := goValueToC(reflect.ValueOf(result), reflect.ValueOf(&C.struct_GetRowsResult{}))
+	if err != nil {
+		return C.struct_GetRowsResult{err: C.CString(err.Error())}
+	}
+	ret := cVal.Elem().Interface().(C.struct_GetRowsResult)
+	ret.err = C.CString(emptyString)
+	return ret
+}
+
 // GetRowHeight provides a function to get row height by given worksheet name
 // and row number.
 //
@@ -1308,12 +1345,6 @@ func GetRowVisible(idx int, sheet *C.char, row int) C.struct_BoolErrorResult {
 //
 //export GetRows
 func GetRows(idx int, sheet *C.char, opts *C.struct_Options) C.struct_GetRowsResult {
-	type Row struct {
-		Cell []string
-	}
-	type GetRowsResult struct {
-		Row []Row
-	}
 	var (
 		options excelize.Options
 		result  GetRowsResult
@@ -1517,46 +1548,6 @@ func GetTables(idx int, sheet *C.char) C.struct_GetTablesResult {
 		*(*C.struct_Table)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(C.struct_Table{}))) = cVal.Elem().Interface().(C.struct_Table)
 	}
 	return C.struct_GetTablesResult{TablesLen: C.int(len(tables)), Tables: (*C.struct_Table)(cArray), Err: C.CString(emptyString)}
-}
-
-// GetMergeCells provides the method to get all merged cell ranges in a worksheet
-// by given worksheet name.
-//
-//export GetMergeCells
-func GetMergeCells(idx int, sheet *C.char) C.struct_GetMergeCellsResult {
-	type MergeCell struct {
-		Ref   string
-		Value string
-	}
-	type GetMergeCellsResult struct {
-		MergeCells []MergeCell
-	}
-
-	var result GetMergeCellsResult
-
-	f, ok := files.Load(idx)
-	if !ok {
-		return C.struct_GetMergeCellsResult{Err: C.CString(errFilePtr)}
-	}
-
-	mergedCells, err := f.(*excelize.File).GetMergeCells(C.GoString(sheet))
-	if err != nil {
-		return C.struct_GetMergeCellsResult{Err: C.CString(err.Error())}
-	}
-
-	for _, mc := range mergedCells {
-		ref := mc.GetStartAxis() + ":" + mc.GetEndAxis()
-		value := mc.GetCellValue()
-		result.MergeCells = append(result.MergeCells, MergeCell{Ref: ref, Value: value})
-	}
-
-	cVal, err := goValueToC(reflect.ValueOf(result), reflect.ValueOf(&C.struct_GetMergeCellsResult{}))
-	if err != nil {
-		return C.struct_GetMergeCellsResult{Err: C.CString(err.Error())}
-	}
-	ret := cVal.Elem().Interface().(C.struct_GetMergeCellsResult)
-	ret.Err = C.CString(emptyString)
-	return ret
 }
 
 // GetWorkbookProps provides a function to gets workbook properties.
@@ -2634,7 +2625,7 @@ func SetRowVisible(idx int, sheet *C.char, row int, visible bool) *C.char {
 
 // SetSheetBackground provides a function to set background picture by given
 // worksheet name and file path. Supported image types: BMP, EMF, EMZ, GIF,
-// JPEG, JPG, PNG, SVG, TIF, TIFF, WMF, and WMZ.
+// ICO, JPEG, JPG, PNG, SVG, TIF, TIFF, WMF and WMZ.
 //
 //export SetSheetBackground
 func SetSheetBackground(idx int, sheet, picture *C.char) *C.char {
@@ -2650,7 +2641,7 @@ func SetSheetBackground(idx int, sheet, picture *C.char) *C.char {
 
 // SetSheetBackgroundFromBytes provides a function to set background picture by
 // given worksheet name, extension name and image data. Supported image types:
-// BMP, EMF, EMZ, GIF, JPEG, JPG, PNG, SVG, TIF, TIFF, WMF, and WMZ.
+// BMP, EMF, EMZ, GIF, ICO, JPEG, JPG, PNG, SVG, TIF, TIFF, WMF and WMZ.
 //
 //export SetSheetBackgroundFromBytes
 func SetSheetBackgroundFromBytes(idx int, sheet, extension *C.char, picture *C.uchar, pictureLen C.int) *C.char {

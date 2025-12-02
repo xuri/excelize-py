@@ -3,8 +3,8 @@ module github.com/xuri/excelize-py
 go 1.24.0
 
 require (
-	github.com/xuri/excelize/v2 v2.10.1-0.20251029022420-541ca7c1b9ea
-	golang.org/x/image v0.32.0
+	github.com/xuri/excelize/v2 v2.10.1-0.20251128004124-f1ac51e63bc8
+	golang.org/x/image v0.33.0
 )
 
 require (
@@ -13,7 +13,7 @@ require (
 	github.com/tiendc/go-deepcopy v1.7.1 // indirect
 	github.com/xuri/efp v0.0.1 // indirect
 	github.com/xuri/nfp v0.0.2-0.20250530014748-2ddeb826f9a9 // indirect
-	golang.org/x/crypto v0.43.0 // indirect
-	golang.org/x/net v0.46.0 // indirect
-	golang.org/x/text v0.30.0 // indirect
+	golang.org/x/crypto v0.45.0 // indirect
+	golang.org/x/net v0.47.0 // indirect
+	golang.org/x/text v0.31.0 // indirect
 )
