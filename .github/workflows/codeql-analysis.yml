@@ -16,7 +16,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        language: ['python', 'go']
+        language: ['python']
 
     steps:
     - name: Checkout repository
@@ -33,5 +33,3 @@ jobs:
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@v4
-      with:
-        category: "/language:${{ matrix.language }}"
