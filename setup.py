@@ -42,7 +42,7 @@ class CustomInstallCommand(install):
 
 setup(
     name="excelize",
-    version="0.0.6",
+    version="0.0.7",
     license="BSD 3-Clause",
     license_files=("LICENSE"),
     description="A Python build of the Go Excelize library for reading and writing Microsoft Excel™ (XLAM / XLSM / XLSX / XLTM / XLTX) spreadsheets",

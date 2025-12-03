@@ -99,7 +99,7 @@ def load_lib() -> Optional[str]:
 
 lib = CDLL(os.path.join(os.path.dirname(__file__), load_lib()))
 ENCODE = "utf-8"
-__version__ = "0.0.6"
+__version__ = "0.0.7"
 uppercase_words = ["id", "rgb", "sq", "xml"]
 
 
@@ -1526,7 +1526,7 @@ class File:
             ```
 
             Example 4, add horizontally scroll bar form control on Sheet1!A2 to
-            change  the value of Sheet1!A1 by click the scroll arrows or drag
+            change the value of Sheet1!A1 by click the scroll arrows or drag
             the scroll box:
 
             ```python
