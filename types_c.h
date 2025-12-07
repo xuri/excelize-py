@@ -864,3 +864,9 @@ struct GetDefinedNameResult
     struct DefinedName *DefinedNames;
     char *Err;
 };
+
+struct GetRowOptsResult
+{
+    struct RowOpts opts;
+    char *err;
+};

@@ -99,7 +99,7 @@ def load_lib() -> Optional[str]:
 
 lib = CDLL(os.path.join(os.path.dirname(__file__), load_lib()))
 ENCODE = "utf-8"
-__version__ = "0.0.7"
+__version__ = "0.0.8"
 uppercase_words = ["id", "rgb", "sq", "xml"]
 
 
@@ -535,6 +535,93 @@ class MergeCell:
             str: The bottom right cell of the merged cell range.
         """
         return self.arr[0].split(":")[1]
+
+
+class Rows:
+    """
+    Rows defines an iterator to a sheet.
+    """
+
+    index: int
+
+    def __init__(self, index: int):
+        self.index = index
+
+    def close(self) -> None:
+        """
+        Closes the open worksheet XML file in the system temporary directory.
+        """
+        lib.RowsClose.restype = c_char_p
+        err = lib.RowsClose(self.index).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
+    def columns(self, *opts: Options) -> List[str]:
+        """
+        Return the current row's column values. This fetches the worksheet data
+        as a stream, returns each cell in a row as is, and will not skip empty
+        rows in the tail of the worksheet.
+
+        Args:
+            *opts (Options): Optional parameters for get column cells value.
+
+        Returns:
+            List[str]: Return the current row's column values if no error
+            occurred, otherwise return an empty list.
+        """
+        prepare_args(
+            [opts[0]] if opts else [],
+            [argsRule("opts", [Options], True)],
+        )
+        lib.RowsColumns.restype, options = types_go._StringArrayErrorResult, None
+        if len(opts) > 0:
+            options = byref(py_value_to_c(opts[0], types_go._Options()))
+        res = lib.RowsColumns(self.index, options)
+        arr = c_value_to_py(res, StringArrayErrorResult()).arr
+        return arr if arr else []
+
+    def error(self) -> None:
+        """
+        Return the error when the error occurs.
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+        """
+        lib.RowsError.restype = c_char_p
+        err = lib.RowsError(self.index).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
+    def get_row_opts(self) -> Optional[RowOpts]:
+        """
+        Return the row options of the current row.
+
+        Returns:
+            Optional[RowOpts]: Return the row options of the current row if no
+            error occurred, otherwise raise a RuntimeError with the message.
+        """
+        lib.RowsGetRowOpts.restype = types_go._GetRowOptsResult
+        res = lib.RowsGetRowOpts(self.index)
+        err = res.err.decode(ENCODE)
+        if not err:
+            return c_value_to_py(res.opts, RowOpts())
+        raise RuntimeError(err)
+
+    def next(self) -> bool:
+        """
+        Return `True` if it finds the next row element.
+
+        Returns:
+            bool: Return if it finds the next row element if no error occurred,
+            otherwise raise a RuntimeError with the message.
+        """
+        lib.RowsNext.restype = types_go._BoolErrorResult
+        res = lib.RowsNext(self.index)
+        err = res.err.decode(ENCODE)
+        if not err:
+            return res.val
+        raise RuntimeError(err)
 
 
 class StreamWriter:
@@ -3177,7 +3264,7 @@ class File:
             rows = f.get_rows("Sheet1")
             for row in rows:
                 for cell in row:
-                    print(f"{cell}\t", end="")
+                    print(f"{cell}\\t", end="")
                 print()
             ```
         """
@@ -3197,8 +3284,7 @@ class File:
         result = c_value_to_py(res, GetRowsResult()).row
         if result:
             for row in result:
-                if row.cell:
-                    rows.append([cell for cell in row.cell])
+                rows.append([cell for cell in row.cell] if row.cell else [])
         if not err:
             return rows
         raise RuntimeError(err)
@@ -4061,6 +4147,41 @@ class File:
         ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
+
+    def rows(self, sheet: str) -> Rows:
+        """
+        Returns a rows iterator, used for streaming reading data for a worksheet
+        with a large data.
+
+        Args:
+            sheet (str): The worksheet name
+
+        Returns:
+            Rows: Return the rows iterator object if no error occurred,
+            otherwise raise a RuntimeError with the message.
+
+        Example:
+            For example:
+
+            ```python
+            try:
+                rows = f.rows("Sheet1")
+                while rows.next():
+                    for cell in rows.columns():
+                        print(f"{cell}\\t", end="")
+                    print()
+                rows.close()
+            except (RuntimeError, TypeError) as err:
+                print(err)
+            ```
+        """
+        prepare_args([sheet], [argsRule("sheet", [str])])
+        lib.Rows.restype = types_go._IntErrorResult
+        res = lib.Rows(self.file_index, sheet.encode(ENCODE))
+        err = res.err.decode(ENCODE)
+        if not err:
+            return Rows(res.val)
+        raise RuntimeError(err)
 
     def search_sheet(self, sheet: str, value: str, *reg: bool) -> List[str]:
         """

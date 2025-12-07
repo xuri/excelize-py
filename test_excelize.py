@@ -118,6 +118,18 @@ class TestExcelize(unittest.TestCase):
         val = f.get_default_font()
         self.assertEqual(val, font_name)
 
+    def test_rows(self):
+        f = excelize.new_file()
+        with self.assertRaises(RuntimeError) as context:
+            _ = f.rows("SheetN")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            _ = f.rows(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
+        )
+
     def test_stream_writer(self):
         f = excelize.new_file()
 
@@ -201,7 +213,27 @@ class TestExcelize(unittest.TestCase):
         )
 
         self.assertIsNone(sw.flush())
-        self.assertIsNone(f.save_as(os.path.join("test", "TestStreamWriter.xlsx")))
+        wb_path = os.path.join("test", "TestStreamWriter.xlsx")
+        self.assertIsNone(f.save_as(wb_path))
+
+        f = excelize.open_file(wb_path)
+        rows = f.rows("Sheet1")
+        cells = 0
+        while rows.next():
+            cells += len(rows.columns())
+        self.assertIsNone(rows.error())
+        rows.close()
+        f.close()
+        self.assertEqual(cells, 24)
+
+        f = excelize.open_file(wb_path)
+        rows = f.rows("Sheet1")
+        while rows.next():
+            rows.columns(excelize.Options(raw_cell_value=True))
+            self.assertEqual(excelize.RowOpts(), rows.get_row_opts())
+            break
+        rows.close()
+        f.close()
 
     def test_style(self):
         f = excelize.new_file()
@@ -692,6 +724,8 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(
             rows,
             [
+                [],
+                [],
                 ["Hello"],
                 ["100"],
                 ["123.45"],
@@ -708,6 +742,8 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(
             rows,
             [
+                [],
+                [],
                 ["Hello"],
                 ["100"],
                 ["123.45"],
@@ -1017,6 +1053,23 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             sw.flush()
         self.assertEqual(str(context.exception), sw_expected)
+
+        f = excelize.new_file()
+        rows = f.rows("Sheet1")
+        rows.index = 100
+        rows_expected = "can not find rows iterator pointer"
+        with self.assertRaises(RuntimeError) as context:
+            rows.close()
+        self.assertEqual(str(context.exception), rows_expected)
+        with self.assertRaises(RuntimeError) as context:
+            rows.error()
+        self.assertEqual(str(context.exception), rows_expected)
+        with self.assertRaises(RuntimeError) as context:
+            rows.get_row_opts()
+        self.assertEqual(str(context.exception), rows_expected)
+        with self.assertRaises(RuntimeError) as context:
+            rows.next()
+        self.assertEqual(str(context.exception), rows_expected)
 
     def test_group_sheets(self):
         f = excelize.new_file()

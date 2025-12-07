@@ -267,6 +267,7 @@ class DocProperties:
     version: str = ""
 
 
+@dataclass
 class RowOpts:
     height: float = 0
     hidden: bool = False

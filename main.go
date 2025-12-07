@@ -52,11 +52,12 @@ const (
 )
 
 var (
-	files, sw          = sync.Map{}, sync.Map{}
-	emptyString        string
-	errFilePtr         = "can not find file pointer"
-	errStreamWriterPtr = "can not find stream writer pointer"
-	errArgType         = errors.New("invalid argument data type")
+	files, rowsIterator, sw = sync.Map{}, sync.Map{}, sync.Map{}
+	emptyString             string
+	errFilePtr              = "can not find file pointer"
+	errRowsIteratorPtr      = "can not find rows iterator pointer"
+	errStreamWriterPtr      = "can not find stream writer pointer"
+	errArgType              = errors.New("invalid argument data type")
 
 	// goBaseTypes defines Go's basic data types.
 	goBaseTypes = map[reflect.Kind]bool{
@@ -1754,6 +1755,116 @@ func NewStreamWriter(idx int, sheet *C.char) C.struct_IntErrorResult {
 	return C.struct_IntErrorResult{val: C.int(swIdx), err: C.CString(emptyString)}
 }
 
+// Rows returns a rows iterator, used for streaming reading data for a worksheet
+// with a large data. This function is concurrency safe.
+//
+//export Rows
+func Rows(idx int, sheet *C.char) C.struct_IntErrorResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_IntErrorResult{val: C.int(0), err: C.CString(errFilePtr)}
+	}
+	rows, err := f.(*excelize.File).Rows(C.GoString(sheet))
+	if err != nil {
+		return C.struct_IntErrorResult{val: C.int(0), err: C.CString(err.Error())}
+	}
+	var rIdx int
+	rowsIterator.Range(func(_, _ interface{}) bool {
+		rIdx++
+		return true
+	})
+	rIdx++
+	rowsIterator.Store(rIdx, rows)
+	return C.struct_IntErrorResult{val: C.int(rIdx), err: C.CString(emptyString)}
+}
+
+// RowsClose closes the open worksheet XML file in the system temporary
+// directory.
+//
+//export RowsClose
+func RowsClose(rIdx int) *C.char {
+	row, ok := rowsIterator.Load(rIdx)
+	if !ok {
+		return C.CString(errRowsIteratorPtr)
+	}
+	defer rowsIterator.Delete(rIdx)
+	if err := row.(*excelize.Rows).Close(); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// RowsColumns return the current row's column values. This fetches the
+// worksheet data as a stream, returns each cell in a row as is, and will not
+// skip empty rows in the tail of the worksheet.
+//
+//export RowsColumns
+func RowsColumns(rIdx int, opts *C.struct_Options) C.struct_StringArrayErrorResult {
+	var options excelize.Options
+	if opts != nil {
+		goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.Options{}))
+		if err != nil {
+			return C.struct_StringArrayErrorResult{Err: C.CString(err.Error())}
+		}
+		options = goVal.Elem().Interface().(excelize.Options)
+	}
+	row, ok := rowsIterator.Load(rIdx)
+	if !ok {
+		return C.struct_StringArrayErrorResult{Err: C.CString(errRowsIteratorPtr)}
+	}
+	result, err := row.(*excelize.Rows).Columns(options)
+	if err != nil {
+		return C.struct_StringArrayErrorResult{Err: C.CString(err.Error())}
+	}
+	cArray := C.malloc(C.size_t(len(result)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	for i, v := range result {
+		*(*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(uintptr(0)))) = unsafe.Pointer(C.CString(v))
+	}
+	return C.struct_StringArrayErrorResult{ArrLen: C.int(len(result)), Arr: (**C.char)(cArray), Err: C.CString(emptyString)}
+}
+
+// RowsError will return the error when the error occurs.
+//
+//export RowsError
+func RowsError(rIdx int) *C.char {
+	row, ok := rowsIterator.Load(rIdx)
+	if !ok {
+		return C.CString(errRowsIteratorPtr)
+	}
+	err := row.(*excelize.Rows).Error()
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// RowsGetRowOpts will return the RowOpts of the current row.
+//
+//export RowsGetRowOpts
+func RowsGetRowOpts(rIdx int) C.struct_GetRowOptsResult {
+	row, ok := rowsIterator.Load(rIdx)
+	if !ok {
+		return C.struct_GetRowOptsResult{err: C.CString(errRowsIteratorPtr)}
+	}
+	opts := row.(*excelize.Rows).GetRowOpts()
+	cVal, err := goValueToC(reflect.ValueOf(opts), reflect.ValueOf(&C.struct_RowOpts{}))
+	if err != nil {
+		return C.struct_GetRowOptsResult{err: C.CString(err.Error())}
+	}
+	return C.struct_GetRowOptsResult{opts: cVal.Elem().Interface().(C.struct_RowOpts), err: C.CString(emptyString)}
+}
+
+// RowsNext will return true if it finds the next row element.
+//
+//export RowsNext
+func RowsNext(rIdx int) C.struct_BoolErrorResult {
+	row, ok := rowsIterator.Load(rIdx)
+	if !ok {
+		return C.struct_BoolErrorResult{val: C._Bool(false), err: C.CString(errRowsIteratorPtr)}
+	}
+	return C.struct_BoolErrorResult{val: C._Bool(row.(*excelize.Rows).Next()), err: C.CString(emptyString)}
+}
+
 // StreamAddTable creates an Excel table for the StreamWriter using the given
 // cell range and format set.
 //
@@ -1874,6 +1985,7 @@ func StreamFlush(swIdx int) *C.char {
 	if !ok {
 		return C.CString(errStreamWriterPtr)
 	}
+	defer sw.Delete(swIdx)
 	if err := streamWriter.(*excelize.StreamWriter).Flush(); err != nil {
 		return C.CString(err.Error())
 	}

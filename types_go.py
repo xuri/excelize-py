@@ -852,3 +852,10 @@ class _GetDefinedNameResult(Structure):
         ("DefinedNames", POINTER(_DefinedName)),
         ("Err", c_char_p),
     ]
+
+
+class _GetRowOptsResult(Structure):
+    _fields_ = [
+        ("opts", _RowOpts),
+        ("err", c_char_p),
+    ]
