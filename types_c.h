@@ -748,6 +748,13 @@ struct StringErrorResult
     char *err;
 };
 
+struct StringIntErrorResult
+{
+    char *strVal;
+    int intVal;
+    char *err;
+};
+
 struct IntErrorResult
 {
     int val;

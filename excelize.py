@@ -2716,7 +2716,7 @@ class File:
         Returns:
             int: The active sheet index
         """
-        lib.GetActiveSheetIndex.restype = c_int
+        lib.GetActiveSheetIndex.restype = c_longlong
         res = lib.GetActiveSheetIndex(self.file_index)
         return res
 
@@ -6134,6 +6134,27 @@ def coordinates_to_cell_name(col: int, row: int, *is_absolute: bool) -> str:
     raise RuntimeError(err)
 
 
+def join_cell_name(col: str, row: int) -> str:
+    """
+    Joins cell name from column name and row number.
+
+    Args:
+        col (str): The column name
+        row (int): The row number
+
+    Returns:
+        str: Return a cell name if no error occurred, otherwise raise a
+        RuntimeError with the message.
+    """
+    prepare_args([col, row], [argsRule("col", [str]), argsRule("row", [int])])
+    lib.JoinCellName.restype = types_go._StringErrorResult
+    res = lib.JoinCellName(col.encode(ENCODE), c_longlong(row))
+    err = res.err.decode(ENCODE)
+    if not err:
+        return res.val.decode(ENCODE)
+    raise RuntimeError(err)
+
+
 def new_file() -> File:
     """
     Create new file by default template.
@@ -6200,4 +6221,37 @@ def open_reader(buffer: bytes, *opts: Options) -> Optional[File]:
     err = res.err.decode(ENCODE)
     if err == "":
         return File(res.val)
+    raise RuntimeError(err)
+
+
+def split_cell_name(cell: str) -> Tuple[str, int]:
+    """
+    Splits cell name to column name and row number.
+
+    Args:
+        cell (str): The cell reference
+
+    Returns:
+        Tuple[str, int]: Return a tuple containing column name and row number if
+        no error occurred, otherwise raise a RuntimeError with the message.
+
+    Example:
+        For example:
+
+        ```python
+        try:
+            col, row = excelize.split_cell_name("AK74") # return "AK", 74
+        except (RuntimeError, TypeError) as err:
+            print(err)
+        ```
+    """
+    prepare_args([cell], [argsRule("cell", [str])])
+    lib.SplitCellName.restype = types_go._StringIntErrorResult
+    res = lib.SplitCellName(cell.encode(ENCODE))
+    err = res.err.decode(ENCODE)
+    if not err:
+        return (
+            res.strVal.decode(ENCODE),
+            res.intVal,
+        )
     raise RuntimeError(err)

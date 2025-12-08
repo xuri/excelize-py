@@ -2227,6 +2227,18 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.save_as(os.path.join("test", "TestDocProps.xlsx")))
         self.assertIsNone(f.close())
 
+    def test_join_cell_name(self):
+        self.assertEqual(excelize.join_cell_name("A", 1), "A1")
+        with self.assertRaises(RuntimeError) as context:
+           excelize.join_cell_name("", 0)
+        self.assertEqual(str(context.exception), 'invalid column name ""')
+        with self.assertRaises(TypeError) as context:
+            excelize.join_cell_name(1, 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'col', but got int",
+        )
+
     def test_merge_cell(self):
         f = excelize.new_file()
         self.assertIsNone(f.set_sheet_row("Sheet1", "A1", ["A1", "B1"]))
@@ -2392,6 +2404,20 @@ class TestExcelize(unittest.TestCase):
         )
         self.assertIsNone(f.save_as(os.path.join("test", "TestSheetVisible.xlsx")))
         self.assertIsNone(f.close())
+
+    def test_split_cell_name(self):
+        col, row = excelize.split_cell_name("AK74")
+        self.assertEqual(col, "AK")
+        self.assertEqual(row, 74)
+        with self.assertRaises(RuntimeError) as context:
+            excelize.split_cell_name("")
+        self.assertEqual(str(context.exception), 'invalid cell name ""')
+        with self.assertRaises(TypeError) as context:
+            excelize.split_cell_name(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'cell', but got int",
+        )
 
     def test_workbook_props(self):
         f = excelize.new_file()

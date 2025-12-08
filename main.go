@@ -1636,6 +1636,17 @@ func InsertRows(idx int, sheet *C.char, row, n int) *C.char {
 	return C.CString(emptyString)
 }
 
+// JoinCellName joins cell name from column name and row number.
+//
+//export JoinCellName
+func JoinCellName(col *C.char, row int) C.struct_StringErrorResult {
+	result, err := excelize.JoinCellName(C.GoString(col), row)
+	if err != nil {
+		return C.struct_StringErrorResult{err: C.CString(err.Error())}
+	}
+	return C.struct_StringErrorResult{val: C.CString(result), err: C.CString(emptyString)}
+}
+
 // MergeCell provides a function to merge cells by given range reference and
 // sheet name. Merging cells only keeps the upper-left cell value, and
 // discards the other values.
@@ -2916,6 +2927,17 @@ func SetWorkbookProps(idx int, opts *C.struct_WorkbookPropsOptions) *C.char {
 		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
+}
+
+// SplitCellName splits cell name to column name and row number.
+//
+//export SplitCellName
+func SplitCellName(cell *C.char, row int) C.struct_StringIntErrorResult {
+	col, row, err := excelize.SplitCellName(C.GoString(cell))
+	if err != nil {
+		return C.struct_StringIntErrorResult{err: C.CString(err.Error())}
+	}
+	return C.struct_StringIntErrorResult{intVal: C.int(row), strVal: C.CString(col), err: C.CString(emptyString)}
 }
 
 // UngroupSheets provides a function to ungroup worksheets.

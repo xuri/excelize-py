@@ -719,6 +719,14 @@ class _StringErrorResult(Structure):
     ]
 
 
+class _StringIntErrorResult(Structure):
+    _fields_ = [
+        ("strVal", c_char_p),
+        ("intVal", c_int),
+        ("err", c_char_p),
+    ]
+
+
 class _IntErrorResult(Structure):
     _fields_ = [
         ("val", c_int),
