@@ -12,7 +12,8 @@ amounts of data. This library needs Python version 3.9 or later.
 
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import List, Optional
+from datetime import datetime, date
+from typing import List, Optional, Union
 
 
 class argsRule:
@@ -260,10 +261,9 @@ class CalcPropsOptions:
 
 
 @dataclass
-class Cell:
-    style_id: int = 0
-    formula: str = ""
-    value: Optional[Interface] = None
+class CustomProperty:
+    name: str = ""
+    value: Union[bool, float, int, str, date, datetime, None] = None
 
 
 @dataclass

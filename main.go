@@ -45,10 +45,11 @@ type GetRowsResult struct {
 const (
 	Nil     C.int = 0
 	Int     C.int = 1
-	String  C.int = 2
-	Float   C.int = 3
-	Boolean C.int = 4
-	Time    C.int = 5
+	Int32   C.int = 2
+	String  C.int = 3
+	Float   C.int = 4
+	Boolean C.int = 5
+	Time    C.int = 6
 )
 
 var (
@@ -433,6 +434,8 @@ func cInterfaceToGo(val C.struct_Interface) interface{} {
 	switch val.Type {
 	case Int:
 		return int(val.Integer)
+	case Int32:
+		return int32(val.Integer32)
 	case String:
 		return C.GoString(val.String)
 	case Float:
@@ -443,6 +446,26 @@ func cInterfaceToGo(val C.struct_Interface) interface{} {
 		return time.Unix(int64(val.Integer), 0)
 	default:
 		return nil
+	}
+}
+
+// goInterfaceToC convert Go interface to C interface data type value.
+func goInterfaceToC(val interface{}) C.struct_Interface {
+	switch v := val.(type) {
+	case int:
+		return C.struct_Interface{Type: Int, Integer: C.int(v)}
+	case int32:
+		return C.struct_Interface{Type: Int32, Integer32: C.int(v)}
+	case string:
+		return C.struct_Interface{Type: String, String: C.CString(v)}
+	case float64:
+		return C.struct_Interface{Type: Float, Float64: C.double(v)}
+	case bool:
+		return C.struct_Interface{Type: Boolean, Boolean: C._Bool(v)}
+	case time.Time:
+		return C.struct_Interface{Type: Time, Integer: C.int(v.Unix())}
+	default:
+		return C.struct_Interface{Type: Nil}
 	}
 }
 
@@ -1238,6 +1261,26 @@ func GetComments(idx int, sheet *C.char) C.struct_GetCommentsResult {
 		*(*C.struct_Comment)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(C.struct_Comment{}))) = cVal.Elem().Interface().(C.struct_Comment)
 	}
 	return C.struct_GetCommentsResult{CommentsLen: C.int(len(comments)), Comments: (*C.struct_Comment)(cArray), Err: C.CString(emptyString)}
+}
+
+// GetCustomProps provides a function to get custom file properties.
+//
+//export GetCustomProps
+func GetCustomProps(idx int) C.struct_GetCustomPropsResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetCustomPropsResult{Err: C.CString(errFilePtr)}
+	}
+	props, err := f.(*excelize.File).GetCustomProps()
+	if err != nil {
+		return C.struct_GetCustomPropsResult{Err: C.CString(err.Error())}
+	}
+	cArray := C.malloc(C.size_t(len(props)) * C.size_t(unsafe.Sizeof(C.struct_CustomProperty{})))
+	for i, prop := range props {
+		cVal := C.struct_CustomProperty{Name: C.CString(prop.Name), Value: goInterfaceToC(prop.Value)}
+		*(*C.struct_CustomProperty)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(C.struct_CustomProperty{}))) = cVal
+	}
+	return C.struct_GetCustomPropsResult{CustomPropsLen: C.int(len(props)), CustomProps: (*C.struct_CustomProperty)(cArray), Err: C.CString(emptyString)}
 }
 
 // GetDefaultFont provides the default font name currently set in the
@@ -2580,6 +2623,27 @@ func SetConditionalFormat(idx int, sheet, rangeRef *C.char, opts *C.struct_Condi
 		options[i] = goVal.Elem().Interface().(excelize.ConditionalFormatOptions)
 	}
 	if err := f.(*excelize.File).SetConditionalFormat(C.GoString(sheet), C.GoString(rangeRef), options); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// SetCustomProps provides a function to set custom file properties by given
+// property name and value. If the property name already exists, it will be
+// updated, otherwise a new property will be added. The value can be of type
+// int32, float64, bool, string, time.Time or nil. The property will be delete
+// if the value is nil. The function returns an error if the property value is
+// not of the correct type.
+//
+//export SetCustomProps
+func SetCustomProps(idx int, prop C.struct_CustomProperty) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetCustomProps(excelize.CustomProperty{
+		Name: C.GoString(prop.Name), Value: cInterfaceToGo(prop.Value),
+	}); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)

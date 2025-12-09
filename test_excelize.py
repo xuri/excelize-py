@@ -23,6 +23,7 @@ from ctypes import (
 )
 import os
 import excelize
+import types_go
 from types_py import argsRule
 
 
@@ -921,6 +922,9 @@ class TestExcelize(unittest.TestCase):
             f.get_app_props()
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
+            f.get_custom_props()
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
             f.get_default_font()
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
@@ -928,6 +932,9 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
             f.get_calc_props()
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
+            f.set_custom_props(excelize.CustomProperty(name="Prop", value=""))
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
             f.get_sheet_name(0)
@@ -2143,6 +2150,34 @@ class TestExcelize(unittest.TestCase):
             "expected type int for argument 'num', but got str",
         )
 
+    def test_custom_props(self):
+        f = excelize.new_file()
+        props = [
+            excelize.CustomProperty(name="Text Prop", value="text"),
+            excelize.CustomProperty(name="Boolean Prop 1", value=True),
+            excelize.CustomProperty(name="Boolean Prop 2", value=False),
+            excelize.CustomProperty(name="Number Prop 1", value=-123.456),
+            excelize.CustomProperty(name="Number Prop 2", value=1),
+            excelize.CustomProperty(
+                name="Date Prop", value=datetime.datetime(2016, 8, 30, 11, 51, 0)
+            ),
+        ]
+        for prop in props:
+            f.set_custom_props(prop)
+        self.assertEqual(props, f.get_custom_props())
+
+        with self.assertRaises(RuntimeError) as context:
+            f.set_custom_props(excelize.CustomProperty(name=None, value=1))
+        self.assertEqual(str(context.exception), "parameter is invalid")
+        with self.assertRaises(TypeError) as context:
+            f.set_custom_props(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type CustomProperty for argument 'prop', but got int",
+        )
+        self.assertIsNone(f.save_as(os.path.join("test", "TestSetCustomProps.xlsx")))
+        self.assertIsNone(f.close())
+
     def test_add_picture(self):
         f = excelize.new_file()
         self.assertIsNone(f.add_picture("Sheet1", "A1", "chart.png", None))
@@ -2490,4 +2525,13 @@ class TestExcelize(unittest.TestCase):
         )
         self.assertEqual(
             excelize.c_value_to_py(excelize.py_value_to_c(t1, _T1()), T1()), t1
+        )
+        self.assertIsNone(excelize.c_value_to_py_interface(None))
+        with self.assertRaises(TypeError) as context:
+            val = types_go._Interface()
+            setattr(val, "Type", c_int(-1))
+            excelize.c_value_to_py_interface(val)
+        self.assertEqual(
+            str(context.exception),
+            "unsupported interface type code: -1",
         )

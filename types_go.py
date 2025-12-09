@@ -16,6 +16,7 @@ from ctypes import (
     c_char,
     c_double,
     c_int,
+    c_int32,
     c_long,
     c_ubyte,
     c_uint,
@@ -28,6 +29,7 @@ class _Interface(Structure):
     _fields_ = [
         ("Type", c_int),
         ("Integer", c_int),
+        ("Integer32", c_int32),
         ("String", c_char_p),
         ("Float64", c_double),
         ("Boolean", c_bool),
@@ -76,6 +78,13 @@ class _CalcPropsOptions(Structure):
         ("ConcurrentCalc", POINTER(c_bool)),
         ("ConcurrentManualCount", POINTER(c_uint)),
         ("ForceFullCalc", POINTER(c_bool)),
+    ]
+
+
+class _CustomProperty(Structure):
+    _fields_ = [
+        ("Name", c_char_p),
+        ("Value", _Interface),
     ]
 
 
@@ -795,6 +804,7 @@ class _GetAppPropsResult(Structure):
         ("err", c_char_p),
     ]
 
+
 class _GetCalcPropsResult(Structure):
     _fields_ = [
         ("opts", _CalcPropsOptions),
@@ -874,6 +884,14 @@ class _GetCommentsResult(Structure):
     _fields_ = [
         ("CommentsLen", c_int),
         ("Comments", POINTER(_Comment)),
+        ("Err", c_char_p),
+    ]
+
+
+class _GetCustomPropsResult(Structure):
+    _fields_ = [
+        ("CustomPropsLen", c_int),
+        ("CustomProps", POINTER(_CustomProperty)),
         ("Err", c_char_p),
     ]
 

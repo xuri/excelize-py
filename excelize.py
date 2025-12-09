@@ -21,6 +21,7 @@ from ctypes import (
     c_char,
     c_double,
     c_int,
+    c_int32,
     c_longlong,
     c_ubyte,
     cast,
@@ -452,17 +453,46 @@ def py_value_to_c_interface(py_value):
     """
     type_mappings = {
         int: lambda: Interface(type=1, integer=py_value),
-        str: lambda: Interface(type=2, string=py_value),
-        float: lambda: Interface(type=3, float64=py_value),
-        bool: lambda: Interface(type=4, boolean=py_value),
-        datetime: lambda: Interface(type=5, integer=int(py_value.timestamp())),
+        str: lambda: Interface(type=3, string=py_value),
+        float: lambda: Interface(type=4, float64=py_value),
+        bool: lambda: Interface(type=5, boolean=py_value),
+        datetime: lambda: Interface(type=6, integer=int(py_value.timestamp())),
         date: lambda: Interface(
-            type=5,
+            type=6,
             integer=int(datetime.combine(py_value, time.min).timestamp()),
         ),
     }
     interface = type_mappings.get(type(py_value), Interface)()
     return py_value_to_c(interface, types_go._Interface())
+
+
+def c_value_to_py_interface(c_value):
+    """
+    Converts a C value to a Python interface representation.
+
+    Args:
+        c_value: The C value to be converted.
+
+    Returns:
+        An Interface object representing the C value in a Python-compatible format.
+
+    Raises:
+        TypeError: If the type of c_value is not supported.
+    """
+    if c_value is None:
+        return None
+    type_mappings = {
+        1: lambda: c_value.Integer,
+        2: lambda: c_value.Integer32,
+        3: lambda: c_value.String.decode(ENCODE) if c_value.String else "",
+        4: lambda: c_value.Float64,
+        5: lambda: c_value.Boolean,
+        6: lambda: datetime.fromtimestamp(c_value.Integer),
+    }
+    converter = type_mappings.get(c_value.Type)
+    if converter:
+        return converter()
+    raise TypeError(f"unsupported interface type code: {c_value.Type}")
 
 
 def prepare_args(args: List, types: List[argsRule]):
@@ -785,7 +815,7 @@ class StreamWriter:
     def set_row(
         self,
         cell: str,
-        values: List[Union[None, int, str, bool, datetime, date]],
+        values: List[Union[bool, float, int, str, date, datetime, None]],
     ) -> None:
         """
         Writes an array to stream rows by giving starting cell reference and a
@@ -794,8 +824,8 @@ class StreamWriter:
 
         Args:
             cell (str): The cell reference
-            values (List[Union[None, int, str, bool, datetime, date]]): The cell
-            values
+            values (List[Union[bool, float, int, str, date, datetime, None]]):
+            The cell values
 
         Returns:
             None: Return None if no error occurred, otherwise raise a
@@ -3054,6 +3084,30 @@ class File:
                 raise RuntimeError(err)
         return result.comments if result and result.comments else []
 
+    def get_custom_props(self) -> List[CustomProperty]:
+        """
+        Get custom file properties
+
+        Returns:
+            List[CustomProperty]: Return the custom file properties if no error
+            occurred, otherwise raise a RuntimeError with the message.
+        """
+        lib.GetCustomProps.restype = types_go._GetCustomPropsResult
+        res = lib.GetCustomProps(self.file_index)
+        err = res.Err.decode(ENCODE)
+        if err == "":
+            arr = []
+            if res.CustomProps:
+                for i in range(res.CustomPropsLen):
+                    arr.append(
+                        CustomProperty(
+                            name=res.CustomProps[i].Name.decode(ENCODE),
+                            value=c_value_to_py_interface(res.CustomProps[i].Value),
+                        )
+                    )
+            return arr
+        raise RuntimeError(err)
+
     def get_default_font(self) -> str:
         """
         Get the default font name currently set in the workbook. The spreadsheet
@@ -5148,6 +5202,37 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
+    def set_custom_props(self, prop: CustomProperty) -> None:
+        """
+        Set custom file properties by given property name and value. If the
+        property name already exists, it will be updated, otherwise a new
+        property will be added. The value can be of type `int`, `float`, `bool`,
+        `str`, `datetime`, `date` and `None`. The property will be delete if the
+        value is `None`. The function returns an error if the property value is
+        not of the correct type.
+
+        Args:
+            prop (CustomProperty): The custom file property
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+        """
+        prepare_args([prop], [argsRule("prop", [CustomProperty])])
+        lib.SetCustomProps.restype = c_char_p
+        options = types_go._CustomProperty()
+        setattr(options, "Name", (prop.name or "").encode(ENCODE))
+        val = types_go._Interface()
+        if type(prop.value) is int:
+            setattr(val, "Type", c_int(2))
+            setattr(val, "Integer32", c_int32(prop.value))
+        else:
+            val = py_value_to_c_interface(prop.value)
+        setattr(options, "Value", val)
+        err = lib.SetCustomProps(self.file_index, options).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
     def set_default_font(self, font_name: str) -> None:
         """
         Set the default font name in the workbook. The spreadsheet generated by
@@ -5216,10 +5301,7 @@ class File:
             ))
             ```
         """
-        prepare_args(
-            [defined_name],
-            [argsRule("defined_name", [DefinedName])],
-        )
+        prepare_args([defined_name], [argsRule("defined_name", [DefinedName])])
         lib.SetDefinedName.restype = c_char_p
         options = py_value_to_c(defined_name, types_go._DefinedName())
         err = lib.SetDefinedName(self.file_index, byref(options)).decode(ENCODE)
@@ -5645,7 +5727,7 @@ class File:
         self,
         sheet: str,
         cell: str,
-        values: List[Union[None, int, str, bool, datetime, date]],
+        values: List[Union[bool, float, int, str, date, datetime, None]],
     ) -> None:
         """
         Writes cells to column by given worksheet name, starting cell reference
@@ -5654,8 +5736,8 @@ class File:
         Args:
             sheet (str): The worksheet name
             cell (str): The cell reference
-            values (List[Union[None, int, str, bool, datetime, date]]): The cell
-            values
+            values (List[Union[bool, float, int, str, date, datetime, None]):
+            The cell values
 
         Returns:
             None: Return None if no error occurred, otherwise raise a
@@ -5780,7 +5862,7 @@ class File:
         self,
         sheet: str,
         cell: str,
-        values: List[Union[None, int, str, bool, datetime, date]],
+        values: List[Union[bool, float, int, str, date, datetime, None]],
     ) -> None:
         """
         Writes cells to row by given worksheet name, starting cell reference and
@@ -5789,8 +5871,8 @@ class File:
         Args:
             sheet (str): The worksheet name
             cell (str): The cell reference
-            values (List[Union[None, int, str, bool, datetime, date]]): The cell
-            values
+            values (List[Union[bool, float, int, str, date, datetime, None]]):
+            The cell values
 
         Returns:
             None: Return None if no error occurred, otherwise raise a

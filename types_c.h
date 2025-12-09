@@ -18,6 +18,7 @@ struct Interface
 {
     int Type;
     int Integer;
+    int32_t Integer32;
     char *String;
     double Float64;
     bool Boolean;
@@ -103,6 +104,15 @@ struct CalcPropsOptions
     bool *ConcurrentCalc;
     unsigned int *ConcurrentManualCount;
     bool *ForceFullCalc;
+};
+
+// CustomProperty directly maps the custom property of the workbook. The value
+// date type may be one of the following: int32, float64, string, bool,
+// time.Time, or nil.
+struct CustomProperty
+{
+    char *Name;
+    struct Interface Value;
 };
 
 // Cell can be used directly in StreamWriter.SetRow to specify a style and
@@ -888,6 +898,13 @@ struct GetCommentsResult
 {
     int CommentsLen;
     struct Comment *Comments;
+    char *Err;
+};
+
+struct GetCustomPropsResult
+{
+    int CustomPropsLen;
+    struct CustomProperty *CustomProps;
     char *Err;
 };
 
