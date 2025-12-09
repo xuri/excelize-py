@@ -1032,6 +1032,25 @@ func GetAppProps(idx int) C.struct_GetAppPropsResult {
 	return C.struct_GetAppPropsResult{opts: cVal.Elem().Interface().(C.struct_AppProperties), err: C.CString(emptyString)}
 }
 
+// GetCalcProps provides a function to gets calculation properties.
+//
+//export GetCalcProps
+func GetCalcProps(idx int) C.struct_GetCalcPropsResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetCalcPropsResult{err: C.CString(errFilePtr)}
+	}
+	opts, err := f.(*excelize.File).GetCalcProps()
+	if err != nil {
+		return C.struct_GetCalcPropsResult{err: C.CString(err.Error())}
+	}
+	cVal, err := goValueToC(reflect.ValueOf(opts), reflect.ValueOf(&C.struct_CalcPropsOptions{}))
+	if err != nil {
+		return C.struct_GetCalcPropsResult{err: C.CString(err.Error())}
+	}
+	return C.struct_GetCalcPropsResult{opts: cVal.Elem().Interface().(C.struct_CalcPropsOptions), err: C.CString(emptyString)}
+}
+
 // GetCellFormula provides a function to get formula from cell by given
 // worksheet name and cell reference in spreadsheet.
 //
@@ -2280,6 +2299,27 @@ func SetAppProps(idx int, opts *C.struct_AppProperties) *C.char {
 	}
 	appProps := goVal.Elem().Interface().(excelize.AppProperties)
 	if err := f.(*excelize.File).SetAppProps(&appProps); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// SetCalcProps provides a function to sets calculation properties. Optional
+// value of "CalcMode" property is: "manual", "auto" or "autoNoTable". Optional
+// value of "RefMode" property is: "A1" or "R1C1".
+//
+//export SetCalcProps
+func SetCalcProps(idx int, opts *C.struct_CalcPropsOptions) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.CalcPropsOptions{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	props := goVal.Elem().Interface().(excelize.CalcPropsOptions)
+	if err := f.(*excelize.File).SetCalcProps(&props); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)

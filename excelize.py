@@ -2735,6 +2735,21 @@ class File:
             return c_value_to_py(res.opts, AppProperties())
         raise RuntimeError(err)
 
+    def get_calc_props(self) -> Optional[CalcPropsOptions]:
+        """
+        Gets calculation properties.
+
+        Returns:
+            Optional[CalcPropsOptions]: Return the calculation properties if no
+            error occurred, otherwise raise a RuntimeError with the message.
+        """
+        lib.GetCalcProps.restype = types_go._GetCalcPropsResult
+        res = lib.GetCalcProps(self.file_index)
+        err = res.err.decode(ENCODE)
+        if not err:
+            return c_value_to_py(res.opts, CalcPropsOptions())
+        raise RuntimeError(err)
+
     def get_cell_formula(self, sheet: str, cell: str) -> str:
         """
         Get formula from cell by given worksheet name and cell reference in
@@ -4331,6 +4346,26 @@ class File:
         lib.SetAppProps.restype = c_char_p
         options = py_value_to_c(app_properties, types_go._AppProperties())
         err = lib.SetAppProps(self.file_index, byref(options)).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
+    def set_calc_props(self, opts: CalcPropsOptions) -> None:
+        """
+        Sets calculation properties. Optional value of `calc_mode` property is:
+        `manual`, `auto` or `autoNoTable`. Optional value of "ref_mode" property
+        is: `A1` or `R1C1`.
+
+        Args:
+            opts (CalcPropsOptions): The calculation properties
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+        """
+        prepare_args([opts], [argsRule("opts", [CalcPropsOptions])])
+        lib.SetCalcProps.restype = c_char_p
+        options = py_value_to_c(opts, types_go._CalcPropsOptions())
+        err = lib.SetCalcProps(self.file_index, byref(options)).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
 

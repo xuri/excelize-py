@@ -61,6 +61,24 @@ class _AppProperties(Structure):
     ]
 
 
+class _CalcPropsOptions(Structure):
+    _fields_ = [
+        ("CalcID", POINTER(c_uint)),
+        ("CalcMode", POINTER(c_char_p)),
+        ("FullCalcOnLoad", POINTER(c_bool)),
+        ("RefMode", POINTER(c_char_p)),
+        ("Iterate", POINTER(c_bool)),
+        ("IterateCount", POINTER(c_uint)),
+        ("IterateDelta", POINTER(c_double)),
+        ("FullPrecision", POINTER(c_bool)),
+        ("CalcCompleted", POINTER(c_bool)),
+        ("CalcOnSave", POINTER(c_bool)),
+        ("ConcurrentCalc", POINTER(c_bool)),
+        ("ConcurrentManualCount", POINTER(c_uint)),
+        ("ForceFullCalc", POINTER(c_bool)),
+    ]
+
+
 class _Cell(Structure):
     _fields_ = [
         ("StyleID", c_int),
@@ -774,6 +792,12 @@ class _CellNameToCoordinatesResult(Structure):
 class _GetAppPropsResult(Structure):
     _fields_ = [
         ("opts", _AppProperties),
+        ("err", c_char_p),
+    ]
+
+class _GetCalcPropsResult(Structure):
+    _fields_ = [
+        ("opts", _CalcPropsOptions),
         ("err", c_char_p),
     ]
 

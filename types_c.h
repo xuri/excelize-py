@@ -86,6 +86,25 @@ struct AppProperties
     char *AppVersion;
 };
 
+// CalcPropsOptions defines the collection of properties the application uses to
+// record calculation status and details.
+struct CalcPropsOptions
+{
+    unsigned int *CalcID;
+    char **CalcMode;
+    bool *FullCalcOnLoad;
+    char **RefMode;
+    bool *Iterate;
+    unsigned int *IterateCount;
+    double *IterateDelta;
+    bool *FullPrecision;
+    bool *CalcCompleted;
+    bool *CalcOnSave;
+    bool *ConcurrentCalc;
+    unsigned int *ConcurrentManualCount;
+    bool *ForceFullCalc;
+};
+
 // Cell can be used directly in StreamWriter.SetRow to specify a style and
 // a value.
 struct Cell
@@ -477,7 +496,8 @@ struct ChartMarker
 
 // ChartDataPoint directly maps the format settings of the chart data point for
 // doughnut, pie and 3D pie charts.
-struct ChartDataPoint {
+struct ChartDataPoint
+{
     int Index;
     struct Fill Fill;
 };
@@ -784,6 +804,12 @@ struct IntStringResult
 {
     int K;
     char *V;
+};
+
+struct GetCalcPropsResult
+{
+    struct CalcPropsOptions opts;
+    char *err;
 };
 
 struct GetCellHyperLinkResult

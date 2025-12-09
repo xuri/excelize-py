@@ -243,6 +243,23 @@ class AppProperties:
 
 
 @dataclass
+class CalcPropsOptions:
+    calc_id: Optional[int] = None
+    calc_mode: Optional[str] = None
+    full_calc_on_load: Optional[bool] = None
+    ref_mode: Optional[str] = None
+    iterate: Optional[bool] = None
+    iterate_count: Optional[int] = None
+    iterate_delta: Optional[float] = None
+    full_precision: Optional[bool] = None
+    calc_completed: Optional[bool] = None
+    calc_on_save: Optional[bool] = None
+    concurrent_calc: Optional[bool] = None
+    concurrent_manual_count: Optional[int] = None
+    force_full_calc: Optional[bool] = None
+
+
+@dataclass
 class Cell:
     style_id: int = 0
     formula: str = ""

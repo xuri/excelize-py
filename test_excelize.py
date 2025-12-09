@@ -80,6 +80,31 @@ class TestExcelize(unittest.TestCase):
     def test_c_value_to_py(self):
         self.assertIsNone(excelize.c_value_to_py(None, None))
 
+    def test_calc_props(self):
+        f = excelize.new_file()
+        opts = excelize.CalcPropsOptions(
+            full_calc_on_load=True,
+            calc_id=122211,
+            concurrent_manual_count=5,
+            iterate_count=10,
+            concurrent_calc=True,
+        )
+        self.assertIsNone(f.set_calc_props(opts))
+        with self.assertRaises(TypeError) as context:
+            f.set_calc_props(0)
+        self.assertEqual(
+            str(context.exception),
+            "expected type CalcPropsOptions for argument 'opts', but got int",
+        )
+        with self.assertRaises(RuntimeError) as context:
+            f.set_calc_props(excelize.CalcPropsOptions(ref_mode="a1"))
+        self.assertEqual(
+            str(context.exception),
+            'invalid RefMode value "a1", acceptable value should be one of A1, R1C1',
+        )
+        self.assertEqual(opts, f.get_calc_props())
+        self.assertIsNone(f.close())
+
     def test_py_value_to_c(self):
         self.assertIsNone(excelize.py_value_to_c(None, None))
 
@@ -900,6 +925,9 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
             f.get_defined_name()
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
+            f.get_calc_props()
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
             f.get_sheet_name(0)
@@ -2230,7 +2258,7 @@ class TestExcelize(unittest.TestCase):
     def test_join_cell_name(self):
         self.assertEqual(excelize.join_cell_name("A", 1), "A1")
         with self.assertRaises(RuntimeError) as context:
-           excelize.join_cell_name("", 0)
+            excelize.join_cell_name("", 0)
         self.assertEqual(str(context.exception), 'invalid column name ""')
         with self.assertRaises(TypeError) as context:
             excelize.join_cell_name(1, 1)
