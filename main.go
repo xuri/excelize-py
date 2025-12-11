@@ -2383,6 +2383,39 @@ func SetCellBool(idx int, sheet, cell *C.char, value bool) *C.char {
 	return C.CString(emptyString)
 }
 
+// SetCellDefault provides a function to set string type value of a cell as
+// default format without escaping the cell.
+//
+//export SetCellDefault
+func SetCellDefault(idx int, sheet, cell, value *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetCellDefault(C.GoString(sheet), C.GoString(cell), C.GoString(value)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// SetCellFloat sets a floating point value into a cell. The precision
+// parameter specifies how many places after the decimal will be shown
+// while -1 is a special value that will use as many decimal places as
+// necessary to represent the number. bitSize is 32 or 64 depending on if a
+// float32 or float64 was originally used for the value.
+//
+//export SetCellFloat
+func SetCellFloat(idx int, sheet, cell *C.char, value float64, precision, bitSize int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).SetCellFloat(C.GoString(sheet), C.GoString(cell), value, precision, bitSize); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
 // SetCellFormula provides a function to set formula on the cell is taken
 // according to the given worksheet name and cell formula settings. The result
 // of the formula cell can be calculated when the worksheet is opened by the

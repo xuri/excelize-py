@@ -481,6 +481,28 @@ class TestExcelize(unittest.TestCase):
             f.set_cell_value("SheetN", "A9", None)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
+        self.assertIsNone(f.set_cell_default("Sheet1", "A13", "default"))
+        with self.assertRaises(TypeError) as context:
+            f.set_cell_default("Sheet1", "A13", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'value', but got int",
+        )
+        with self.assertRaises(RuntimeError) as context:
+            f.set_cell_default("SheetN", "A13", "default")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+
+        self.assertIsNone(f.set_cell_float("Sheet1", "A14", 1.325, 2, 32))
+        with self.assertRaises(TypeError) as context:
+            f.set_cell_float("Sheet1", 1, 1.325, 2, 32)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'cell', but got int",
+        )
+        with self.assertRaises(RuntimeError) as context:
+            f.set_cell_float("SheetN", "A14", 1.325, 2, 32)
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+
         val = f.get_cell_value("Sheet1", "A2")
         self.assertEqual("", val)
 
@@ -762,6 +784,8 @@ class TestExcelize(unittest.TestCase):
                 ["FALSE"],
                 ["100"],
                 ["Hello"],
+                ["default"],
+                ["1.33"],
             ],
         )
         rows = f.get_rows("Sheet1", excelize.Options(raw_cell_value=True))
@@ -780,6 +804,8 @@ class TestExcelize(unittest.TestCase):
                 ["0"],
                 ["100"],
                 ["Hello"],
+                ["default"],
+                ["1.33"],
             ],
         )
         with self.assertRaises(RuntimeError) as context:

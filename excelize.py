@@ -4438,12 +4438,106 @@ class File:
             RuntimeError with the message.
         """
         prepare_args(
-            [sheet, cell],
-            [argsRule("sheet", [str]), argsRule("cell", [str])],
+            [sheet, cell, value],
+            [
+                argsRule("sheet", [str]),
+                argsRule("cell", [str]),
+                argsRule("value", [bool]),
+            ],
         )
         err, lib.SetCellBool.restype = None, c_char_p
         err = lib.SetCellBool(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE), value
+        ).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
+    def set_cell_default(self, sheet: str, cell: str, value: str) -> None:
+        """
+        Set string type value of a cell as default format without escaping the
+        cell.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+            value (str): The cell value
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+        """
+        prepare_args(
+            [sheet, cell, value],
+            [
+                argsRule("sheet", [str]),
+                argsRule("cell", [str]),
+                argsRule("value", [str]),
+            ],
+        )
+        err, lib.SetCellDefault.restype = None, c_char_p
+        err = lib.SetCellDefault(
+            self.file_index,
+            sheet.encode(ENCODE),
+            cell.encode(ENCODE),
+            value.encode(ENCODE),
+        ).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
+    def set_cell_float(
+        self,
+        sheet: str,
+        cell: str,
+        value: Union[float, int],
+        precision: int,
+        bit_size: int,
+    ) -> None:
+        """
+        Sets a floating point value into a cell. The precision parameter
+        specifies how many places after the decimal will be shown while -1 is a
+        special value that will use as many decimal places as necessary to
+        represent the number. bitSize is 32 or 64 depending on if a `float32` or
+        `float64` was originally used for the value.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+            value (float): The cell value
+            precision (int): The cell value precision
+            bit_size (int): The cell value bit size
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+
+        Example:
+            For example set column width for column A to H on Sheet1:
+
+            ```python
+            try:
+                f.set_cell_float("Sheet1", "A1", 1.325, 2, 32)
+            except (RuntimeError, TypeError) as err:
+                print(err)
+            ```
+        """
+        prepare_args(
+            [sheet, cell, value, precision, bit_size],
+            [
+                argsRule("sheet", [str]),
+                argsRule("cell", [str]),
+                argsRule("value", [int, float]),
+                argsRule("precision", [int]),
+                argsRule("bit_size", [int]),
+            ],
+        )
+        err, lib.SetCellFloat.restype = None, c_char_p
+        err = lib.SetCellFloat(
+            self.file_index,
+            sheet.encode(ENCODE),
+            cell.encode(ENCODE),
+            c_double(value),
+            c_longlong(precision),
+            c_longlong(bit_size),
         ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
