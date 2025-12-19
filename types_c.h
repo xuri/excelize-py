@@ -863,6 +863,13 @@ struct GetCellRichTextResult
     char *Err;
 };
 
+struct GetSlicersResult
+{
+    int SlicersLen;
+    struct SlicerOptions *Slicers;
+    char *Err;
+};
+
 struct GetStyleResult
 {
     struct Style style;
@@ -894,6 +901,13 @@ struct GetSheetMapResult
     struct IntStringResult *Arr;
     char *Err;
 };
+
+struct GetSheetViewResult
+{
+    struct ViewOptions opts;
+    char *err;
+};
+
 
 struct GetCommentsResult
 {

@@ -3471,20 +3471,46 @@ class File:
             return res.val.decode(ENCODE)
         raise RuntimeError(err)
 
-    def get_sheet_props(self, sheet_name: str) -> Optional[SheetPropsOptions]:
+    def get_sheet_props(self, sheet: str) -> Optional[SheetPropsOptions]:
         """
         Get worksheet properties.
+
+        Args:
+            sheet (str): The sheet name.
 
         Returns:
             Optional[SheetPropsOptions]: Return the sheet property options if no
             error occurred, otherwise raise a RuntimeError with the message.
         """
-        prepare_args([sheet_name], [argsRule("sheet_name", [str])])
+        prepare_args([sheet], [argsRule("sheet", [str])])
         lib.GetSheetProps.restype = types_go._GetSheetPropsResult
-        res = lib.GetSheetProps(self.file_index, sheet_name.encode(ENCODE))
+        res = lib.GetSheetProps(self.file_index, sheet.encode(ENCODE))
         err = res.err.decode(ENCODE)
         if not err:
             return c_value_to_py(res.opts, SheetPropsOptions())
+        raise RuntimeError(err)
+
+    def get_sheet_view(self, sheet: str, view_index: int) -> Optional[ViewOptions]:
+        """
+        Gets the value of sheet view options. The view_index may be negative and
+        if so is counted backward (-1 is the last view).
+
+        Args:
+            sheet (str): The sheet name.
+
+        Returns:
+            Optional[ViewOptions]: Return the sheet view options if no error
+            occurred, otherwise raise a RuntimeError with the message.
+        """
+        prepare_args(
+            [sheet, view_index],
+            [argsRule("sheet", [str]), argsRule("view_index", [int])],
+        )
+        lib.GetSheetView.restype = types_go._GetSheetViewResult
+        res = lib.GetSheetView(self.file_index, sheet.encode(ENCODE), view_index)
+        err = res.err.decode(ENCODE)
+        if not err:
+            return c_value_to_py(res.opts, ViewOptions())
         raise RuntimeError(err)
 
     def get_sheet_visible(self, sheet: str) -> bool:
@@ -3514,6 +3540,28 @@ class File:
         err = res.err.decode(ENCODE)
         if not err:
             return res.val
+        raise RuntimeError(err)
+
+    def get_slicers(self, sheet: str) -> List[SlicerOptions]:
+        """
+        Get all slicers in a worksheet by a given worksheet name. Note that,
+        this function does not support getting the height, width, and graphic
+        options of the slicer shape currently.
+
+        Args:
+            sheet (str): The worksheet name
+
+        Returns:
+            List[SlicerOptions]: Return the slicer list if no error occurred,
+            otherwise raise a RuntimeError with the message.
+        """
+        prepare_args([sheet], [argsRule("sheet", [str])])
+        lib.GetSlicers.restype = types_go._GetSlicersResult
+        res = lib.GetSlicers(self.file_index, sheet.encode(ENCODE))
+        slicers = c_value_to_py(res, GetSlicersResult()).slicers
+        err = res.Err.decode(ENCODE)
+        if not err:
+            return slicers if slicers else []
         raise RuntimeError(err)
 
     def get_style(self, style_id: int) -> Optional[Style]:

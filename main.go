@@ -1554,6 +1554,26 @@ func GetSheetProps(idx int, sheet *C.char) C.struct_GetSheetPropsResult {
 	return C.struct_GetSheetPropsResult{opts: cVal.Elem().Interface().(C.struct_SheetPropsOptions), err: C.CString(emptyString)}
 }
 
+// GetSheetView gets the value of sheet view options. The viewIndex may be
+// negative and if so is counted backward (-1 is the last view).
+//
+//export GetSheetView
+func GetSheetView(idx int, sheet *C.char, viewIndex int) C.struct_GetSheetViewResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetSheetViewResult{err: C.CString(errFilePtr)}
+	}
+	opts, err := f.(*excelize.File).GetSheetView(C.GoString(sheet), viewIndex)
+	if err != nil {
+		return C.struct_GetSheetViewResult{err: C.CString(err.Error())}
+	}
+	cVal, err := goValueToC(reflect.ValueOf(opts), reflect.ValueOf(&C.struct_ViewOptions{}))
+	if err != nil {
+		return C.struct_GetSheetViewResult{err: C.CString(err.Error())}
+	}
+	return C.struct_GetSheetViewResult{opts: cVal.Elem().Interface().(C.struct_ViewOptions), err: C.CString(emptyString)}
+}
+
 // GetSheetVisible provides a function to get worksheet visible by given
 // worksheet name.
 //
@@ -1568,6 +1588,31 @@ func GetSheetVisible(idx int, sheet *C.char) C.struct_BoolErrorResult {
 		return C.struct_BoolErrorResult{val: C._Bool(visible), err: C.CString(err.Error())}
 	}
 	return C.struct_BoolErrorResult{val: C._Bool(visible), err: C.CString(emptyString)}
+}
+
+// GetSlicers provides the method to get all slicers in a worksheet by a given
+// worksheet name. Note that, this function does not support getting the height,
+// width, and graphic options of the slicer shape currently.
+//
+//export GetSlicers
+func GetSlicers(idx int, sheet *C.char) C.struct_GetSlicersResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetSlicersResult{Err: C.CString(errFilePtr)}
+	}
+	tables, err := f.(*excelize.File).GetSlicers(C.GoString(sheet))
+	if err != nil {
+		return C.struct_GetSlicersResult{Err: C.CString(err.Error())}
+	}
+	cArray := C.malloc(C.size_t(len(tables)) * C.size_t(unsafe.Sizeof(C.struct_SlicerOptions{})))
+	for i, t := range tables {
+		cVal, err := goValueToC(reflect.ValueOf(t), reflect.ValueOf(&C.struct_SlicerOptions{}))
+		if err != nil {
+			return C.struct_GetSlicersResult{Err: C.CString(err.Error())}
+		}
+		*(*C.struct_SlicerOptions)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(C.struct_SlicerOptions{}))) = cVal.Elem().Interface().(C.struct_SlicerOptions)
+	}
+	return C.struct_GetSlicersResult{SlicersLen: C.int(len(tables)), Slicers: (*C.struct_SlicerOptions)(cArray), Err: C.CString(emptyString)}
 }
 
 // GetStyle provides a function to get style definition by given style index.

@@ -784,6 +784,10 @@ class SlicerOptions:
     item_desc: bool = False
     format: GraphicOptions = GraphicOptions
 
+@dataclass
+class GetSlicersResult:
+    slicers: Optional[List[SlicerOptions]] = None
+    err: str = ""
 
 @dataclass
 class SparklineOptions:

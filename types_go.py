@@ -843,6 +843,14 @@ class _GetCellRichTextResult(Structure):
     ]
 
 
+class _GetSlicersResult(Structure):
+    _fields_ = [
+        ("SlicersLen", c_int),
+        ("Slicers", POINTER(_SlicerOptions)),
+        ("Err", c_char_p),
+    ]
+
+
 class _GetStyleResult(Structure):
     _fields_ = [
         ("style", _Style),
@@ -877,6 +885,13 @@ class _GetSheetMapResult(Structure):
         ("ArrLen", c_int),
         ("Arr", POINTER(_IntStringResult)),
         ("Err", c_char_p),
+    ]
+
+
+class _GetSheetViewResult(Structure):
+    _fields_ = [
+        ("opts", _ViewOptions),
+        ("err", c_char_p),
     ]
 
 

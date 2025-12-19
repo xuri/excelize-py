@@ -1444,7 +1444,7 @@ class TestExcelize(unittest.TestCase):
             _ = f.get_sheet_props(1)
         self.assertEqual(
             str(context.exception),
-            "expected type str for argument 'sheet_name', but got int",
+            "expected type str for argument 'sheet', but got int",
         )
         with self.assertRaises(RuntimeError) as context:
             f.set_sheet_props("SheetN", excelize.SheetPropsOptions(code_name="Sheet1"))
@@ -1732,18 +1732,14 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(len(tables), 1)
         self.assertEqual(tables[0].name, "Table1")
         self.assertEqual(tables[0].range, "A1:D5")
-        self.assertIsNone(
-            f.add_slicer(
-                "Sheet1",
-                excelize.SlicerOptions(
-                    name="Column1",
-                    cell="E1",
-                    table_sheet="Sheet1",
-                    table_name="Table1",
-                    caption="Column1",
-                ),
-            )
+        opts = excelize.SlicerOptions(
+            name="Column1",
+            cell="E1",
+            table_sheet="Sheet1",
+            table_name="Table1",
+            caption="Column1",
         )
+        self.assertIsNone(f.add_slicer("Sheet1", opts))
         with self.assertRaises(RuntimeError) as context:
             f.add_slicer("Sheet1", excelize.SlicerOptions())
         self.assertEqual(str(context.exception), "parameter is invalid")
@@ -1762,6 +1758,24 @@ class TestExcelize(unittest.TestCase):
             str(context.exception),
             "expected type str for argument 'sheet', but got int",
         )
+
+        slicers = f.get_slicers("Sheet1")
+        self.assertEqual(len(slicers), 1)
+        self.assertEqual(opts.name, slicers[0].name)
+        self.assertEqual(opts.cell, slicers[0].cell)
+        self.assertEqual(opts.table_sheet, slicers[0].table_sheet)
+        self.assertEqual(opts.table_name, slicers[0].table_name)
+        self.assertEqual(opts.caption, slicers[0].caption)
+        with self.assertRaises(RuntimeError) as context:
+            _ = f.get_slicers("SheetN")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            _ = f.get_slicers(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
+        )
+
         self.assertIsNone(f.save_as(os.path.join("test", "TestAddSlicer.xlsx")))
         self.assertIsNone(f.close())
 
@@ -2456,6 +2470,16 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(
             str(context.exception),
             "expected type ViewOptions for argument 'opts', but got int",
+        )
+        self.assertEqual(expected, f.get_sheet_view("Sheet1", -1))
+        with self.assertRaises(RuntimeError) as context:
+            f.get_sheet_view("SheetN", 0)
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.get_sheet_view("Sheet1", "")
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'view_index', but got str",
         )
         self.assertIsNone(f.save_as(os.path.join("test", "TestSheetView.xlsx")))
         self.assertIsNone(f.close())
