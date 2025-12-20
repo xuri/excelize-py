@@ -817,6 +817,40 @@ class TestExcelize(unittest.TestCase):
             str(context.exception),
             "expected type Options for argument 'opts', but got int",
         )
+
+        cols = f.get_cols("Sheet1")
+        self.assertEqual(
+            cols,
+            [
+                [
+                    "",
+                    "",
+                    "Hello",
+                    "100",
+                    "123.45",
+                    "TRUE",
+                    "8/30/16 11:51",
+                    "08-30-16",
+                    "TRUE",
+                    "FALSE",
+                    "100",
+                    "Hello",
+                    "default",
+                    "1.33",
+                ],
+                *[[""] * 13 for _ in range(9)],
+            ],
+        )
+        with self.assertRaises(RuntimeError) as context:
+            _ = f.get_cols("SheetN")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            _ = f.get_cols("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type Options for argument 'opts', but got int",
+        )
+
         self.assertIsNone(
             f.protect_sheet(
                 "Sheet1",

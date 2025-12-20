@@ -389,13 +389,13 @@ class Style:
 
 
 @dataclass
-class Row:
+class Cells:
     cell: Optional[List[str]] = None
 
 
 @dataclass
-class GetRowsResult:
-    row: Optional[List[Row]] = None
+class StringMatrixErrorResult:
+    row: Optional[List[Cells]] = None
 
 
 @dataclass

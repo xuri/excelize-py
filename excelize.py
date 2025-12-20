@@ -3065,6 +3065,56 @@ class File:
             return res.val
         raise RuntimeError(err)
 
+    def get_cols(self, sheet: str, *opts: Options) -> List[List[str]]:
+        """
+        Gets the value of all cells by columns on the worksheet based on the
+        given worksheet name, returned as a two-dimensional array, where the
+        value of the cell is converted to the `str` type. If the cell format can
+        be applied to the value of the cell, the applied value will be used,
+        otherwise the original value will be used.
+
+        Args:
+            sheet (str): The worksheet name
+            *opts (Options): Optional parameters for get columns
+
+        Returns:
+            List[List[str]]: Return all the columns in a sheet by given
+            worksheet name, returned as a two-dimensional array if no error
+            occurred, otherwise raise a RuntimeError with the message.
+
+        Example:
+            For example, get and traverse the value of all cells by columns on a
+            worksheet named 'Sheet1':
+
+            ```python
+            cols = f.get_cols("Sheet1")
+            for col in cols:
+                for cell in col:
+                    print(f"{cell}\\t", end="")
+                print()
+            ```
+        """
+        prepare_args(
+            [sheet, opts[0]] if opts else [sheet],
+            [argsRule("sheet", [str]), argsRule("opts", [Options], True)],
+        )
+        lib.GetCols.restype = types_go._StringMatrixErrorResult
+        cols = []
+        options = (
+            byref(py_value_to_c(opts[0], types_go._Options()))
+            if opts
+            else POINTER(types_go._Options)()
+        )
+        res = lib.GetCols(self.file_index, sheet.encode(ENCODE), options)
+        err = res.err.decode(ENCODE)
+        result = c_value_to_py(res, StringMatrixErrorResult()).row
+        if result:
+            for row in result:
+                cols.append([cell for cell in row.cell] if row.cell else [])
+        if not err:
+            return cols
+        raise RuntimeError(err)
+
     def get_comments(self, sheet: str) -> List[Comment]:
         """
         Retrieves all comments in a worksheet by given worksheet
@@ -3187,7 +3237,7 @@ class File:
             [sheet, without_values[0]] if without_values else [sheet],
             [argsRule("sheet", [str]), argsRule("without_values", [bool], True)],
         )
-        lib.GetMergeCells.restype = types_go._GetRowsResult
+        lib.GetMergeCells.restype = types_go._StringMatrixErrorResult
         merge_cells = []
         res = lib.GetMergeCells(
             self.file_index,
@@ -3195,7 +3245,7 @@ class File:
             without_values[0] if without_values else False,
         )
         err = res.err.decode(ENCODE)
-        result = c_value_to_py(res, GetRowsResult()).row
+        result = c_value_to_py(res, StringMatrixErrorResult()).row
         if result:
             for row in result:
                 if row.cell:
@@ -3341,7 +3391,7 @@ class File:
             [sheet, opts[0]] if opts else [sheet],
             [argsRule("sheet", [str]), argsRule("opts", [Options], True)],
         )
-        lib.GetRows.restype = types_go._GetRowsResult
+        lib.GetRows.restype = types_go._StringMatrixErrorResult
         rows = []
         options = (
             byref(py_value_to_c(opts[0], types_go._Options()))
@@ -3350,7 +3400,7 @@ class File:
         )
         res = lib.GetRows(self.file_index, sheet.encode(ENCODE), options)
         err = res.err.decode(ENCODE)
-        result = c_value_to_py(res, GetRowsResult()).row
+        result = c_value_to_py(res, StringMatrixErrorResult()).row
         if result:
             for row in result:
                 rows.append([cell for cell in row.cell] if row.cell else [])
@@ -3507,7 +3557,9 @@ class File:
             [argsRule("sheet", [str]), argsRule("view_index", [int])],
         )
         lib.GetSheetView.restype = types_go._GetSheetViewResult
-        res = lib.GetSheetView(self.file_index, sheet.encode(ENCODE), view_index)
+        res = lib.GetSheetView(
+            self.file_index, sheet.encode(ENCODE), c_longlong(view_index)
+        )
         err = res.err.decode(ENCODE)
         if not err:
             return c_value_to_py(res.opts, ViewOptions())

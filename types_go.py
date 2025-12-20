@@ -820,17 +820,17 @@ class _GetCellHyperLinkResult(Structure):
     ]
 
 
-class _Row(Structure):
+class _Cells(Structure):
     _fields_ = [
         ("CellLen", c_int),
         ("Cell", POINTER(POINTER(c_char))),
     ]
 
 
-class _GetRowsResult(Structure):
+class _StringMatrixErrorResult(Structure):
     _fields_ = [
         ("RowLen", c_int),
-        ("Row", POINTER(_Row)),
+        ("Row", POINTER(_Cells)),
         ("err", c_char_p),
     ]
 

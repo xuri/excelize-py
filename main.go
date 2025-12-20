@@ -35,11 +35,11 @@ import (
 	"github.com/xuri/excelize/v2"
 )
 
-type Row struct {
+type Cells struct {
 	Cell []string
 }
-type GetRowsResult struct {
-	Row []Row
+type StringMatrixErrorResult struct {
+	Row []Cells
 }
 
 const (
@@ -1240,6 +1240,47 @@ func GetColWidth(idx int, sheet, col *C.char) C.struct_Float64ErrorResult {
 	return C.struct_Float64ErrorResult{val: C.double(val), err: C.CString(emptyString)}
 }
 
+// GetCols gets the value of all cells by columns on the worksheet based on the
+// given worksheet name, returned as a two-dimensional array, where the value
+// of the cell is converted to the `string` type. If the cell format can be
+// applied to the value of the cell, the applied value will be used, otherwise
+// the original value will be used.
+//
+//export GetCols
+func GetCols(idx int, sheet *C.char, opts *C.struct_Options) C.struct_StringMatrixErrorResult {
+	var (
+		options excelize.Options
+		result  StringMatrixErrorResult
+	)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_StringMatrixErrorResult{err: C.CString(errFilePtr)}
+	}
+	if opts != nil {
+		goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.Options{}))
+		if err != nil {
+			return C.struct_StringMatrixErrorResult{err: C.CString(err.Error())}
+		}
+		options = goVal.Elem().Interface().(excelize.Options)
+	}
+	cols, err := f.(*excelize.File).GetCols(C.GoString(sheet), options)
+	if err != nil {
+		return C.struct_StringMatrixErrorResult{err: C.CString(err.Error())}
+	}
+	for _, col := range cols {
+		var c Cells
+		c.Cell = append(c.Cell, col...)
+		result.Row = append(result.Row, c)
+	}
+	cVal, err := goValueToC(reflect.ValueOf(result), reflect.ValueOf(&C.struct_StringMatrixErrorResult{}))
+	if err != nil {
+		return C.struct_StringMatrixErrorResult{err: C.CString(err.Error())}
+	}
+	ret := cVal.Elem().Interface().(C.struct_StringMatrixErrorResult)
+	ret.err = C.CString(emptyString)
+	return ret
+}
+
 // GetComments retrieves all comments in a worksheet by given worksheet name.
 //
 //export GetComments
@@ -1326,26 +1367,26 @@ func GetDefinedName(idx int) C.struct_GetDefinedNameResult {
 // returned.
 //
 //export GetMergeCells
-func GetMergeCells(idx int, sheet *C.char, withoutValues bool) C.struct_GetRowsResult {
-	var result GetRowsResult
+func GetMergeCells(idx int, sheet *C.char, withoutValues bool) C.struct_StringMatrixErrorResult {
+	var result StringMatrixErrorResult
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.struct_GetRowsResult{err: C.CString(errFilePtr)}
+		return C.struct_StringMatrixErrorResult{err: C.CString(errFilePtr)}
 	}
 	rows, err := f.(*excelize.File).GetMergeCells(C.GoString(sheet), withoutValues)
 	if err != nil {
-		return C.struct_GetRowsResult{err: C.CString(err.Error())}
+		return C.struct_StringMatrixErrorResult{err: C.CString(err.Error())}
 	}
 	for _, row := range rows {
-		var r Row
+		var r Cells
 		r.Cell = append(r.Cell, row...)
 		result.Row = append(result.Row, r)
 	}
-	cVal, err := goValueToC(reflect.ValueOf(result), reflect.ValueOf(&C.struct_GetRowsResult{}))
+	cVal, err := goValueToC(reflect.ValueOf(result), reflect.ValueOf(&C.struct_StringMatrixErrorResult{}))
 	if err != nil {
-		return C.struct_GetRowsResult{err: C.CString(err.Error())}
+		return C.struct_StringMatrixErrorResult{err: C.CString(err.Error())}
 	}
-	ret := cVal.Elem().Interface().(C.struct_GetRowsResult)
+	ret := cVal.Elem().Interface().(C.struct_StringMatrixErrorResult)
 	ret.err = C.CString(emptyString)
 	return ret
 }
@@ -1407,36 +1448,36 @@ func GetRowVisible(idx int, sheet *C.char, row int) C.struct_BoolErrorResult {
 // may be inconsistent.
 //
 //export GetRows
-func GetRows(idx int, sheet *C.char, opts *C.struct_Options) C.struct_GetRowsResult {
+func GetRows(idx int, sheet *C.char, opts *C.struct_Options) C.struct_StringMatrixErrorResult {
 	var (
 		options excelize.Options
-		result  GetRowsResult
+		result  StringMatrixErrorResult
 	)
 	f, ok := files.Load(idx)
 	if !ok {
-		return C.struct_GetRowsResult{err: C.CString(errFilePtr)}
+		return C.struct_StringMatrixErrorResult{err: C.CString(errFilePtr)}
 	}
 	if opts != nil {
 		goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.Options{}))
 		if err != nil {
-			return C.struct_GetRowsResult{err: C.CString(err.Error())}
+			return C.struct_StringMatrixErrorResult{err: C.CString(err.Error())}
 		}
 		options = goVal.Elem().Interface().(excelize.Options)
 	}
 	rows, err := f.(*excelize.File).GetRows(C.GoString(sheet), options)
 	if err != nil {
-		return C.struct_GetRowsResult{err: C.CString(err.Error())}
+		return C.struct_StringMatrixErrorResult{err: C.CString(err.Error())}
 	}
 	for _, row := range rows {
-		var r Row
+		var r Cells
 		r.Cell = append(r.Cell, row...)
 		result.Row = append(result.Row, r)
 	}
-	cVal, err := goValueToC(reflect.ValueOf(result), reflect.ValueOf(&C.struct_GetRowsResult{}))
+	cVal, err := goValueToC(reflect.ValueOf(result), reflect.ValueOf(&C.struct_StringMatrixErrorResult{}))
 	if err != nil {
-		return C.struct_GetRowsResult{err: C.CString(err.Error())}
+		return C.struct_StringMatrixErrorResult{err: C.CString(err.Error())}
 	}
-	ret := cVal.Elem().Interface().(C.struct_GetRowsResult)
+	ret := cVal.Elem().Interface().(C.struct_StringMatrixErrorResult)
 	ret.err = C.CString(emptyString)
 	return ret
 }

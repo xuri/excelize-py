@@ -843,16 +843,16 @@ struct GetAppPropsResult
     char *err;
 };
 
-struct Row
+struct Cells
 {
     int CellLen;
     char **Cell;
 };
 
-struct GetRowsResult
+struct StringMatrixErrorResult
 {
     int RowLen;
-    struct Row *Row;
+    struct Cells *Row;
     char *err;
 };
 
