@@ -982,7 +982,13 @@ class TestExcelize(unittest.TestCase):
             f.get_app_props()
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
+            f.get_calc_props()
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
             f.get_custom_props()
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
+            f.set_custom_props(excelize.CustomProperty(name="Prop", value=""))
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
             f.get_default_font()
@@ -991,10 +997,10 @@ class TestExcelize(unittest.TestCase):
             f.get_defined_name()
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
-            f.get_calc_props()
+            f.get_doc_props()
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
-            f.set_custom_props(excelize.CustomProperty(name="Prop", value=""))
+            f.get_page_layout("Sheet1")
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
             f.get_sheet_name(0)
@@ -1524,10 +1530,7 @@ class TestExcelize(unittest.TestCase):
 
     def test_page_layout(self):
         f = excelize.new_file()
-        self.assertIsNone(
-            f.set_page_layout(
-                "Sheet1",
-                excelize.PageLayoutOptions(
+        opts =  excelize.PageLayoutOptions(
                     size=1,
                     orientation="landscape",
                     first_page_number=1,
@@ -1536,9 +1539,8 @@ class TestExcelize(unittest.TestCase):
                     fit_to_width=2,
                     black_and_white=True,
                     page_order="overThenDown",
-                ),
-            )
-        )
+                )
+        self.assertIsNone(f.set_page_layout("Sheet1", opts))
         with self.assertRaises(RuntimeError) as context:
             f.set_page_layout("SheetN", excelize.PageLayoutOptions())
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
@@ -1547,6 +1549,16 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(
             str(context.exception),
             "expected type PageLayoutOptions for argument 'opts', but got int",
+        )
+        self.assertEqual(f.get_page_layout("Sheet1"), opts)
+        with self.assertRaises(RuntimeError) as context:
+            f.get_page_layout("SheetN")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.get_page_layout(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
         )
         self.assertIsNone(f.save_as(os.path.join("test", "TestPageLayout.xlsx")))
         self.assertIsNone(f.close())
@@ -2341,26 +2353,24 @@ class TestExcelize(unittest.TestCase):
 
     def test_doc_props(self):
         f = excelize.new_file()
-        self.assertIsNone(
-            f.set_doc_props(
-                excelize.DocProperties(
-                    category="category",
-                    content_status="Draft",
-                    created="2019-06-04T22:00:10Z",
-                    creator="Go Excelize",
-                    description="This file created by Go Excelize",
-                    identifier="xlsx",
-                    keywords="Spreadsheet",
-                    last_modified_by="Go Author",
-                    modified="2019-06-04T22:00:10Z",
-                    revision="0",
-                    subject="Test Subject",
-                    title="Test Title",
-                    language="en-US",
-                    version="1.0.0",
-                )
-            )
+        props = excelize.DocProperties(
+            category="category",
+            content_status="Draft",
+            created="2019-06-04T22:00:10Z",
+            creator="Go Excelize",
+            description="This file created by Go Excelize",
+            identifier="xlsx",
+            keywords="Spreadsheet",
+            last_modified_by="Go Author",
+            modified="2019-06-04T22:00:10Z",
+            revision="0",
+            subject="Test Subject",
+            title="Test Title",
+            language="en-US",
+            version="1.0.0",
         )
+        self.assertIsNone(f.set_doc_props(props))
+        self.assertEqual(props, f.get_doc_props())
         self.assertIsNone(f.save_as(os.path.join("test", "TestDocProps.xlsx")))
         self.assertIsNone(f.close())
 

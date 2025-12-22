@@ -930,6 +930,18 @@ struct GetDefinedNameResult
     char *Err;
 };
 
+struct GetDocPropsResult
+{
+    struct DocProperties opts;
+    char *err;
+};
+
+struct GetPageLayoutResult
+{
+    struct PageLayoutOptions opts;
+    char *err;
+};
+
 struct GetRowOptsResult
 {
     struct RowOpts opts;

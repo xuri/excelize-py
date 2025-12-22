@@ -3205,6 +3205,21 @@ class File:
             return arr
         raise RuntimeError(err)
 
+    def get_doc_props(self) -> DocProperties:
+        """
+        Get document core properties.
+
+        Returns:
+            DocProperties: Return the document core properties if no error
+            occurred, otherwise raise a RuntimeError with the message.
+        """
+        lib.GetDocProps.restype = types_go._GetDocPropsResult
+        res = lib.GetDocProps(self.file_index)
+        err = res.err.decode(ENCODE)
+        if not err:
+            return c_value_to_py(res.opts, DocProperties())
+        raise RuntimeError(err)
+
     def get_merge_cells(self, sheet: str, *without_values: bool) -> List[MergeCell]:
         """
         Get all merged cells from a specific worksheet. If the `without_values`
@@ -3252,6 +3267,22 @@ class File:
                     merge_cells.append(MergeCell([cell for cell in row.cell]))
         if not err:
             return merge_cells
+        raise RuntimeError(err)
+
+    def get_page_layout(self, sheet: str) -> PageLayoutOptions:
+        """
+        Gets worksheet page layout.
+
+        Returns:
+            PageLayoutOptions: Return the worksheet page layout if no error
+            occurred, otherwise raise a RuntimeError with the message.
+        """
+        prepare_args([sheet], [argsRule("sheet", [str])])
+        lib.GetPageLayout.restype = types_go._GetPageLayoutResult
+        res = lib.GetPageLayout(self.file_index, sheet.encode(ENCODE))
+        err = res.err.decode(ENCODE)
+        if not err:
+            return c_value_to_py(res.opts, PageLayoutOptions())
         raise RuntimeError(err)
 
     def get_row_height(self, sheet: str, row: int) -> float:

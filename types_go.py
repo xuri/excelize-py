@@ -919,6 +919,20 @@ class _GetDefinedNameResult(Structure):
     ]
 
 
+class _GetDocPropsResult(Structure):
+    _fields_ = [
+        ("opts", _DocProperties),
+        ("err", c_char_p),
+    ]
+
+
+class _GetPageLayoutResult(Structure):
+    _fields_ = [
+        ("opts", _PageLayoutOptions),
+        ("err", c_char_p),
+    ]
+
+
 class _GetRowOptsResult(Structure):
     _fields_ = [
         ("opts", _RowOpts),

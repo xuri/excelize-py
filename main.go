@@ -1361,6 +1361,25 @@ func GetDefinedName(idx int) C.struct_GetDefinedNameResult {
 	return C.struct_GetDefinedNameResult{DefinedNamesLen: C.int(len(definedNames)), DefinedNames: (*C.struct_DefinedName)(cArray), Err: C.CString(emptyString)}
 }
 
+// GetDocProps provides a function to get document core properties.
+//
+//export GetDocProps
+func GetDocProps(idx int) C.struct_GetDocPropsResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetDocPropsResult{err: C.CString(errFilePtr)}
+	}
+	opts, err := f.(*excelize.File).GetDocProps()
+	if err != nil {
+		return C.struct_GetDocPropsResult{err: C.CString(err.Error())}
+	}
+	cVal, err := goValueToC(reflect.ValueOf(*opts), reflect.ValueOf(&C.struct_DocProperties{}))
+	if err != nil {
+		return C.struct_GetDocPropsResult{err: C.CString(err.Error())}
+	}
+	return C.struct_GetDocPropsResult{opts: cVal.Elem().Interface().(C.struct_DocProperties), err: C.CString(emptyString)}
+}
+
 // GetMergeCells provides a function to get all merged cells from a specific
 // worksheet. If the `withoutValues` parameter is set to true, it will not
 // return the cell values of merged cells, only the range reference will be
@@ -1389,6 +1408,25 @@ func GetMergeCells(idx int, sheet *C.char, withoutValues bool) C.struct_StringMa
 	ret := cVal.Elem().Interface().(C.struct_StringMatrixErrorResult)
 	ret.err = C.CString(emptyString)
 	return ret
+}
+
+// GetPageLayout provides a function to gets worksheet page layout.
+//
+//export GetPageLayout
+func GetPageLayout(idx int, sheet *C.char) C.struct_GetPageLayoutResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetPageLayoutResult{err: C.CString(errFilePtr)}
+	}
+	opts, err := f.(*excelize.File).GetPageLayout(C.GoString(sheet))
+	if err != nil {
+		return C.struct_GetPageLayoutResult{err: C.CString(err.Error())}
+	}
+	cVal, err := goValueToC(reflect.ValueOf(opts), reflect.ValueOf(&C.struct_PageLayoutOptions{}))
+	if err != nil {
+		return C.struct_GetPageLayoutResult{err: C.CString(err.Error())}
+	}
+	return C.struct_GetPageLayoutResult{opts: cVal.Elem().Interface().(C.struct_PageLayoutOptions), err: C.CString(emptyString)}
 }
 
 // GetRowHeight provides a function to get row height by given worksheet name
