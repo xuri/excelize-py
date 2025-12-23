@@ -3285,6 +3285,45 @@ class File:
             return c_value_to_py(res.opts, PageLayoutOptions())
         raise RuntimeError(err)
 
+    def get_page_margins(self, sheet: str) -> PageLayoutMarginsOptions:
+        """
+        Get worksheet page margins.
+
+        Returns:
+            PageLayoutMarginsOptions: Return the worksheet page margins if no
+            error occurred, otherwise raise a RuntimeError with the message.
+        """
+        prepare_args([sheet], [argsRule("sheet", [str])])
+        lib.GetPageMargins.restype = types_go._GetPageMarginsResult
+        res = lib.GetPageMargins(self.file_index, sheet.encode(ENCODE))
+        err = res.err.decode(ENCODE)
+        if not err:
+            return c_value_to_py(res.opts, PageLayoutMarginsOptions())
+        raise RuntimeError(err)
+
+    def get_pivot_tables(self, sheet: str) -> List[PivotTableOptions]:
+        """
+        Returns all pivot table definitions in a worksheet by given worksheet
+        name. Currently only support get pivot table cache with worksheet source
+        type, and doesn't support source types: external, consolidation and
+        scenario.
+
+        Args:
+            sheet (str): The worksheet name
+
+        Returns:
+            List[PivotTableOptions]: Return pivot table options if no error
+            occurred, otherwise raise a RuntimeError with the message.
+        """
+        prepare_args([sheet], [argsRule("sheet", [str])])
+        lib.GetPivotTables.restype = types_go._GetPivotTablesResult
+        res = lib.GetPivotTables(self.file_index, sheet.encode(ENCODE))
+        pivot_tables = c_value_to_py(res, GetPivotTablesResult()).pivot_tables
+        err = res.Err.decode(ENCODE)
+        if not err:
+            return pivot_tables if pivot_tables else []
+        raise RuntimeError(err)
+
     def get_row_height(self, sheet: str, row: int) -> float:
         """
         Get row height by given worksheet name and row number.

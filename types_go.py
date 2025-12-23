@@ -933,6 +933,21 @@ class _GetPageLayoutResult(Structure):
     ]
 
 
+class _GetPageMarginsResult(Structure):
+    _fields_ = [
+        ("opts", _PageLayoutMarginsOptions),
+        ("err", c_char_p),
+    ]
+
+
+class _GetPivotTablesResult(Structure):
+    _fields_ = [
+        ("PivotTablesLen", c_int),
+        ("PivotTables", POINTER(_PivotTableOptions)),
+        ("Err", c_char_p),
+    ]
+
+
 class _GetRowOptsResult(Structure):
     _fields_ = [
         ("opts", _RowOpts),

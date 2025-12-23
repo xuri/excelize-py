@@ -899,3 +899,9 @@ class GetSheetMapResult:
 class GetCommentsResult:
     comments: Optional[List[Comment]] = None
     err: str = ""
+
+
+@dataclass
+class GetPivotTablesResult:
+    pivot_tables: Optional[List[PivotTableOptions]] = None
+    err: str = ""

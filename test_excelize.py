@@ -1003,6 +1003,12 @@ class TestExcelize(unittest.TestCase):
             f.get_page_layout("Sheet1")
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
+            f.get_page_margins("Sheet1")
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
+            f.get_pivot_tables("Sheet1")
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
             f.get_sheet_name(0)
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(TypeError) as context:
@@ -1530,16 +1536,16 @@ class TestExcelize(unittest.TestCase):
 
     def test_page_layout(self):
         f = excelize.new_file()
-        opts =  excelize.PageLayoutOptions(
-                    size=1,
-                    orientation="landscape",
-                    first_page_number=1,
-                    adjust_to=120,
-                    fit_to_height=2,
-                    fit_to_width=2,
-                    black_and_white=True,
-                    page_order="overThenDown",
-                )
+        opts = excelize.PageLayoutOptions(
+            size=1,
+            orientation="landscape",
+            first_page_number=1,
+            adjust_to=120,
+            fit_to_height=2,
+            fit_to_width=2,
+            black_and_white=True,
+            page_order="overThenDown",
+        )
         self.assertIsNone(f.set_page_layout("Sheet1", opts))
         with self.assertRaises(RuntimeError) as context:
             f.set_page_layout("SheetN", excelize.PageLayoutOptions())
@@ -1565,21 +1571,17 @@ class TestExcelize(unittest.TestCase):
 
     def test_page_margins(self):
         f = excelize.new_file()
-        self.assertIsNone(
-            f.set_page_margins(
-                "Sheet1",
-                excelize.PageLayoutMarginsOptions(
-                    bottom=1.0,
-                    footer=1.0,
-                    header=1.0,
-                    left=1.0,
-                    right=1.0,
-                    top=1.0,
-                    horizontally=True,
-                    vertically=True,
-                ),
-            )
+        opts = excelize.PageLayoutMarginsOptions(
+            bottom=1.0,
+            footer=1.0,
+            header=1.0,
+            left=1.0,
+            right=1.0,
+            top=1.0,
+            horizontally=True,
+            vertically=True,
         )
+        self.assertIsNone(f.set_page_margins("Sheet1", opts))
         with self.assertRaises(RuntimeError) as context:
             f.set_page_margins("SheetN", excelize.PageLayoutMarginsOptions())
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
@@ -1588,6 +1590,16 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(
             str(context.exception),
             "expected type PageLayoutMarginsOptions for argument 'opts', but got int",
+        )
+        self.assertEqual(f.get_page_margins("Sheet1"), opts)
+        with self.assertRaises(RuntimeError) as context:
+            f.get_page_margins("SheetN")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.get_page_margins(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
         )
         self.assertIsNone(f.save_as(os.path.join("test", "TestPageMargins.xlsx")))
         self.assertIsNone(f.close())
@@ -1666,32 +1678,52 @@ class TestExcelize(unittest.TestCase):
             self.assertIsNone(
                 f.set_cell_value("Sheet1", f"E{row}", region[random.randrange(4)])
             )
-        self.assertIsNone(
-            f.add_pivot_table(
-                excelize.PivotTableOptions(
-                    data_range="Sheet1!A1:E31",
-                    pivot_table_range="Sheet1!G2:M34",
-                    rows=[
-                        excelize.PivotTableField(data="Month", default_subtotal=True),
-                        excelize.PivotTableField(data="Year"),
-                    ],
-                    filter=[excelize.PivotTableField(data="Region")],
-                    columns=[
-                        excelize.PivotTableField(data="Type", default_subtotal=True),
-                    ],
-                    data=[
-                        excelize.PivotTableField(
-                            data="Sales", name="Summarize", subtotal="Sum"
-                        ),
-                    ],
-                    row_grand_totals=True,
-                    col_grand_totals=True,
-                    show_drill=True,
-                    show_row_headers=True,
-                    show_col_headers=True,
-                    show_last_column=True,
-                )
-            )
+        opts = excelize.PivotTableOptions(
+            data_range="Sheet1!A1:E31",
+            pivot_table_range="Sheet1!G2:M34",
+            rows=[
+                excelize.PivotTableField(data="Month", default_subtotal=True),
+                excelize.PivotTableField(data="Year"),
+            ],
+            filter=[excelize.PivotTableField(data="Region")],
+            columns=[
+                excelize.PivotTableField(data="Type", default_subtotal=True),
+            ],
+            data=[
+                excelize.PivotTableField(
+                    data="Sales", name="Summarize", subtotal="Sum"
+                ),
+            ],
+            row_grand_totals=True,
+            col_grand_totals=True,
+            show_drill=True,
+            show_row_headers=True,
+            show_col_headers=True,
+            show_last_column=True,
+        )
+        self.assertIsNone(f.add_pivot_table(opts))
+        tables = f.get_pivot_tables("Sheet1")
+        self.assertEqual(len(tables), 1)
+        self.assertEqual(tables[0].data_range, opts.data_range)
+        self.assertEqual(tables[0].pivot_table_range, opts.pivot_table_range)
+        self.assertEqual(tables[0].rows, opts.rows)
+        self.assertEqual(tables[0].filter, opts.filter)
+        self.assertEqual(tables[0].columns, opts.columns)
+        self.assertEqual(tables[0].data, opts.data)
+        self.assertEqual(tables[0].row_grand_totals, opts.row_grand_totals)
+        self.assertEqual(tables[0].col_grand_totals, opts.col_grand_totals)
+        self.assertEqual(tables[0].show_drill, opts.show_drill)
+        self.assertEqual(tables[0].show_row_headers, opts.show_row_headers)
+        self.assertEqual(tables[0].show_col_headers, opts.show_col_headers)
+        self.assertEqual(tables[0].show_last_column, opts.show_last_column)
+        with self.assertRaises(RuntimeError) as context:
+            f.get_pivot_tables("SheetN")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.get_pivot_tables(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
         )
         with self.assertRaises(RuntimeError) as context:
             f.add_pivot_table(excelize.PivotTableOptions())

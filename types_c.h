@@ -942,6 +942,19 @@ struct GetPageLayoutResult
     char *err;
 };
 
+struct GetPageMarginsResult
+{
+    struct PageLayoutMarginsOptions opts;
+    char *err;
+};
+
+struct GetPivotTablesResult
+{
+    int PivotTablesLen;
+    struct PivotTableOptions *PivotTables;
+    char *Err;
+};
+
 struct GetRowOptsResult
 {
     struct RowOpts opts;

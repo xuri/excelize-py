@@ -1429,6 +1429,51 @@ func GetPageLayout(idx int, sheet *C.char) C.struct_GetPageLayoutResult {
 	return C.struct_GetPageLayoutResult{opts: cVal.Elem().Interface().(C.struct_PageLayoutOptions), err: C.CString(emptyString)}
 }
 
+// GetPageMargins provides a function to get worksheet page margins.
+//
+//export GetPageMargins
+func GetPageMargins(idx int, sheet *C.char) C.struct_GetPageMarginsResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetPageMarginsResult{err: C.CString(errFilePtr)}
+	}
+	opts, err := f.(*excelize.File).GetPageMargins(C.GoString(sheet))
+	if err != nil {
+		return C.struct_GetPageMarginsResult{err: C.CString(err.Error())}
+	}
+	cVal, err := goValueToC(reflect.ValueOf(opts), reflect.ValueOf(&C.struct_PageLayoutMarginsOptions{}))
+	if err != nil {
+		return C.struct_GetPageMarginsResult{err: C.CString(err.Error())}
+	}
+	return C.struct_GetPageMarginsResult{opts: cVal.Elem().Interface().(C.struct_PageLayoutMarginsOptions), err: C.CString(emptyString)}
+}
+
+// GetPivotTables returns all pivot table definitions in a worksheet by given
+// worksheet name. Currently only support get pivot table cache with worksheet
+// source type, and doesn't support source types: external, consolidation
+// and scenario.
+//
+//export GetPivotTables
+func GetPivotTables(idx int, sheet *C.char) C.struct_GetPivotTablesResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetPivotTablesResult{Err: C.CString(errFilePtr)}
+	}
+	pivotTables, err := f.(*excelize.File).GetPivotTables(C.GoString(sheet))
+	if err != nil {
+		return C.struct_GetPivotTablesResult{Err: C.CString(err.Error())}
+	}
+	cArray := C.malloc(C.size_t(len(pivotTables)) * C.size_t(unsafe.Sizeof(C.struct_PivotTableOptions{})))
+	for i, tbl := range pivotTables {
+		cVal, err := goValueToC(reflect.ValueOf(tbl), reflect.ValueOf(&C.struct_PivotTableOptions{}))
+		if err != nil {
+			return C.struct_GetPivotTablesResult{Err: C.CString(err.Error())}
+		}
+		*(*C.struct_PivotTableOptions)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(C.struct_PivotTableOptions{}))) = cVal.Elem().Interface().(C.struct_PivotTableOptions)
+	}
+	return C.struct_GetPivotTablesResult{PivotTablesLen: C.int(len(pivotTables)), PivotTables: (*C.struct_PivotTableOptions)(cArray), Err: C.CString(emptyString)}
+}
+
 // GetRowHeight provides a function to get row height by given worksheet name
 // and row number.
 //
