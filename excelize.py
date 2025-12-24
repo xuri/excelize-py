@@ -1680,6 +1680,74 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
+    def add_header_footer_image(
+        self, sheet: str, opts: HeaderFooterImageOptions
+    ) -> None:
+        """
+        set the graphics that can be referenced in the header and footer
+        definitions via `&G`, supported image types: EMF, EMZ, GIF, ICO, JPEG,
+        JPG, PNG, SVG, TIF, TIFF, WMF, and WMZ.
+
+        The extension should be provided with a `.` in front, e.g. `.png`. The
+        width and height should have units in them, e.g. `100pt`.
+
+        Args:
+            sheet (str): The worksheet name
+            opts (HeaderFooterImageOptions): The header and footer image options
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+        """
+        prepare_args(
+            [sheet, opts],
+            [
+                argsRule("sheet", [str]),
+                argsRule("opts", [HeaderFooterImageOptions]),
+            ],
+        )
+        lib.AddHeaderFooterImage.restype = c_char_p
+        err = lib.AddHeaderFooterImage(
+            self.file_index,
+            sheet.encode(ENCODE),
+            byref(py_value_to_c(opts, types_go._HeaderFooterImageOptions())),
+        ).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
+    def add_ignored_errors(
+        self, sheet: str, range_ref: str, ignored_errors_type: IgnoredErrorsType
+    ) -> None:
+        """
+        Ignored error for a range of cells.
+
+        Args:
+            sheet (str): The worksheet name
+            range_ref (str): The cell range reference
+            ignored_errors_type (IgnoredErrorsType): The ignored errors type
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+        """
+        prepare_args(
+            [sheet, range_ref, ignored_errors_type],
+            [
+                argsRule("sheet", [str]),
+                argsRule("range_ref", [str]),
+                argsRule("ignored_errors_type", [IgnoredErrorsType]),
+            ],
+        )
+        lib.AddIgnoredErrors.restype = c_char_p
+        err = lib.AddIgnoredErrors(
+            self.file_index,
+            sheet.encode(ENCODE),
+            range_ref.encode(ENCODE),
+            c_longlong(ignored_errors_type),
+        ).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
     def add_picture(
         self, sheet: str, cell: str, name: str, opts: Optional[GraphicOptions]
     ) -> None:

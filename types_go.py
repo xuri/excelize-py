@@ -210,6 +210,19 @@ class _HeaderFooterOptions(Structure):
     ]
 
 
+class _HeaderFooterImageOptions(Structure):
+    _fields_ = [
+        ("Position", c_uint),
+        ("FileLen", c_int),
+        ("File", POINTER(c_ubyte)),
+        ("IsFooter", c_bool),
+        ("FirstPage", c_bool),
+        ("Extension", c_char_p),
+        ("Width", c_char_p),
+        ("Height", c_char_p),
+    ]
+
+
 class _HyperlinkOpts(Structure):
     _fields_ = [
         ("Display", POINTER(c_char_p)),

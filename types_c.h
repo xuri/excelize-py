@@ -233,6 +233,20 @@ struct HeaderFooterOptions
     char *FirstFooter;
 };
 
+// HeaderFooterImageOptions defines the settings for an image to be accessible
+// from the worksheet header and footer options.
+struct HeaderFooterImageOptions
+{
+    unsigned char Position;
+    int FileLen;
+    unsigned char *File;
+	bool IsFooter;
+	bool FirstPage;
+    char *Extension;
+    char *Width;
+    char *Height;
+};
+
 // HyperlinkOpts can be passed to SetCellHyperlink to set optional hyperlink
 // attributes (e.g. display value)
 struct HyperlinkOpts

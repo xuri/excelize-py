@@ -125,6 +125,27 @@ class TestExcelize(unittest.TestCase):
             "expected type str for argument 'filename', but got int",
         )
 
+    def test_add_ignored_errors(self):
+        f = excelize.new_file()
+        self.assertIsNone(f.set_cell_value("Sheet1", "A3", "3"))
+        for i, error_type in enumerate(excelize.IgnoredErrorsType, start=1):
+            cell = excelize.coordinates_to_cell_name(1, i, False)
+            self.assertIsNone(f.add_ignored_errors("Sheet1", cell, error_type))
+        with self.assertRaises(RuntimeError) as context:
+            f.add_ignored_errors(
+                "SheetN", "A10", excelize.IgnoredErrorsType.IgnoredErrorsEvalError
+            )
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.add_ignored_errors(
+                "Sheet1", 1, excelize.IgnoredErrorsType.IgnoredErrorsEvalError
+            )
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'range_ref', but got int",
+        )
+        self.assertIsNone(f.save_as(os.path.join("test", "TestAddIgnoredErrors.xlsx")))
+
     def test_app_props(self):
         f = excelize.new_file()
         expected = excelize.AppProperties(
@@ -979,6 +1000,14 @@ class TestExcelize(unittest.TestCase):
             "expected type bytes for argument 'file', but got str",
         )
         with self.assertRaises(RuntimeError) as context:
+            f.add_header_footer_image("Sheet1", excelize.HeaderFooterImageOptions())
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
+            f.add_ignored_errors(
+                "Sheet1", "A1", excelize.IgnoredErrorsType.IgnoredErrorsEvalError
+            )
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
             f.get_app_props()
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
@@ -1532,6 +1561,49 @@ class TestExcelize(unittest.TestCase):
             "expected type HeaderFooterOptions for argument 'opts', but got int",
         )
         self.assertIsNone(f.save_as(os.path.join("test", "TestHeaderFooter.xlsx")))
+        self.assertIsNone(f.close())
+
+    def test_header_footer_image(self):
+        f = excelize.new_file()
+        self.assertIsNone(f.set_cell_value("Sheet1", "A1", "Example"))
+        self.assertIsNone(
+            f.set_header_footer(
+                "Sheet1",
+                excelize.HeaderFooterOptions(
+                    different_first=True,
+                    odd_header="&L&GExcelize&C&G&R&G",
+                    odd_footer="&L&GExcelize&C&G&R&G",
+                    first_header="&L&GExcelize&C&G&R&G",
+                    first_footer="&L&GExcelize&C&G&R&G",
+                ),
+            )
+        )
+        with open("chart.png", "rb") as file:
+            self.assertIsNone(
+                f.add_header_footer_image(
+                    "Sheet1",
+                    excelize.HeaderFooterImageOptions(
+                        position=excelize.HeaderFooterImagePositionType.HeaderFooterImagePositionLeft,
+                        file=file.read(),
+                        first_page=True,
+                        extension=".png",
+                        width="50pt",
+                        height="32pt",
+                    ),
+                )
+            )
+        with self.assertRaises(RuntimeError) as context:
+            f.add_header_footer_image("SheetN", excelize.HeaderFooterImageOptions())
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.add_header_footer_image("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type HeaderFooterImageOptions for argument 'opts', but got int",
+        )
+        self.assertIsNone(
+            f.save_as(os.path.join("test", "TestAddHeaderFooterImage.xlsx"))
+        )
         self.assertIsNone(f.close())
 
     def test_page_layout(self):

@@ -579,6 +579,45 @@ func AddFormControl(idx int, sheet *C.char, opts *C.struct_FormControl) *C.char 
 	return C.CString(emptyString)
 }
 
+// AddHeaderFooterImage provides a mechanism to set the graphics that can be
+// referenced in the header and footer definitions via &G, supported image
+// types: EMF, EMZ, GIF, ICO, JPEG, JPG, PNG, SVG, TIF, TIFF, WMF, and WMZ.
+//
+// The extension should be provided with a "." in front, e.g. ".png".
+// The width and height should have units in them, e.g. "100pt".
+//
+//export AddHeaderFooterImage
+func AddHeaderFooterImage(idx int, sheet *C.char, opts *C.struct_HeaderFooterImageOptions) *C.char {
+	var options excelize.HeaderFooterImageOptions
+	goVal, err := cValueToGo(reflect.ValueOf(*opts), reflect.TypeOf(excelize.HeaderFooterImageOptions{}))
+	if err != nil {
+		return C.CString(err.Error())
+	}
+	options = goVal.Elem().Interface().(excelize.HeaderFooterImageOptions)
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).AddHeaderFooterImage(C.GoString(sheet), &options); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// AddIgnoredErrors provides the method to ignored error for a range of cells.
+//
+//export AddIgnoredErrors
+func AddIgnoredErrors(idx int, sheet, rangeRef *C.char, ignoredErrorsType C.int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).AddIgnoredErrors(C.GoString(sheet), C.GoString(rangeRef), excelize.IgnoredErrorsType(ignoredErrorsType)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
 // AddPicture add picture in a sheet by given picture format set (such as
 // offset, scale, aspect ratio setting and print settings) and file path,
 // supported image types: BMP, EMF, EMZ, GIF, ICO, JPEG, JPG, PNG, SVG, TIF,

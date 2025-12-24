@@ -197,6 +197,34 @@ class ChartTickLabelPositionType(IntEnum):
     ChartTickLabelNone = 3
 
 
+class HeaderFooterImagePositionType(IntEnum):
+    """
+    HeaderFooterImagePositionType is the type of header and footer image
+    position.
+    """
+
+    HeaderFooterImagePositionLeft = 0
+    HeaderFooterImagePositionCenter = 1
+    HeaderFooterImagePositionRight = 2
+
+
+class IgnoredErrorsType(IntEnum):
+    """
+    IgnoredErrorsType is the type of ignored errors.
+    worksheet.
+    """
+
+    IgnoredErrorsEvalError = 0
+    IgnoredErrorsTwoDigitTextYear = 1
+    IgnoredErrorsNumberStoredAsText = 2
+    IgnoredErrorsFormula = 3
+    IgnoredErrorsFormulaRange = 4
+    IgnoredErrorsUnlockedFormula = 5
+    IgnoredErrorsEmptyCellReference = 6
+    IgnoredErrorsListDataValidation = 7
+    IgnoredErrorsCalculatedColumn = 8
+
+
 class PictureInsertType(IntEnum):
     """
     PictureInsertType defines the type of the picture has been inserted into the
@@ -367,6 +395,19 @@ class HeaderFooterOptions:
     even_footer: str = ""
     first_header: str = ""
     first_footer: str = ""
+
+
+@dataclass
+class HeaderFooterImageOptions:
+    position: HeaderFooterImagePositionType = (
+        HeaderFooterImagePositionType.HeaderFooterImagePositionLeft
+    )
+    file: Optional[bytes] = None
+    is_footer: bool = False
+    first_page: bool = False
+    extension: str = ""
+    width: str = ""
+    height: str = ""
 
 
 @dataclass
