@@ -1,4 +1,4 @@
-"""Copyright 2024 - 2025 The excelize Authors. All rights reserved. Use of this
+"""Copyright 2024 - 2026 The excelize Authors. All rights reserved. Use of this
 source code is governed by a BSD-style license that can be found in the LICENSE
 file.
 
@@ -193,6 +193,15 @@ def c_value_to_py(ctypes_instance, py_instance):
                 # Pointer of the Go data type, for example: *excelize.Options or *string
                 value = getattr(ctypes_instance, c_field_name)
                 if value:
+                    if bytes in py_field_args:  # []byte
+                        length = getattr(ctypes_instance, c_field_name + "Len")
+                        if length is not None:
+                            setattr(
+                                py_instance,
+                                py_field_name,
+                                bytes(value[i] for i in range(length)),
+                            )
+                        continue
                     if any(is_py_primitive_type(arg) for arg in py_field_args):
                         # Pointer of the Go basic data type, for example: *string
                         setattr(
@@ -1684,7 +1693,7 @@ class File:
         self, sheet: str, opts: HeaderFooterImageOptions
     ) -> None:
         """
-        set the graphics that can be referenced in the header and footer
+        Set the graphics that can be referenced in the header and footer
         definitions via `&G`, supported image types: EMF, EMZ, GIF, ICO, JPEG,
         JPG, PNG, SVG, TIF, TIFF, WMF, and WMZ.
 
@@ -2774,8 +2783,8 @@ class File:
 
         Args:
             sheet (str): The worksheet name
-            row (int): The row number
-            row2 (int): The row number
+            row (int): The row number to duplicate from
+            row2 (int): The row number to duplicate to
 
         Returns:
             None: Return None if no error occurred, otherwise raise a
@@ -3367,6 +3376,53 @@ class File:
         err = res.err.decode(ENCODE)
         if not err:
             return c_value_to_py(res.opts, PageLayoutMarginsOptions())
+        raise RuntimeError(err)
+
+    def get_pictures(self, sheet: str, cell: str) -> List[Picture]:
+        """
+        Get picture meta info and raw content embed in spreadsheet by given
+        worksheet and cell name. This function returns the image contents as
+        `bytes` data types. Note that this function currently does not support
+        retrieving all properties from the image's `format` property, and the
+        value of the `scale_x` and `scale_y` property is a floating-point number
+        greater than 0 with a precision of two decimal places.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+
+        Returns:
+            List[Picture]: Return pictures if no error occurred, otherwise raise
+            a RuntimeError with the message.
+
+        Example:
+            For example:
+
+            ```python
+            import excelize
+
+            f = excelize.open_file("Book1.xlsx")
+            try:
+                pics = f.get_pictures("Sheet1", "A2")
+                for idx, pic in enumerate(pics):
+                    name = f"image{idx + 1}{pic.extension}"
+                    with open(name, "wb") as file:
+                        file.write(pic.file)
+            except (RuntimeError, TypeError) as err:
+                print(err)
+            finally:
+                f.close()
+            ```
+        """
+        prepare_args([sheet, cell], [argsRule("sheet", [str]), argsRule("cell", [str])])
+        lib.GetPictures.restype = types_go._GetPicturesResult
+        res = lib.GetPictures(
+            self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
+        )
+        pics = c_value_to_py(res, GetPicturesResult()).pictures
+        err = res.Err.decode(ENCODE)
+        if not err:
+            return pics if pics else []
         raise RuntimeError(err)
 
     def get_pivot_tables(self, sheet: str) -> List[PivotTableOptions]:
@@ -4079,7 +4135,7 @@ class File:
         Returns stream writer struct by given worksheet name used for writing
         data on a new existing empty worksheet with large amounts of data. Note
         that after writing data with the stream writer for the worksheet, you
-        must call the 'flush' method to end the streaming writing process,
+        must call the `flush` method to end the streaming writing process,
         ensure that the order of row numbers is ascending when set rows, and the
         normal mode functions and stream mode functions can not be work mixed to
         writing data on the worksheets. The stream writer will try to use
@@ -4129,8 +4185,8 @@ class File:
         """
         Create the style for cells by a given style options, and returns style
         index. The same style index can not be used across different workbook.
-        Note that the 'font.color' field uses an RGB color represented in
-        'RRGGBB' hexadecimal notation.
+        Note that the `font.color` field uses an RGB color represented in
+        `RRGGBB` hexadecimal notation.
 
         Args:
             style (Style): The style options

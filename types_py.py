@@ -1,4 +1,4 @@
-"""Copyright 2024 - 2025 The excelize Authors. All rights reserved. Use of this
+"""Copyright 2024 - 2026 The excelize Authors. All rights reserved. Use of this
 source code is governed by a BSD-style license that can be found in the LICENSE
 file.
 
@@ -211,7 +211,6 @@ class HeaderFooterImagePositionType(IntEnum):
 class IgnoredErrorsType(IntEnum):
     """
     IgnoredErrorsType is the type of ignored errors.
-    worksheet.
     """
 
     IgnoredErrorsEvalError = 0
@@ -442,6 +441,7 @@ class StringMatrixErrorResult:
 @dataclass
 class GraphicOptions:
     alt_text: str = ""
+    name: str = ""
     print_object: Optional[bool] = None
     locked: Optional[bool] = None
     lock_aspect_ratio: bool = False
@@ -939,6 +939,12 @@ class GetSheetMapResult:
 @dataclass
 class GetCommentsResult:
     comments: Optional[List[Comment]] = None
+    err: str = ""
+
+
+@dataclass
+class GetPicturesResult:
+    pictures: Optional[List[Picture]] = None
     err: str = ""
 
 

@@ -1,4 +1,4 @@
-// Copyright 2024 - 2025 The excelize Authors. All rights reserved. Use of this
+// Copyright 2024 - 2026 The excelize Authors. All rights reserved. Use of this
 // source code is governed by a BSD-style license that can be found in the
 // LICENSE file.
 //
@@ -399,6 +399,14 @@ func goValueToC(goVal, cVal reflect.Value) (reflect.Value, error) {
 				return result, err
 			}
 			c.FieldByName(field.Name + "Len").Set(l)
+			if ele.Kind() == reflect.Uint8 { // []byte
+				byteSlice := goSlice.Bytes()
+				cArray := C.malloc(C.size_t(len(byteSlice)))
+				cSlice := unsafe.Slice((*byte)(cArray), len(byteSlice))
+				copy(cSlice, byteSlice)
+				c.FieldByName(field.Name).Set(reflect.ValueOf((*C.uchar)(cArray)))
+				continue
+			}
 			cArray := C.malloc(C.size_t(goSlice.Len()) * C.size_t(cField.Type.Elem().Size()))
 			for j := 0; j < goSlice.Len(); j++ {
 				if goBaseTypes[ele.Kind()] {
@@ -1485,6 +1493,35 @@ func GetPageMargins(idx int, sheet *C.char) C.struct_GetPageMarginsResult {
 		return C.struct_GetPageMarginsResult{err: C.CString(err.Error())}
 	}
 	return C.struct_GetPageMarginsResult{opts: cVal.Elem().Interface().(C.struct_PageLayoutMarginsOptions), err: C.CString(emptyString)}
+}
+
+// GetPictures provides a function to get picture meta info and raw content
+// embed in spreadsheet by given worksheet and cell name. This function
+// returns the image contents as []byte data types. This function is
+// concurrency safe. Note that this function currently does not support
+// retrieving all properties from the image's Format property, and the value of
+// the ScaleX and ScaleY property is a floating-point number greater than 0 with
+// a precision of two decimal places.
+//
+//export GetPictures
+func GetPictures(idx int, sheet, cell *C.char) C.struct_GetPicturesResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetPicturesResult{Err: C.CString(errFilePtr)}
+	}
+	pics, err := f.(*excelize.File).GetPictures(C.GoString(sheet), C.GoString(cell))
+	if err != nil {
+		return C.struct_GetPicturesResult{Err: C.CString(err.Error())}
+	}
+	cArray := C.malloc(C.size_t(len(pics)) * C.size_t(unsafe.Sizeof(C.struct_Picture{})))
+	for i, pic := range pics {
+		cVal, err := goValueToC(reflect.ValueOf(pic), reflect.ValueOf(&C.struct_Picture{}))
+		if err != nil {
+			return C.struct_GetPicturesResult{Err: C.CString(err.Error())}
+		}
+		*(*C.struct_Picture)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(C.struct_Picture{}))) = cVal.Elem().Interface().(C.struct_Picture)
+	}
+	return C.struct_GetPicturesResult{PicturesLen: C.int(len(pics)), Pictures: (*C.struct_Picture)(cArray), Err: C.CString(emptyString)}
 }
 
 // GetPivotTables returns all pivot table definitions in a worksheet by given

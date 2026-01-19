@@ -1,4 +1,4 @@
-"""Copyright 2024 - 2025 The excelize Authors. All rights reserved. Use of this
+"""Copyright 2024 - 2026 The excelize Authors. All rights reserved. Use of this
 source code is governed by a BSD-style license that can be found in the LICENSE
 file.
 
@@ -1033,6 +1033,9 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
             f.get_page_margins("Sheet1")
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
+            f.get_pictures("Sheet1", "A1")
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
             f.get_pivot_tables("Sheet1")
@@ -2371,19 +2374,15 @@ class TestExcelize(unittest.TestCase):
     def test_add_picture(self):
         f = excelize.new_file()
         self.assertIsNone(f.add_picture("Sheet1", "A1", "chart.png", None))
-        self.assertIsNone(
-            f.add_picture(
-                "Sheet1",
-                "A2",
-                "chart.png",
-                excelize.GraphicOptions(
-                    print_object=True,
-                    scale_x=0.1,
-                    scale_y=0.1,
-                    locked=False,
-                ),
-            )
+        opts = excelize.GraphicOptions(
+            name="Picture 2",
+            print_object=True,
+            lock_aspect_ratio=True,
+            scale_x=0.1,
+            scale_y=0.1,
+            locked=False,
         )
+        self.assertIsNone(f.add_picture("Sheet1", "A2", "chart.png", opts))
         with self.assertRaises(RuntimeError) as context:
             f.add_picture("SheetN", "A1", "chart.png", None)
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
@@ -2419,6 +2418,17 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(
             str(context.exception),
             "expected type Picture for argument 'picture', but got int",
+        )
+        pictures = f.get_pictures("Sheet1", "A2")
+        self.assertEqual(len(pictures), 1)
+        self.assertEqual(pictures[0].extension, ".png")
+        self.assertEqual(pictures[0].format, opts)
+        self.assertEqual(len(pictures[0].file), 137555)
+        with self.assertRaises(TypeError) as context:
+            f.get_pictures("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'cell', but got int",
         )
         self.assertIsNone(f.save_as(os.path.join("test", "TestAddPicture.xlsx")))
         self.assertIsNone(f.close())

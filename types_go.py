@@ -1,4 +1,4 @@
-"""Copyright 2024 - 2025 The excelize Authors. All rights reserved. Use of this
+"""Copyright 2024 - 2026 The excelize Authors. All rights reserved. Use of this
 source code is governed by a BSD-style license that can be found in the LICENSE
 file.
 
@@ -248,6 +248,7 @@ class _Style(Structure):
 class _GraphicOptions(Structure):
     _fields_ = [
         ("AltText", c_char_p),
+        ("Name", c_char_p),
         ("PrintObject", POINTER(c_bool)),
         ("Locked", POINTER(c_bool)),
         ("LockAspectRatio", c_bool),
@@ -950,6 +951,14 @@ class _GetPageMarginsResult(Structure):
     _fields_ = [
         ("opts", _PageLayoutMarginsOptions),
         ("err", c_char_p),
+    ]
+
+
+class _GetPicturesResult(Structure):
+    _fields_ = [
+        ("PicturesLen", c_int),
+        ("Pictures", POINTER(_Picture)),
+        ("Err", c_char_p),
     ]
 
 

@@ -1,4 +1,4 @@
-// Copyright 2024 - 2025 The excelize Authors. All rights reserved. Use of this
+// Copyright 2024 - 2026 The excelize Authors. All rights reserved. Use of this
 // source code is governed by a BSD-style license that can be found in the
 // LICENSE file.
 //
@@ -281,6 +281,7 @@ struct Style
 struct GraphicOptions
 {
     char *AltText;
+    char *Name;
     bool *PrintObject;
     bool *Locked;
     bool LockAspectRatio;
@@ -960,6 +961,13 @@ struct GetPageMarginsResult
 {
     struct PageLayoutMarginsOptions opts;
     char *err;
+};
+
+struct GetPicturesResult
+{
+    int PicturesLen;
+    struct Picture *Pictures;
+    char *Err;
 };
 
 struct GetPivotTablesResult
