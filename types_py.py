@@ -586,6 +586,8 @@ class ChartNumFmt:
 @dataclass
 class ChartAxis:
     none: bool = False
+    drop_lines: bool = False
+    high_low_lines: bool = False
     major_grid_lines: bool = False
     minor_grid_lines: bool = False
     major_unit: float = 0

@@ -402,6 +402,8 @@ class _ChartNumFmt(Structure):
 class _ChartAxis(Structure):
     _fields_ = [
         ("None", c_bool),
+        ("DropLines", c_bool),
+        ("HighLowLines", c_bool),
         ("MajorGridLines", c_bool),
         ("MinorGridLines", c_bool),
         ("MajorUnit", c_double),
@@ -937,6 +939,14 @@ class _GetDocPropsResult(Structure):
     _fields_ = [
         ("opts", _DocProperties),
         ("err", c_char_p),
+    ]
+
+
+class _GetFormControlsResult(Structure):
+    _fields_ = [
+        ("FormControlsLen", c_int),
+        ("FormControls", POINTER(_FormControl)),
+        ("Err", c_char_p),
     ]
 
 

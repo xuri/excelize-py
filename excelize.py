@@ -2674,6 +2674,40 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
+    def delete_form_control(self, sheet: str, cell: str) -> None:
+        """
+        Delete form control in a worksheet by given worksheet name and cell
+        reference.
+
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+
+        Example:
+            For example, delete the form control in Sheet1!$A$1:
+
+            ```python
+            try:
+                f.delete_form_control("Sheet1", "A1")
+            except (RuntimeError, TypeError) as err:
+                print(err)
+            ```
+        """
+        prepare_args(
+            [sheet, cell],
+            [argsRule("sheet", [str]), argsRule("cell", [str])],
+        )
+        err, lib.DeleteFormControl.restype = None, c_char_p
+        err = lib.DeleteFormControl(
+            self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
+        ).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
     def delete_picture(self, sheet: str, cell: str) -> None:
         """
         Delete all pictures in a cell by given worksheet name and cell reference.
@@ -3295,6 +3329,31 @@ class File:
         err = res.err.decode(ENCODE)
         if not err:
             return c_value_to_py(res.opts, DocProperties())
+        raise RuntimeError(err)
+
+    def get_form_controls(self, sheet: str) -> List[FormControl]:
+        """
+        Retrieves all form controls in a worksheet by a given worksheet name.
+        Note that, this function does not support getting the width and height
+        of the form controls currently.
+
+        Args:
+            sheet (str): The worksheet name
+
+        Returns:
+            List[FormControl]: Return the form controls list if no error
+            occurred, otherwise raise a RuntimeError with the message.
+        """
+        prepare_args([sheet], [argsRule("sheet", [str])])
+        lib.GetFormControls.restype = types_go._GetFormControlsResult
+        res = lib.GetFormControls(self.file_index, sheet.encode(ENCODE))
+        err = res.Err.decode(ENCODE)
+        if err == "":
+            arr = []
+            if res.FormControls:
+                for i in range(res.FormControlsLen):
+                    arr.append(c_value_to_py(res.FormControls[i], FormControl()))
+            return arr
         raise RuntimeError(err)
 
     def get_merge_cells(self, sheet: str, *without_values: bool) -> List[MergeCell]:

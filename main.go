@@ -986,6 +986,21 @@ func DeleteDefinedName(idx int, definedName *C.struct_DefinedName) *C.char {
 	return C.CString(emptyString)
 }
 
+// DeleteFormControl provides the method to delete form control in a worksheet
+// by given worksheet name and cell reference.
+//
+//export DeleteFormControl
+func DeleteFormControl(idx int, sheet, cell *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).DeleteFormControl(C.GoString(sheet), C.GoString(cell)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
 // DeletePicture provides a function to delete charts in spreadsheet by given
 // worksheet name and cell reference. Note that the image file won't be
 // deleted from the document currently.
@@ -1425,6 +1440,31 @@ func GetDocProps(idx int) C.struct_GetDocPropsResult {
 		return C.struct_GetDocPropsResult{err: C.CString(err.Error())}
 	}
 	return C.struct_GetDocPropsResult{opts: cVal.Elem().Interface().(C.struct_DocProperties), err: C.CString(emptyString)}
+}
+
+// GetFormControls retrieves all form controls in a worksheet by a given
+// worksheet name. Note that, this function does not support getting the width
+// and height of the form controls currently.
+//
+//export GetFormControls
+func GetFormControls(idx int, sheet *C.char) C.struct_GetFormControlsResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetFormControlsResult{Err: C.CString(errFilePtr)}
+	}
+	opts, err := f.(*excelize.File).GetFormControls(C.GoString(sheet))
+	if err != nil {
+		return C.struct_GetFormControlsResult{Err: C.CString(err.Error())}
+	}
+	cArray := C.malloc(C.size_t(len(opts)) * C.size_t(unsafe.Sizeof(C.struct_FormControl{})))
+	for i, dn := range opts {
+		cVal, err := goValueToC(reflect.ValueOf(dn), reflect.ValueOf(&C.struct_FormControl{}))
+		if err != nil {
+			return C.struct_GetFormControlsResult{Err: C.CString(err.Error())}
+		}
+		*(*C.struct_FormControl)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(C.struct_FormControl{}))) = cVal.Elem().Interface().(C.struct_FormControl)
+	}
+	return C.struct_GetFormControlsResult{FormControlsLen: C.int(len(opts)), FormControls: (*C.struct_FormControl)(cArray), Err: C.CString(emptyString)}
 }
 
 // GetMergeCells provides a function to get all merged cells from a specific

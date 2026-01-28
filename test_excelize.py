@@ -1008,6 +1008,9 @@ class TestExcelize(unittest.TestCase):
             )
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
+            f.delete_form_control("Sheet1", "A1")
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
             f.get_app_props()
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
@@ -1027,6 +1030,9 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
             f.get_doc_props()
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
+            f.get_form_controls("Sheet1")
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
             f.get_page_layout("Sheet1")
@@ -1426,81 +1432,119 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.save_as(os.path.join("test", "TestComment.xlsx")))
         self.assertIsNone(f.close())
 
-    def test_add_form_control(self):
+    def test_form_control(self):
         f = excelize.new_file()
-        self.assertIsNone(
-            f.add_form_control(
-                "Sheet1",
-                excelize.FormControl(
-                    cell="A3",
-                    macro="Button1_Click",
-                    width=140,
-                    height=60,
-                    text="Button 1\r\n",
-                    paragraph=[
-                        excelize.RichTextRun(
-                            font=excelize.Font(
-                                bold=True,
-                                italic=True,
-                                underline="single",
-                                family="Times New Roman",
-                                size=14,
-                                color="777777",
-                            ),
-                            text="C1=A1+B1",
-                        )
-                    ],
-                    type=excelize.FormControlType.FormControlButton,
-                    format=excelize.GraphicOptions(
-                        print_object=True,
-                        positioning="absolute",
-                    ),
+        form_controls = [
+            excelize.FormControl(
+                cell="D1",
+                type=excelize.FormControlType.FormControlButton,
+                macro="Button1_Click",
+            ),
+            excelize.FormControl(
+                cell="A1",
+                macro="Button1_Click",
+                width=140,
+                height=60,
+                text="Button 1\n",
+                paragraph=[
+                    excelize.RichTextRun(
+                        font=excelize.Font(
+                            bold=True,
+                            italic=True,
+                            underline="single",
+                            family="Times New Roman",
+                            size=14,
+                            color="777777",
+                        ),
+                        text="C1=A1+B1",
+                    )
+                ],
+                type=excelize.FormControlType.FormControlButton,
+                format=excelize.GraphicOptions(
+                    print_object=True,
+                    positioning="absolute",
                 ),
-            )
-        )
-        self.assertIsNone(
-            f.add_form_control(
-                "Sheet1",
-                excelize.FormControl(
-                    cell="A1",
-                    text="Option Button 1",
-                    type=excelize.FormControlType.FormControlOptionButton,
+            ),
+            excelize.FormControl(
+                cell="A5",
+                type=excelize.FormControlType.FormControlCheckBox,
+                text="Check Box 1",
+                checked=True,
+                format=excelize.GraphicOptions(
+                    print_object=False,
+                    positioning="oneCell",
                 ),
-            )
-        )
-        self.assertIsNone(
-            f.add_form_control(
-                "Sheet1",
-                excelize.FormControl(
-                    cell="B1",
-                    type=excelize.FormControlType.FormControlSpinButton,
-                    width=15,
-                    height=40,
-                    current_val=7,
-                    min_val=5,
-                    max_val=10,
-                    inc_change=1,
-                    cell_link="A1",
-                ),
-            )
-        )
-        self.assertIsNone(
-            f.add_form_control(
-                "Sheet1",
-                excelize.FormControl(
-                    cell="B3",
-                    type=excelize.FormControlType.FormControlScrollBar,
-                    width=140,
-                    height=20,
-                    current_val=50,
-                    min_val=10,
-                    max_val=100,
-                    page_change=1,
-                    cell_link="A1",
-                    horizontally=True,
-                ),
-            )
-        )
+            ),
+            excelize.FormControl(
+                cell="A6",
+                type=excelize.FormControlType.FormControlCheckBox,
+                text="Check Box 2",
+                cell_link="C5",
+                format=excelize.GraphicOptions(positioning="twoCell"),
+            ),
+            excelize.FormControl(
+                cell="A7",
+                type=excelize.FormControlType.FormControlOptionButton,
+                text="Option Button 1",
+                checked=True,
+            ),
+            excelize.FormControl(
+                cell="A8",
+                type=excelize.FormControlType.FormControlOptionButton,
+                text="Option Button 2",
+            ),
+            excelize.FormControl(
+                cell="D3",
+                type=excelize.FormControlType.FormControlGroupBox,
+                text="Group Box 1",
+                width=140,
+                height=60,
+            ),
+            excelize.FormControl(
+                cell="A9",
+                type=excelize.FormControlType.FormControlLabel,
+                text="Label 1",
+                width=140,
+            ),
+            excelize.FormControl(
+                cell="C5",
+                type=excelize.FormControlType.FormControlSpinButton,
+                width=40,
+                height=60,
+                current_val=7,
+                min_val=5,
+                max_val=10,
+                inc_change=1,
+                cell_link="C2",
+            ),
+            excelize.FormControl(
+                cell="D7",
+                type=excelize.FormControlType.FormControlScrollBar,
+                width=140,
+                height=20,
+                current_val=50,
+                min_val=10,
+                max_val=100,
+                inc_change=1,
+                page_change=1,
+                horizontally=True,
+                cell_link="C3",
+            ),
+            excelize.FormControl(
+                cell="G1",
+                type=excelize.FormControlType.FormControlScrollBar,
+                width=20,
+                height=140,
+                current_val=50,
+                min_val=1000,
+                max_val=100,
+                inc_change=1,
+                page_change=1,
+                cell_link="C4",
+            ),
+        ]
+        for form_control in form_controls:
+            self.assertIsNone(f.add_form_control("Sheet1", form_control))
         with self.assertRaises(RuntimeError) as context:
             f.add_form_control("SheetN", excelize.FormControl())
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
@@ -1535,6 +1579,48 @@ class TestExcelize(unittest.TestCase):
         )
         with open(os.path.join("test", "vbaProject.bin"), "rb") as file:
             self.assertIsNone(f.add_vba_project(file.read()))
+
+        self.assertIsNone(f.delete_form_control("Sheet1", "B1"))
+        with self.assertRaises(RuntimeError) as context:
+            f.delete_form_control("SheetN", "A1")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.delete_form_control("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'cell', but got int",
+        )
+
+        result = f.get_form_controls("Sheet1")
+        self.assertEqual(len(result), 11)
+        for i, form_control in enumerate(form_controls):
+            self.assertEqual(form_control.type, result[i].type)
+            self.assertEqual(form_control.cell, result[i].cell)
+            self.assertEqual(form_control.macro, result[i].macro)
+            self.assertEqual(form_control.checked, result[i].checked)
+            self.assertEqual(form_control.current_val, result[i].current_val)
+            self.assertEqual(form_control.min_val, result[i].min_val)
+            self.assertEqual(form_control.max_val, result[i].max_val)
+            self.assertEqual(form_control.inc_change, result[i].inc_change)
+            self.assertEqual(form_control.horizontally, result[i].horizontally)
+            self.assertEqual(form_control.cell_link, result[i].cell_link)
+            self.assertEqual(form_control.text, result[i].text)
+            self.assertEqual(
+                len(form_control.paragraph) if form_control.paragraph else 0,
+                len(result[i].paragraph) if result[i].paragraph else 0,
+            )
+
+        self.assertIsNone(f.delete_form_control("Sheet1", "B1"))
+        with self.assertRaises(RuntimeError) as context:
+            f.get_form_controls("SheetN")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.get_form_controls(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
+        )
+
         self.assertIsNone(f.save_as(os.path.join("test", "TestAddFormControl.xlsm")))
         self.assertIsNone(f.close())
 

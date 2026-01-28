@@ -435,6 +435,8 @@ struct ChartNumFmt
 struct ChartAxis
 {
     bool None;
+    bool DropLines;
+    bool HighLowLines;
     bool MajorGridLines;
     bool MinorGridLines;
     double MajorUnit;
@@ -949,6 +951,13 @@ struct GetDocPropsResult
 {
     struct DocProperties opts;
     char *err;
+};
+
+struct GetFormControlsResult
+{
+    int FormControlsLen;
+    struct FormControl *FormControls;
+    char *Err;
 };
 
 struct GetPageLayoutResult
