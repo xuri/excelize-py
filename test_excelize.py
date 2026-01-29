@@ -872,6 +872,27 @@ class TestExcelize(unittest.TestCase):
             "expected type Options for argument 'opts', but got int",
         )
 
+        opts = excelize.SheetProtectionOptions(
+            select_locked_cells=True,
+            select_unlocked_cells=True,
+            edit_scenarios=True,
+        )
+        self.assertIsNone(f.protect_sheet("Sheet1", opts))
+        result = f.get_sheet_protection("Sheet1")
+        self.assertEqual(opts, result)
+
+        with self.assertRaises(RuntimeError) as context:
+            f.get_sheet_protection("SheetN")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.get_sheet_protection(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
+        )
+
+        self.assertIsNone(f.unprotect_sheet("Sheet1"))
+
         self.assertIsNone(
             f.protect_sheet(
                 "Sheet1",
@@ -907,7 +928,6 @@ class TestExcelize(unittest.TestCase):
             "expected type str for argument 'password', but got int",
         )
         self.assertIsNone(f.unprotect_sheet("Sheet1", "password"))
-        self.assertIsNone(f.unprotect_sheet("Sheet1"))
 
         self.assertIsNone(
             f.protect_workbook(
@@ -1034,6 +1054,10 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.get_form_controls("Sheet1")
         self.assertEqual(str(context.exception), expected)
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
+            f.get_hyperlink_cells("Sheet1", "")
+        self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
             f.get_page_layout("Sheet1")
         self.assertEqual(str(context.exception), expected)
@@ -1055,6 +1079,9 @@ class TestExcelize(unittest.TestCase):
             str(context.exception),
             "expected type int for argument 'sheet', but got str",
         )
+        with self.assertRaises(RuntimeError) as context:
+            f.get_sheet_protection("Sheet1")
+        self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
             f.get_workbook_props()
         self.assertEqual(str(context.exception), expected)
@@ -2185,6 +2212,10 @@ class TestExcelize(unittest.TestCase):
         self.assertTrue(link)
         self.assertEqual(target, display)
 
+        self.assertEqual(["A3"], f.get_hyperlink_cells("Sheet1", ""))
+        self.assertEqual([], f.get_hyperlink_cells("Sheet1", "Location"))
+        self.assertEqual([], f.get_hyperlink_cells("Sheet1", "None"))
+
         with self.assertRaises(RuntimeError) as context:
             _, _ = f.get_cell_hyperlink("SheetN", "A3")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
@@ -2194,6 +2225,17 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(
             str(context.exception),
             "expected type str for argument 'cell', but got int",
+        )
+
+        with self.assertRaises(RuntimeError) as context:
+            f.get_hyperlink_cells("SheetN", "")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+
+        with self.assertRaises(TypeError) as context:
+            f.get_hyperlink_cells("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'link_type', but got int",
         )
 
         self.assertIsNone(f.save_as(os.path.join("test", "TestCellHyperLink.xlsx")))

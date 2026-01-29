@@ -3356,6 +3356,39 @@ class File:
             return arr
         raise RuntimeError(err)
 
+    def get_hyperlink_cells(self, sheet: str, link_type: str) -> List[str]:
+        """
+        Returns cell references which contain hyperlinks in a given worksheet
+        name and link type. The optional parameter `link_type` use for specific
+        link type,the optional values are `External` for website links,
+        `Location` for moving to one of cell in this workbook, `None` for no
+        links. If `link_type` is empty, it will return all hyperlinks in the
+        worksheet.
+
+        Args:
+            sheet (str): The worksheet name
+            link_type (str): The hyperlink type to filter
+
+        Returns:
+            List[str]: Return the cell name list if no error occurred,
+            otherwise raise a RuntimeError with the message.
+        """
+        prepare_args(
+            [sheet, link_type],
+            [argsRule("sheet", [str]), argsRule("link_type", [str])],
+        )
+        lib.GetHyperLinkCells.restype = types_go._StringArrayErrorResult
+        res = lib.GetHyperLinkCells(
+            self.file_index,
+            sheet.encode(ENCODE),
+            link_type.encode(ENCODE),
+        )
+        arr = c_value_to_py(res, StringArrayErrorResult()).arr
+        err = res.Err.decode(ENCODE)
+        if not err:
+            return arr if arr else []
+        raise RuntimeError(err)
+
     def get_merge_cells(self, sheet: str, *without_values: bool) -> List[MergeCell]:
         """
         Get all merged cells from a specific worksheet. If the `without_values`
@@ -3791,6 +3824,27 @@ class File:
         err = res.err.decode(ENCODE)
         if not err:
             return c_value_to_py(res.opts, SheetPropsOptions())
+        raise RuntimeError(err)
+
+    def get_sheet_protection(self, sheet: str) -> Optional[SheetProtectionOptions]:
+        """
+        Get worksheet protection settings by given worksheet name. Note that the
+        password in the returned will always be empty.
+
+        Args:
+            sheet (str): The sheet name.
+
+        Returns:
+            Optional[SheetProtectionOptions]: Return the sheet protection
+            options if no error occurred, otherwise raise a RuntimeError with
+            the message.
+        """
+        prepare_args([sheet], [argsRule("sheet", [str])])
+        lib.GetSheetProtection.restype = types_go._GetSheetProtectionResult
+        res = lib.GetSheetProtection(self.file_index, sheet.encode(ENCODE))
+        err = res.err.decode(ENCODE)
+        if not err:
+            return c_value_to_py(res.opts, SheetProtectionOptions())
         raise RuntimeError(err)
 
     def get_sheet_view(self, sheet: str, view_index: int) -> Optional[ViewOptions]:

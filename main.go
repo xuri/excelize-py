@@ -1457,14 +1457,37 @@ func GetFormControls(idx int, sheet *C.char) C.struct_GetFormControlsResult {
 		return C.struct_GetFormControlsResult{Err: C.CString(err.Error())}
 	}
 	cArray := C.malloc(C.size_t(len(opts)) * C.size_t(unsafe.Sizeof(C.struct_FormControl{})))
-	for i, dn := range opts {
-		cVal, err := goValueToC(reflect.ValueOf(dn), reflect.ValueOf(&C.struct_FormControl{}))
+	for i, opt := range opts {
+		cVal, err := goValueToC(reflect.ValueOf(opt), reflect.ValueOf(&C.struct_FormControl{}))
 		if err != nil {
 			return C.struct_GetFormControlsResult{Err: C.CString(err.Error())}
 		}
 		*(*C.struct_FormControl)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(C.struct_FormControl{}))) = cVal.Elem().Interface().(C.struct_FormControl)
 	}
 	return C.struct_GetFormControlsResult{FormControlsLen: C.int(len(opts)), FormControls: (*C.struct_FormControl)(cArray), Err: C.CString(emptyString)}
+}
+
+// GetHyperLinkCells returns cell references which contain hyperlinks in a
+// given worksheet name and link type. The optional parameter 'linkType' use for
+// specific link type,the optional values are "External" for website links,
+// "Location" for moving to one of cell in this workbook, "None" for no links.
+// If linkType is empty, it will return all hyperlinks in the worksheet.
+//
+//export GetHyperLinkCells
+func GetHyperLinkCells(idx int, sheet, linkType *C.char) C.struct_StringArrayErrorResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_StringArrayErrorResult{Err: C.CString(errFilePtr)}
+	}
+	result, err := f.(*excelize.File).GetHyperLinkCells(C.GoString(sheet), C.GoString(linkType))
+	if err != nil {
+		return C.struct_StringArrayErrorResult{Err: C.CString(err.Error())}
+	}
+	cArray := C.malloc(C.size_t(len(result)) * C.size_t(unsafe.Sizeof(uintptr(0))))
+	for i, v := range result {
+		*(*unsafe.Pointer)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(uintptr(0)))) = unsafe.Pointer(C.CString(v))
+	}
+	return C.struct_StringArrayErrorResult{ArrLen: C.int(len(result)), Arr: (**C.char)(cArray), Err: C.CString(emptyString)}
 }
 
 // GetMergeCells provides a function to get all merged cells from a specific
@@ -1792,6 +1815,27 @@ func GetSheetProps(idx int, sheet *C.char) C.struct_GetSheetPropsResult {
 		return C.struct_GetSheetPropsResult{err: C.CString(err.Error())}
 	}
 	return C.struct_GetSheetPropsResult{opts: cVal.Elem().Interface().(C.struct_SheetPropsOptions), err: C.CString(emptyString)}
+}
+
+// GetSheetProtection provides a function to get worksheet protection settings
+// by given worksheet name. Note that the password in the returned will always
+// be empty.
+//
+//export GetSheetProtection
+func GetSheetProtection(idx int, sheet *C.char) C.struct_GetSheetProtectionResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetSheetProtectionResult{err: C.CString(errFilePtr)}
+	}
+	opts, err := f.(*excelize.File).GetSheetProtection(C.GoString(sheet))
+	if err != nil {
+		return C.struct_GetSheetProtectionResult{err: C.CString(err.Error())}
+	}
+	cVal, err := goValueToC(reflect.ValueOf(opts), reflect.ValueOf(&C.struct_SheetProtectionOptions{}))
+	if err != nil {
+		return C.struct_GetSheetProtectionResult{err: C.CString(err.Error())}
+	}
+	return C.struct_GetSheetProtectionResult{opts: cVal.Elem().Interface().(C.struct_SheetProtectionOptions), err: C.CString(emptyString)}
 }
 
 // GetSheetView gets the value of sheet view options. The viewIndex may be

@@ -912,6 +912,12 @@ struct GetSheetPropsResult
     char *err;
 };
 
+struct GetSheetProtectionResult
+{
+    struct SheetProtectionOptions opts;
+    char *err;
+};
+
 struct GetSheetMapResult
 {
     int ArrLen;

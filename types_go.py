@@ -896,6 +896,13 @@ class _GetSheetPropsResult(Structure):
     ]
 
 
+class _GetSheetProtectionResult(Structure):
+    _fields_ = [
+        ("opts", _SheetProtectionOptions),
+        ("err", c_char_p),
+    ]
+
+
 class _GetSheetMapResult(Structure):
     _fields_ = [
         ("ArrLen", c_int),
