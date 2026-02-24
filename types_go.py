@@ -33,6 +33,8 @@ class _Interface(Structure):
         ("String", c_char_p),
         ("Float64", c_double),
         ("Boolean", c_bool),
+        ("StyleID", c_int),
+        ("Formula", c_char_p),
     ]
 
 
@@ -791,6 +793,14 @@ class _Float64ErrorResult(Structure):
     ]
 
 
+class _BytesErrorResult(Structure):
+    _fields_ = [
+        ("data", POINTER(c_ubyte)),
+        ("length", c_int),
+        ("err", c_char_p),
+    ]
+
+
 class _IntStringResult(Structure):
     _fields_ = [
         ("K", c_int),
@@ -983,6 +993,33 @@ class _GetPivotTablesResult(Structure):
     _fields_ = [
         ("PivotTablesLen", c_int),
         ("PivotTables", POINTER(_PivotTableOptions)),
+        ("Err", c_char_p),
+    ]
+
+
+class _DataValidation(Structure):
+    _fields_ = [
+        ("AllowBlank", c_bool),
+        ("Error", POINTER(c_char_p)),
+        ("ErrorStyle", POINTER(c_char_p)),
+        ("ErrorTitle", POINTER(c_char_p)),
+        ("Formula1", c_char_p),
+        ("Formula2", c_char_p),
+        ("Operator", c_char_p),
+        ("Prompt", POINTER(c_char_p)),
+        ("PromptTitle", POINTER(c_char_p)),
+        ("ShowDropDown", c_bool),
+        ("ShowErrorMessage", c_bool),
+        ("ShowInputMessage", c_bool),
+        ("Sqref", c_char_p),
+        ("Type", c_char_p),
+    ]
+
+
+class _GetDataValidationsResult(Structure):
+    _fields_ = [
+        ("DataValidationsLen", c_int),
+        ("DataValidations", POINTER(_DataValidation)),
         ("Err", c_char_p),
     ]
 
