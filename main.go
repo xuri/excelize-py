@@ -21,6 +21,7 @@ import (
 	"bytes"
 	"errors"
 	"reflect"
+	"sort"
 	"sync"
 	"time"
 	"unicode"
@@ -145,6 +146,37 @@ var (
 		},
 	}
 )
+
+// colRange represents a column range with a style ID for batch column styling.
+type colRange struct{ min, max, styleID int }
+
+// mergeColRanges sorts column ranges by start column, then merges consecutive
+// or overlapping ranges that share the same style ID. This reduces the number
+// of SetColStyle calls from O(N) to the number of distinct contiguous groups,
+// avoiding the O(N*M) cost of flatCols() in excelize for each call.
+func mergeColRanges(ranges []colRange) []colRange {
+	if len(ranges) <= 1 {
+		return ranges
+	}
+ sort.Slice(ranges, func(i, j int) bool {
+	if ranges[i].styleID != ranges[j].styleID {
+		return ranges[i].styleID < ranges[j].styleID
+	}
+	return ranges[i].min < ranges[j].min
+ })
+ merged := []colRange{ranges[0]}
+ for i := 1; i < len(ranges); i++ {
+	last := &merged[len(merged)-1]
+	if ranges[i].styleID == last.styleID && ranges[i].min <= last.max+1 {
+		if ranges[i].max > last.max {
+			last.max = ranges[i].max
+		}
+	} else {
+		merged = append(merged, ranges[i])
+	}
+ }
+ return merged
+}
 
 // cToGoBaseType convert JavaScript value to Go basic data type variable.
 func cToGoBaseType(cVal reflect.Value, kind reflect.Kind) (reflect.Value, error) {
@@ -439,22 +471,34 @@ func goValueToC(goVal, cVal reflect.Value) (reflect.Value, error) {
 
 // cInterfaceToGo convert C interface to Go interface data type value.
 func cInterfaceToGo(val C.struct_Interface) interface{} {
+	var value interface{}
 	switch val.Type {
 	case Int:
-		return int(val.Integer)
+		value = int(val.Integer)
 	case Int32:
-		return int32(val.Integer32)
+		value = int32(val.Integer32)
 	case String:
-		return C.GoString(val.String)
+		value = C.GoString(val.String)
 	case Float:
-		return float64(val.Float64)
+		value = float64(val.Float64)
 	case Boolean:
-		return bool(val.Boolean)
+		value = bool(val.Boolean)
 	case Time:
-		return time.Unix(int64(val.Integer), 0)
+		value = time.Unix(int64(val.Integer), 0)
 	default:
-		return nil
+		value = nil
 	}
+	// If StyleID or Formula is set, return an excelize.Cell
+	styleID := int(val.StyleID)
+	formula := C.GoString(val.Formula)
+	if styleID != 0 || formula != "" {
+		return excelize.Cell{
+			StyleID: styleID,
+			Formula: formula,
+			Value:   value,
+		}
+	}
+	return value
 }
 
 // goInterfaceToC convert Go interface to C interface data type value.
@@ -558,6 +602,52 @@ func AddComment(idx int, sheet *C.char, opts *C.struct_Comment) *C.char {
 		return C.CString(errFilePtr)
 	}
 	if err := f.(*excelize.File).AddComment(C.GoString(sheet), comment); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// cCharPtrPtrToStringPtr converts a C char** to a Go *string.
+// Returns nil if the C pointer is nil or points to nil/empty string.
+func cCharPtrPtrToStringPtr(cStrPtr **C.char) *string {
+	if cStrPtr == nil || *cStrPtr == nil {
+		return nil
+	}
+	s := C.GoString(*cStrPtr)
+	if s == "" {
+		return nil
+	}
+	return &s
+}
+
+// AddDataValidation provides a method to set data validation on a range of the
+// worksheet by given data validation object and worksheet name. The data
+// validation object can be created by DataValidation struct.
+//
+//export AddDataValidation
+func AddDataValidation(idx int, sheet *C.char, opts *C.struct_DataValidation) *C.char {
+	// Manual conversion because DataValidation has *string fields
+	dv := excelize.DataValidation{
+		AllowBlank:       bool(opts.AllowBlank),
+		Error:            cCharPtrPtrToStringPtr(opts.Error),
+		ErrorStyle:       cCharPtrPtrToStringPtr(opts.ErrorStyle),
+		ErrorTitle:       cCharPtrPtrToStringPtr(opts.ErrorTitle),
+		Formula1:         C.GoString(opts.Formula1),
+		Formula2:         C.GoString(opts.Formula2),
+		Operator:         C.GoString(opts.Operator),
+		Prompt:           cCharPtrPtrToStringPtr(opts.Prompt),
+		PromptTitle:      cCharPtrPtrToStringPtr(opts.PromptTitle),
+		ShowDropDown:     bool(opts.ShowDropDown),
+		ShowErrorMessage: bool(opts.ShowErrorMessage),
+		ShowInputMessage: bool(opts.ShowInputMessage),
+		Sqref:            C.GoString(opts.Sqref),
+		Type:             C.GoString(opts.Type),
+	}
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).AddDataValidation(C.GoString(sheet), &dv); err != nil {
 		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
@@ -1467,6 +1557,55 @@ func GetFormControls(idx int, sheet *C.char) C.struct_GetFormControlsResult {
 	return C.struct_GetFormControlsResult{FormControlsLen: C.int(len(opts)), FormControls: (*C.struct_FormControl)(cArray), Err: C.CString(emptyString)}
 }
 
+// stringPtrToCCharPtrPtr converts a Go *string to a C char**.
+// Returns nil if the pointer is nil.
+func stringPtrToCCharPtrPtr(s *string) **C.char {
+	if s == nil {
+		return nil
+	}
+	cStr := C.CString(*s)
+	cStrPtr := (**C.char)(C.malloc(C.size_t(unsafe.Sizeof(uintptr(0)))))
+	*cStrPtr = cStr
+	return cStrPtr
+}
+
+// GetDataValidations returns all data validations in a worksheet by a given
+// worksheet name.
+//
+//export GetDataValidations
+func GetDataValidations(idx int, sheet *C.char) C.struct_GetDataValidationsResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_GetDataValidationsResult{Err: C.CString(errFilePtr)}
+	}
+	dvs, err := f.(*excelize.File).GetDataValidations(C.GoString(sheet))
+	if err != nil {
+		return C.struct_GetDataValidationsResult{Err: C.CString(err.Error())}
+	}
+	cArray := C.malloc(C.size_t(len(dvs)) * C.size_t(unsafe.Sizeof(C.struct_DataValidation{})))
+	for i, dv := range dvs {
+		// Manual conversion because DataValidation has *string fields
+		cDv := C.struct_DataValidation{
+			AllowBlank:       C._Bool(dv.AllowBlank),
+			Error:            stringPtrToCCharPtrPtr(dv.Error),
+			ErrorStyle:       stringPtrToCCharPtrPtr(dv.ErrorStyle),
+			ErrorTitle:       stringPtrToCCharPtrPtr(dv.ErrorTitle),
+			Formula1:         C.CString(dv.Formula1),
+			Formula2:         C.CString(dv.Formula2),
+			Operator:         C.CString(dv.Operator),
+			Prompt:           stringPtrToCCharPtrPtr(dv.Prompt),
+			PromptTitle:      stringPtrToCCharPtrPtr(dv.PromptTitle),
+			ShowDropDown:     C._Bool(dv.ShowDropDown),
+			ShowErrorMessage: C._Bool(dv.ShowErrorMessage),
+			ShowInputMessage: C._Bool(dv.ShowInputMessage),
+			Sqref:            C.CString(dv.Sqref),
+			Type:             C.CString(dv.Type),
+		}
+		*(*C.struct_DataValidation)(unsafe.Pointer(uintptr(unsafe.Pointer(cArray)) + uintptr(i)*unsafe.Sizeof(C.struct_DataValidation{}))) = cDv
+	}
+	return C.struct_GetDataValidationsResult{DataValidationsLen: C.int(len(dvs)), DataValidations: (*C.struct_DataValidation)(cArray), Err: C.CString(emptyString)}
+}
+
 // GetHyperLinkCells returns cell references which contain hyperlinks in a
 // given worksheet name and link type. The optional parameter 'linkType' use for
 // specific link type,the optional values are "External" for website links,
@@ -2337,6 +2476,47 @@ func StreamSetColWidth(swIdx int, minVal, maxVal int, width float64) *C.char {
 	return C.CString(emptyString)
 }
 
+// StreamSetColStyle provides a function to set the style of columns for the
+// StreamWriter. Note that you must call the 'StreamSetColStyle' function before
+// the 'StreamSetRow' function.
+//
+//export StreamSetColStyle
+func StreamSetColStyle(swIdx int, minVal, maxVal, styleID int) *C.char {
+	streamWriter, ok := sw.Load(swIdx)
+	if !ok {
+		return C.CString(errStreamWriterPtr)
+	}
+	if err := streamWriter.(*excelize.StreamWriter).SetColStyle(minVal, maxVal, styleID); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// StreamSetColStyles provides a function to batch set the style of columns for
+// the StreamWriter in a single FFI call. The data parameter is a flat array of
+// (minVal, maxVal, styleID) triples, and count is the number of triples.
+//
+//export StreamSetColStyles
+func StreamSetColStyles(swIdx int, data *C.longlong, count int) *C.char {
+	streamWriter, ok := sw.Load(swIdx)
+	if !ok {
+		return C.CString(errStreamWriterPtr)
+	}
+	writer := streamWriter.(*excelize.StreamWriter)
+	vals := unsafe.Slice(data, count*3)
+	ranges := make([]colRange, count)
+	for i := 0; i < count; i++ {
+		ranges[i] = colRange{int(vals[i*3]), int(vals[i*3+1]), int(vals[i*3+2])}
+	}
+	merged := mergeColRanges(ranges)
+	for _, r := range merged {
+		if err := writer.SetColStyle(r.min, r.max, r.styleID); err != nil {
+			return C.CString(err.Error())
+		}
+	}
+	return C.CString(emptyString)
+}
+
 // StreamSetPanes provides a function to create and remove freeze panes and
 // split panes by giving panes options for the StreamWriter. Note that you must
 // call the 'StreamSetPanes' function before the 'StreamSetRow' function.
@@ -2375,6 +2555,36 @@ func StreamSetRow(swIdx int, cell *C.char, row *C.struct_Interface, length int) 
 	}
 	if err := streamWriter.(*excelize.StreamWriter).SetRow(C.GoString(cell), cells); err != nil {
 		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
+// StreamSetRows writes multiple rows to stream by giving starting column,
+// starting row, number of columns, and a flattened 2D array of values. This is
+// optimized for batch writing large amounts of data with reduced FFI overhead.
+//
+//export StreamSetRows
+func StreamSetRows(swIdx int, startCol int, startRow int, numCols int, data *C.struct_Interface, numRows int) *C.char {
+	streamWriter, ok := sw.Load(swIdx)
+	if !ok {
+		return C.CString(errStreamWriterPtr)
+	}
+	writer := streamWriter.(*excelize.StreamWriter)
+	// Get all data as a flat slice
+	allData := unsafe.Slice(data, numRows*numCols)
+
+	for rowIdx := 0; rowIdx < numRows; rowIdx++ {
+		cells := make([]interface{}, numCols)
+		for colIdx := 0; colIdx < numCols; colIdx++ {
+			cells[colIdx] = cInterfaceToGo(allData[rowIdx*numCols+colIdx])
+		}
+		cell, err := excelize.CoordinatesToCellName(startCol, startRow+rowIdx)
+		if err != nil {
+			return C.CString(err.Error())
+		}
+		if err := writer.SetRow(cell, cells); err != nil {
+			return C.CString(err.Error())
+		}
 	}
 	return C.CString(emptyString)
 }
@@ -2617,6 +2827,28 @@ func SaveAs(idx int, name *C.char, opts *C.struct_Options) *C.char {
 		return C.CString(err.Error())
 	}
 	return C.CString(emptyString)
+}
+
+// WriteToBuffer provides a function to get the bytes.Buffer from the saved file,
+// and it allocates a new memory to store the spreadsheet.
+//
+//export WriteToBuffer
+func WriteToBuffer(idx int) C.struct_BytesErrorResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_BytesErrorResult{err: C.CString(errFilePtr)}
+	}
+	buf, err := f.(*excelize.File).WriteToBuffer()
+	if err != nil {
+		return C.struct_BytesErrorResult{err: C.CString(err.Error())}
+	}
+	data := buf.Bytes()
+	cData := C.CBytes(data)
+	return C.struct_BytesErrorResult{
+		data:   (*C.uchar)(cData),
+		length: C.int(len(data)),
+		err:    C.CString(emptyString),
+	}
 }
 
 // SearchSheet provides a function to get cell reference by given worksheet name,

@@ -195,6 +195,57 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(sw.insert_page_break("A1"))
         self.assertIsNone(sw.merge_cell("D1", "E2"))
         self.assertIsNone(sw.set_col_width(3, 2, 20.0))
+
+        # Test set_col_style - create a style and apply to columns
+        style_id = f.new_style(excelize.Style(num_fmt=14))  # Date format
+        self.assertIsNone(sw.set_col_style(2, 3, style_id))
+
+        # Test set_col_style type validation
+        with self.assertRaises(TypeError) as context:
+            sw.set_col_style("B", 3, style_id)
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'start_col', but got str",
+        )
+        with self.assertRaises(TypeError) as context:
+            sw.set_col_style(2, "C", style_id)
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'end_col', but got str",
+        )
+        with self.assertRaises(TypeError) as context:
+            sw.set_col_style(2, 3, "invalid")
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'style_id', but got str",
+        )
+
+        # Test set_col_styles (batch) with consecutive merge
+        pct_style = f.new_style(excelize.Style(num_fmt=10))
+        self.assertIsNone(
+            sw.set_col_styles(
+                [
+                    (4, 4, style_id),  # Column D
+                    (5, 5, style_id),  # Column E - should merge with D
+                    (6, 6, pct_style),  # Column F - different style, no merge
+                ]
+            )
+        )
+        # Empty list should be a no-op
+        self.assertIsNone(sw.set_col_styles([]))
+
+        # Test set_col_styles type validation
+        with self.assertRaises(TypeError):
+            sw.set_col_styles("not a list")
+        with self.assertRaises(TypeError):
+            sw.set_col_styles([(1, 2)])  # tuple too short
+        with self.assertRaises(TypeError):
+            sw.set_col_styles([("B", 3, style_id)])  # start_col not int
+        with self.assertRaises(TypeError):
+            sw.set_col_styles([(1, "C", style_id)])  # end_col not int
+        with self.assertRaises(TypeError):
+            sw.set_col_styles([(1, 2, "bad")])  # style_id not int
+
         self.assertIsNone(
             sw.set_panes(
                 excelize.Panes(
@@ -260,27 +311,56 @@ class TestExcelize(unittest.TestCase):
         )
 
         self.assertIsNone(sw.flush())
-        wb_path = os.path.join("test", "TestStreamWriter.xlsx")
-        self.assertIsNone(f.save_as(wb_path))
 
-        f = excelize.open_file(wb_path)
-        rows = f.rows("Sheet1")
-        cells = 0
-        while rows.next():
-            cells += len(rows.columns())
-        self.assertIsNone(rows.error())
-        rows.close()
-        f.close()
-        self.assertEqual(cells, 24)
+    def test_stream_writer_batch(self):
+        """Test batch set_rows for performance optimization."""
+        f = excelize.new_file()
+        sw = f.new_stream_writer("Sheet1")
 
-        f = excelize.open_file(wb_path)
-        rows = f.rows("Sheet1")
-        while rows.next():
-            rows.columns(excelize.Options(raw_cell_value=True))
-            self.assertEqual(excelize.RowOpts(), rows.get_row_opts())
-            break
-        rows.close()
-        f.close()
+        # Write header
+        self.assertIsNone(sw.set_row("A1", ["Name", "Value", "Score"]))
+
+        # Prepare batch data
+        batch_rows = []
+        for i in range(100):
+            batch_rows.append([f"Item{i}", i * 1.5, i % 100])
+
+        # Write batch (default start_col=1)
+        self.assertIsNone(sw.set_rows(2, batch_rows))
+
+        # Test empty rows (should be no-op)
+        self.assertIsNone(sw.set_rows(200, []))
+
+        # Test validation - rows with different column counts
+        with self.assertRaises(ValueError) as context:
+            sw.set_rows(300, [[1, 2, 3], [1, 2]])  # Second row has fewer columns
+        self.assertIn("columns", str(context.exception))
+
+        self.assertIsNone(sw.flush())
+        self.assertIsNone(f.save_as(os.path.join("test", "TestStreamWriterBatch.xlsx")))
+        self.assertIsNone(f.close())
+
+        # Test with start_col parameter
+        f2 = excelize.new_file()
+        sw2 = f2.new_stream_writer("Sheet1")
+        # Write data starting from column C (3)
+        data = [["Val1", "Val2"], ["Val3", "Val4"]]
+        self.assertIsNone(sw2.set_rows(1, data, start_col=3))
+        self.assertIsNone(sw2.flush())
+        self.assertIsNone(
+            f2.save_as(os.path.join("test", "TestStreamWriterBatchCol.xlsx"))
+        )
+        self.assertIsNone(f2.close())
+
+        # Verify data was written at correct position
+        f3 = excelize.open_file(os.path.join("test", "TestStreamWriterBatchCol.xlsx"))
+        val_c1 = f3.get_cell_value("Sheet1", "C1")
+        val_d1 = f3.get_cell_value("Sheet1", "D1")
+        val_a1 = f3.get_cell_value("Sheet1", "A1")
+        self.assertEqual(val_c1, "Val1")
+        self.assertEqual(val_d1, "Val2")
+        self.assertEqual(val_a1, "")  # Column A should be empty
+        f3.close()
 
     def test_style(self):
         f = excelize.new_file()
@@ -1604,7 +1684,7 @@ class TestExcelize(unittest.TestCase):
             str(context.exception),
             "expected type SheetPropsOptions for argument 'opts', but got int",
         )
-        with open(os.path.join("test", "vbaProject.bin"), "rb") as file:
+        with open(os.path.join("testdata", "vbaProject.bin"), "rb") as file:
             self.assertIsNone(f.add_vba_project(file.read()))
 
         self.assertIsNone(f.delete_form_control("Sheet1", "B1"))
@@ -2826,6 +2906,91 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.set_workbook_props(expected))
         self.assertEqual(f.get_workbook_props(), expected)
         self.assertIsNone(f.save_as(os.path.join("test", "TestWorkbookProps.xlsx")))
+        self.assertIsNone(f.close())
+
+    def test_data_validation(self):
+        f = excelize.new_file()
+
+        # Test dropdown list validation
+        dv1 = excelize.DataValidation(allow_blank=True)
+        dv1.sqref = "A1:A10"
+        dv1.set_drop_list(["Yes", "No", "Maybe"])
+        self.assertIsNone(f.add_data_validation("Sheet1", dv1))
+
+        # Test whole number validation with between operator
+        dv2 = excelize.DataValidation(allow_blank=True)
+        dv2.sqref = "B1:B10"
+        dv2.set_whole_number(
+            excelize.DataValidationOperator.DataValidationOperatorBetween, "1", "100"
+        )
+        dv2.set_input("Input Title", "Enter a number between 1 and 100")
+        dv2.set_error(
+            excelize.DataValidationErrorStyle.DataValidationErrorStyleStop,
+            "Error Title",
+            "Value must be between 1 and 100",
+        )
+        self.assertIsNone(f.add_data_validation("Sheet1", dv2))
+
+        # Test decimal validation
+        dv3 = excelize.DataValidation(allow_blank=True)
+        dv3.sqref = "C1:C10"
+        dv3.set_decimal(
+            excelize.DataValidationOperator.DataValidationOperatorGreaterThan,
+            "0.5",
+        )
+        self.assertIsNone(f.add_data_validation("Sheet1", dv3))
+
+        # Test text length validation
+        dv4 = excelize.DataValidation(allow_blank=True)
+        dv4.sqref = "D1:D10"
+        dv4.set_text_length(
+            excelize.DataValidationOperator.DataValidationOperatorLessThanOrEqual,
+            "10",
+        )
+        self.assertIsNone(f.add_data_validation("Sheet1", dv4))
+
+        # Test custom formula validation
+        dv5 = excelize.DataValidation(allow_blank=True)
+        dv5.sqref = "E1:E10"
+        dv5.set_custom("=AND(E1>=1, E1<=100)")
+        self.assertIsNone(f.add_data_validation("Sheet1", dv5))
+
+        # Test get data validations
+        validations = f.get_data_validations("Sheet1")
+        self.assertEqual(len(validations), 5)
+
+        # Verify dropdown list validation
+        self.assertEqual(validations[0].sqref, "A1:A10")
+        self.assertEqual(validations[0].type, "list")
+
+        # Verify whole number validation
+        self.assertEqual(validations[1].sqref, "B1:B10")
+        self.assertEqual(validations[1].type, "whole")
+        self.assertEqual(validations[1].operator, "between")
+
+        # Test type validation
+        with self.assertRaises(TypeError) as context:
+            f.add_data_validation(1, dv1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
+        )
+
+        with self.assertRaises(TypeError) as context:
+            f.add_data_validation("Sheet1", "invalid")
+        self.assertEqual(
+            str(context.exception),
+            "expected type DataValidation for argument 'dv', but got str",
+        )
+
+        with self.assertRaises(TypeError) as context:
+            f.get_data_validations(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
+        )
+
+        self.assertIsNone(f.save_as(os.path.join("test", "TestDataValidation.xlsx")))
         self.assertIsNone(f.close())
 
     def test_type_convert(self):

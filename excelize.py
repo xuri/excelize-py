@@ -100,7 +100,7 @@ def load_lib() -> Optional[str]:
 
 lib = CDLL(os.path.join(os.path.dirname(__file__), load_lib()))
 ENCODE = "utf-8"
-__version__ = "0.0.8"
+__version__ = "0.7.0"
 uppercase_words = ["id", "rgb", "sq", "xml"]
 
 
@@ -455,24 +455,52 @@ def py_value_to_c_interface(py_value):
         py_value: The Python value to be converted.
 
     Returns:
-        An Interface object representing the Python value in a C-compatible format.
+        An _Interface ctypes struct representing the Python value.
 
     Raises:
         TypeError: If the type of py_value is not supported.
     """
-    type_mappings = {
-        int: lambda: Interface(type=1, integer=py_value),
-        str: lambda: Interface(type=3, string=py_value),
-        float: lambda: Interface(type=4, float64=py_value),
-        bool: lambda: Interface(type=5, boolean=py_value),
-        datetime: lambda: Interface(type=6, integer=int(py_value.timestamp())),
-        date: lambda: Interface(
-            type=6,
-            integer=int(datetime.combine(py_value, time.min).timestamp()),
-        ),
-    }
-    interface = type_mappings.get(type(py_value), Interface)()
-    return py_value_to_c(interface, types_go._Interface())
+    c = types_go._Interface()
+
+    # Handle Cell objects (with style_id and formula)
+    style_id = 0
+    formula = ""
+    if isinstance(py_value, Cell):
+        style_id = py_value.style_id
+        formula = py_value.formula
+        py_value = py_value.value
+
+    # Set the value based on type
+    if py_value is None or py_value == "":
+        c.Type = 0  # Nil
+    elif isinstance(py_value, bool):
+        c.Type = 5
+        c.Boolean = py_value
+    elif isinstance(py_value, int):
+        c.Type = 1
+        c.Integer = py_value
+    elif isinstance(py_value, float):
+        c.Type = 4
+        c.Float64 = py_value
+    elif isinstance(py_value, str):
+        c.Type = 3
+        c.String = py_value.encode(ENCODE)
+    elif isinstance(py_value, datetime):
+        c.Type = 6
+        c.Integer = int(py_value.timestamp())
+    elif isinstance(py_value, date):
+        c.Type = 6
+        c.Integer = int(datetime.combine(py_value, time.min).timestamp())
+    else:
+        c.Type = 3
+        c.String = str(py_value).encode(ENCODE)
+
+    # Set style and formula if present
+    c.StyleID = style_id
+    if formula:
+        c.Formula = formula.encode(ENCODE)
+
+    return c
 
 
 def c_value_to_py_interface(c_value):
@@ -801,6 +829,143 @@ class StreamWriter:
         if err != "":
             raise RuntimeError(err)
 
+    def set_col_style(self, start_col: int, end_col: int, style_id: int) -> None:
+        """
+        Set the style of a single column or multiple columns for the stream
+        writer. Note that you must call the `set_col_style` function before the
+        `set_row` function, as column definitions must be written to the XML
+        header before row data.
+
+        This is useful for efficiently applying styles (e.g., date formats,
+        percentages) to entire columns when streaming large amounts of data,
+        rather than setting the style on every individual cell.
+
+        Args:
+            start_col (int): The start column number (1-indexed)
+            end_col (int): The end column number (1-indexed)
+            style_id (int): The style ID created by `new_style`
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+
+        Example:
+            For example, set the style for columns B:C (columns 2-3) with a
+            date format:
+
+            ```python
+            # Create a style with date format
+            style_id = f.new_style(excelize.Style(num_fmt=14))
+
+            # Apply the style to columns B:C before writing rows
+            sw.set_col_style(2, 3, style_id)
+
+            # Then write rows
+            sw.set_row("A1", ["Name", "Date1", "Date2"])
+            sw.set_row("A2", ["Alice", datetime(2024, 1, 15), datetime(2024, 2, 20)])
+            sw.flush()
+            ```
+
+        Note:
+            Use `column_name_to_number` to convert column letters to numbers:
+
+            ```python
+            start = excelize.column_name_to_number("B")  # Returns 2
+            end = excelize.column_name_to_number("C")    # Returns 3
+            sw.set_col_style(start, end, style_id)
+            ```
+        """
+        prepare_args(
+            [start_col, end_col, style_id],
+            [
+                argsRule("start_col", [int]),
+                argsRule("end_col", [int]),
+                argsRule("style_id", [int]),
+            ],
+        )
+        lib.StreamSetColStyle.restype = c_char_p
+        err = lib.StreamSetColStyle(
+            self.sw_index,
+            c_longlong(start_col),
+            c_longlong(end_col),
+            c_longlong(style_id),
+        ).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
+    def set_col_styles(self, col_styles: list[tuple[int, int, int]]) -> None:
+        """
+        Batch set the style of columns for the stream writer in a single
+        call. This is significantly faster than calling set_col_style
+        repeatedly when styling many columns, as it reduces FFI overhead.
+
+        Note that you must call this function before the set_row function,
+        as column definitions must be written to the XML header before row
+        data.
+
+        Args:
+            col_styles (list[tuple[int, int, int]]): A list of tuples, each
+                containing (start_col, end_col, style_id) where columns are
+                1-indexed numbers and style_id is created by new_style.
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+
+        Example:
+            For example, batch set styles for multiple column ranges:
+
+
+            date_style = f.new_style(excelize.Style(num_fmt=14))
+            pct_style = f.new_style(excelize.Style(num_fmt=10))
+
+            sw.set_col_styles([
+                (2, 3, date_style),   # Columns B:C with date format
+                (5, 5, pct_style),    # Column E with percentage format
+            ])
+
+        """
+        if not isinstance(col_styles, list):
+            raise TypeError(
+                f"expected type list for argument 'col_styles', but got "
+                f"{type(col_styles).__name__}"
+            )
+        count = len(col_styles)
+        if count == 0:
+            return
+        flat = (c_longlong * (count * 3))()
+        for i, item in enumerate(col_styles):
+            if not isinstance(item, (tuple, list)) or len(item) != 3:
+                raise TypeError(
+                    f"each item in col_styles must be a tuple of "
+                    f"(start_col, end_col, style_id)"
+                )
+            start_col, end_col, style_id = item
+            if not isinstance(start_col, int):
+                raise TypeError(
+                    f"expected type int for start_col, but got "
+                    f"{type(start_col).__name__}"
+                )
+            if not isinstance(end_col, int):
+                raise TypeError(
+                    f"expected type int for end_col, but got {type(end_col).__name__}"
+                )
+            if not isinstance(style_id, int):
+                raise TypeError(
+                    f"expected type int for style_id, but got {type(style_id).__name__}"
+                )
+            flat[i * 3] = start_col
+            flat[i * 3 + 1] = end_col
+            flat[i * 3 + 2] = style_id
+        lib.StreamSetColStyles.restype = c_char_p
+        err = lib.StreamSetColStyles(
+            self.sw_index,
+            byref(flat),
+            c_longlong(count),
+        ).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
     def set_panes(self, opts: Panes) -> None:
         """
         Create and remove freeze panes and split panes by giving panes options
@@ -853,6 +1018,118 @@ class StreamWriter:
             cell.encode(ENCODE),
             byref(vals),
             len(vals),
+        ).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
+    def set_rows(
+        self,
+        start_row: int,
+        rows: List[List[Union[bool, float, int, str, date, datetime, None]]],
+        start_col: int = 1,
+    ) -> None:
+        """
+        Writes multiple rows to stream in a single batch operation. This is
+        significantly faster than calling `set_row` for each row individually
+        when writing large amounts of data.
+
+        All rows must have the same number of columns. Use None for empty cells.
+
+        Args:
+            start_row (int): The starting row number (1-indexed)
+            rows (List[List]): A list of rows, where each row is a list of values
+            start_col (int): The starting column number (1-indexed), defaults to 1
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+
+        Example:
+            Write 10,000 rows in a single batch call:
+
+            ```python
+            # Prepare data
+            rows = []
+            for i in range(10000):
+                rows.append([f"Name{i}", i * 1.5, datetime.now()])
+
+            # Write all rows in one batch (much faster than individual set_row calls)
+            sw.set_rows(2, rows)  # Start from row 2 (row 1 is header)
+            sw.flush()
+
+            # Or start at a specific column
+            sw.set_rows(2, rows, start_col=3)  # Start from column C, row 2
+            ```
+
+        Performance:
+            This method reduces FFI (Foreign Function Interface) overhead by
+            batching multiple rows into a single call. For 45,000 rows, this
+            can reduce write time from minutes to seconds.
+        """
+        if not rows:
+            return
+        num_rows = len(rows)
+        num_cols = len(rows[0])
+
+        # Flatten all rows into a single array for efficient transfer
+        # Use direct ctypes assignment for speed (avoids reflection overhead)
+        lib.StreamSetRows.restype = c_char_p
+        total_cells = num_rows * num_cols
+        vals = (types_go._Interface * total_cells)()
+
+        idx = 0
+        for row in rows:
+            if len(row) != num_cols:
+                raise ValueError(
+                    f"Row {idx // num_cols} has {len(row)} columns, expected {num_cols}"
+                )
+            for value in row:
+                c = vals[idx]
+                # Handle Cell objects (with style_id and formula)
+                style_id = 0
+                formula = ""
+                if isinstance(value, Cell):
+                    style_id = value.style_id
+                    formula = value.formula
+                    value = value.value
+
+                if value is None or value == "":
+                    c.Type = 0  # Nil
+                elif isinstance(value, bool):
+                    c.Type = 5
+                    c.Boolean = value
+                elif isinstance(value, int):
+                    c.Type = 1
+                    c.Integer = value
+                elif isinstance(value, float):
+                    c.Type = 4
+                    c.Float64 = value
+                elif isinstance(value, str):
+                    c.Type = 3
+                    c.String = value.encode(ENCODE)
+                elif isinstance(value, datetime):
+                    c.Type = 6
+                    c.Integer = int(value.timestamp())
+                elif isinstance(value, date):
+                    c.Type = 6
+                    c.Integer = int(datetime.combine(value, time.min).timestamp())
+                else:
+                    c.Type = 3
+                    c.String = str(value).encode(ENCODE)
+
+                # Set style and formula if present
+                c.StyleID = style_id
+                if formula:
+                    c.Formula = formula.encode(ENCODE)
+                idx += 1
+
+        err = lib.StreamSetRows(
+            self.sw_index,
+            c_longlong(start_col),
+            c_longlong(start_row),
+            c_longlong(num_cols),
+            byref(vals),
+            c_longlong(num_rows),
         ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -934,6 +1211,46 @@ class File:
         )
         if err != "":
             raise RuntimeError(err)
+
+    def write_to_buffer(self) -> bytes:
+        """
+        Serialize the workbook to bytes without writing to disk.
+
+        This is useful for:
+        - Returning workbook data from HTTP endpoints
+        - In-memory round-trips after StreamWriter (save and re-open without disk I/O)
+        - Any scenario where you need the file as bytes
+
+        Returns:
+            bytes: The serialized workbook data.
+
+        Example:
+            Return workbook as bytes for HTTP response:
+
+            ```python
+            data = f.write_to_buffer()
+            return Response(data, media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+            ```
+
+            In-memory round-trip after StreamWriter:
+
+            ```python
+            sw = f.new_stream_writer("Sheet1")
+            # ... write data ...
+            sw.flush()
+            buf = f.write_to_buffer()
+            f.close()
+            f = excelize.open_reader(buf)
+            # Now can use normal operations on the sheet
+            ```
+        """
+        lib.WriteToBuffer.restype = types_go._BytesErrorResult
+        res = lib.WriteToBuffer(self.file_index)
+        err = res.err.decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+        # Use string_at for fast bulk copy (not byte-by-byte iteration)
+        return string_at(res.data, res.length)
 
     def add_chart(self, sheet: str, cell: str, chart: Chart, **combo: Chart) -> None:
         """
@@ -1684,6 +2001,75 @@ class File:
         lib.AddFormControl.restype = c_char_p
         options = py_value_to_c(opts, types_go._FormControl())
         err = lib.AddFormControl(
+            self.file_index, sheet.encode(ENCODE), byref(options)
+        ).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
+    def add_data_validation(self, sheet: str, dv: DataValidation) -> None:
+        """
+        Adds data validation rules to specified cell ranges in a worksheet.
+        Data validation allows you to define rules for what data can be entered
+        into cells, such as dropdown lists, number ranges, dates, text length,
+        and custom formulas.
+
+        Args:
+            sheet (str): The worksheet name
+            dv (DataValidation): The data validation options
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+
+        Example:
+            Example 1, set data validation on Sheet1!A1:A10 with validation
+            criteria settings, show error alert when invalid data is entered
+            with "Stop" style and custom title "error title":
+
+            ```python
+            dv = excelize.DataValidation(allow_blank=True)
+            dv.sqref = "A1:A10"
+            dv.set_range("A1:A10")
+            dv.set_drop_list(["1", "2", "3"])
+            f.add_data_validation("Sheet1", dv)
+            ```
+
+            Example 2, set data validation on Sheet1!A2:A5 with validation
+            criteria settings and show input message when cell is selected:
+
+            ```python
+            dv = excelize.DataValidation(allow_blank=True)
+            dv.sqref = "A2:A5"
+            dv.set_whole_number(
+                excelize.DataValidationOperator.DataValidationOperatorBetween,
+                "1",
+                "100"
+            )
+            dv.set_input("Input Title", "Enter a number between 1 and 100")
+            dv.set_error(
+                excelize.DataValidationErrorStyle.DataValidationErrorStyleStop,
+                "Error Title",
+                "Value must be between 1 and 100"
+            )
+            f.add_data_validation("Sheet1", dv)
+            ```
+
+            Example 3, set data validation using custom formula:
+
+            ```python
+            dv = excelize.DataValidation(allow_blank=True)
+            dv.sqref = "A3:A10"
+            dv.set_custom("=AND(A3>=1, A3<=100)")
+            f.add_data_validation("Sheet1", dv)
+            ```
+        """
+        prepare_args(
+            [sheet, dv],
+            [argsRule("sheet", [str]), argsRule("dv", [DataValidation])],
+        )
+        lib.AddDataValidation.restype = c_char_p
+        options = py_value_to_c(dv, types_go._DataValidation())
+        err = lib.AddDataValidation(
             self.file_index, sheet.encode(ENCODE), byref(options)
         ).decode(ENCODE)
         if err != "":
@@ -3353,6 +3739,45 @@ class File:
             if res.FormControls:
                 for i in range(res.FormControlsLen):
                     arr.append(c_value_to_py(res.FormControls[i], FormControl()))
+            return arr
+        raise RuntimeError(err)
+
+    def get_data_validations(self, sheet: str) -> List[DataValidation]:
+        """
+        Retrieves all data validations in a worksheet by a given worksheet name.
+        Data validations define rules for what data can be entered into cells,
+        such as dropdown lists, number ranges, dates, text length, and custom
+        formulas.
+
+        Args:
+            sheet (str): The worksheet name
+
+        Returns:
+            List[DataValidation]: Return the data validations list if no error
+            occurred, otherwise raise a RuntimeError with the message.
+
+        Example:
+            Get all data validations in Sheet1:
+
+            ```python
+            validations = f.get_data_validations("Sheet1")
+            for dv in validations:
+                print(f"Range: {dv.sqref}, Type: {dv.type}")
+                if dv.formula1:
+                    print(f"  Formula1: {dv.formula1}")
+                if dv.formula2:
+                    print(f"  Formula2: {dv.formula2}")
+            ```
+        """
+        prepare_args([sheet], [argsRule("sheet", [str])])
+        lib.GetDataValidations.restype = types_go._GetDataValidationsResult
+        res = lib.GetDataValidations(self.file_index, sheet.encode(ENCODE))
+        err = res.Err.decode(ENCODE)
+        if err == "":
+            arr = []
+            if res.DataValidations:
+                for i in range(res.DataValidationsLen):
+                    arr.append(c_value_to_py(res.DataValidations[i], DataValidation()))
             return arr
         raise RuntimeError(err)
 

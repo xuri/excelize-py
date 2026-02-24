@@ -224,6 +224,46 @@ class IgnoredErrorsType(IntEnum):
     IgnoredErrorsCalculatedColumn = 8
 
 
+class DataValidationType(IntEnum):
+    """
+    DataValidationType is the type of data validation.
+    """
+
+    DataValidationTypeNone = 0
+    DataValidationTypeWhole = 1
+    DataValidationTypeDecimal = 2
+    DataValidationTypeList = 3
+    DataValidationTypeDate = 4
+    DataValidationTypeTime = 5
+    DataValidationTypeTextLength = 6
+    DataValidationTypeCustom = 7
+
+
+class DataValidationOperator(IntEnum):
+    """
+    DataValidationOperator is the type of data validation operator.
+    """
+
+    DataValidationOperatorBetween = 0
+    DataValidationOperatorNotBetween = 1
+    DataValidationOperatorEqual = 2
+    DataValidationOperatorNotEqual = 3
+    DataValidationOperatorGreaterThan = 4
+    DataValidationOperatorLessThan = 5
+    DataValidationOperatorGreaterThanOrEqual = 6
+    DataValidationOperatorLessThanOrEqual = 7
+
+
+class DataValidationErrorStyle(IntEnum):
+    """
+    DataValidationErrorStyle is the type of data validation error style.
+    """
+
+    DataValidationErrorStyleStop = 0
+    DataValidationErrorStyleWarning = 1
+    DataValidationErrorStyleInformation = 2
+
+
 class PictureInsertType(IntEnum):
     """
     PictureInsertType defines the type of the picture has been inserted into the
@@ -243,6 +283,20 @@ class Interface:
     string: str = ""
     float64: float = 0
     boolean: bool = False
+
+
+@dataclass
+class Cell:
+    """
+    Cell can be used directly in StreamWriter to write a value with a style.
+
+    Example:
+        sw.set_row("A1", [Cell(value="Header", style_id=bold_style)])
+    """
+
+    value: Union[bool, float, int, str, date, datetime, None] = None
+    style_id: int = 0
+    formula: str = ""
 
 
 @dataclass
@@ -953,4 +1007,216 @@ class GetPicturesResult:
 @dataclass
 class GetPivotTablesResult:
     pivot_tables: Optional[List[PivotTableOptions]] = None
+    err: str = ""
+
+
+def _data_validation_operator_to_str(op: DataValidationOperator) -> str:
+    """Convert DataValidationOperator enum to string."""
+    mapping = {
+        DataValidationOperator.DataValidationOperatorBetween: "between",
+        DataValidationOperator.DataValidationOperatorNotBetween: "notBetween",
+        DataValidationOperator.DataValidationOperatorEqual: "equal",
+        DataValidationOperator.DataValidationOperatorNotEqual: "notEqual",
+        DataValidationOperator.DataValidationOperatorGreaterThan: "greaterThan",
+        DataValidationOperator.DataValidationOperatorLessThan: "lessThan",
+        DataValidationOperator.DataValidationOperatorGreaterThanOrEqual: "greaterThanOrEqual",
+        DataValidationOperator.DataValidationOperatorLessThanOrEqual: "lessThanOrEqual",
+    }
+    return mapping.get(op, "between")
+
+
+def _data_validation_error_style_to_str(style: DataValidationErrorStyle) -> str:
+    """Convert DataValidationErrorStyle enum to string."""
+    mapping = {
+        DataValidationErrorStyle.DataValidationErrorStyleStop: "stop",
+        DataValidationErrorStyle.DataValidationErrorStyleWarning: "warning",
+        DataValidationErrorStyle.DataValidationErrorStyleInformation: "information",
+    }
+    return mapping.get(style, "stop")
+
+
+@dataclass
+class DataValidation:
+    """
+    DataValidation directly maps the data validation settings of a cell range.
+    """
+
+    allow_blank: bool = False
+    error: Optional[str] = None
+    error_style: Optional[str] = None
+    error_title: Optional[str] = None
+    formula1: str = ""
+    formula2: str = ""
+    operator: str = ""
+    prompt: Optional[str] = None
+    prompt_title: Optional[str] = None
+    show_drop_down: bool = False
+    show_error_message: bool = False
+    show_input_message: bool = False
+    sqref: str = ""
+    type: str = ""
+
+    def set_drop_list(self, values: List[str]) -> None:
+        """
+        Set a dropdown list validation with the given values.
+
+        Args:
+            values: A list of string values to show in the dropdown.
+        """
+        self.type = "list"
+        self.formula1 = '"' + ",".join(values) + '"'
+        self.show_drop_down = True
+
+    def set_range(
+        self,
+        range_ref: str,
+    ) -> None:
+        """
+        Set the cell range reference (sqref) for this validation.
+
+        Args:
+            range_ref: The cell range reference (e.g., "A1:A100").
+        """
+        self.sqref = range_ref
+
+    def set_whole_number(
+        self,
+        operator: DataValidationOperator,
+        formula1: str,
+        formula2: str = "",
+    ) -> None:
+        """
+        Set a whole number validation.
+
+        Args:
+            operator: The comparison operator.
+            formula1: The first value or formula.
+            formula2: The second value (for between/not between operators).
+        """
+        self.type = "whole"
+        self.operator = _data_validation_operator_to_str(operator)
+        self.formula1 = formula1
+        self.formula2 = formula2
+
+    def set_decimal(
+        self,
+        operator: DataValidationOperator,
+        formula1: str,
+        formula2: str = "",
+    ) -> None:
+        """
+        Set a decimal number validation.
+
+        Args:
+            operator: The comparison operator.
+            formula1: The first value or formula.
+            formula2: The second value (for between/not between operators).
+        """
+        self.type = "decimal"
+        self.operator = _data_validation_operator_to_str(operator)
+        self.formula1 = formula1
+        self.formula2 = formula2
+
+    def set_date(
+        self,
+        operator: DataValidationOperator,
+        formula1: str,
+        formula2: str = "",
+    ) -> None:
+        """
+        Set a date validation.
+
+        Args:
+            operator: The comparison operator.
+            formula1: The first date value or formula.
+            formula2: The second date value (for between/not between operators).
+        """
+        self.type = "date"
+        self.operator = _data_validation_operator_to_str(operator)
+        self.formula1 = formula1
+        self.formula2 = formula2
+
+    def set_time(
+        self,
+        operator: DataValidationOperator,
+        formula1: str,
+        formula2: str = "",
+    ) -> None:
+        """
+        Set a time validation.
+
+        Args:
+            operator: The comparison operator.
+            formula1: The first time value or formula.
+            formula2: The second time value (for between/not between operators).
+        """
+        self.type = "time"
+        self.operator = _data_validation_operator_to_str(operator)
+        self.formula1 = formula1
+        self.formula2 = formula2
+
+    def set_text_length(
+        self,
+        operator: DataValidationOperator,
+        formula1: str,
+        formula2: str = "",
+    ) -> None:
+        """
+        Set a text length validation.
+
+        Args:
+            operator: The comparison operator.
+            formula1: The first length value or formula.
+            formula2: The second length value (for between/not between operators).
+        """
+        self.type = "textLength"
+        self.operator = _data_validation_operator_to_str(operator)
+        self.formula1 = formula1
+        self.formula2 = formula2
+
+    def set_custom(self, formula: str) -> None:
+        """
+        Set a custom validation using a formula.
+
+        Args:
+            formula: The custom validation formula.
+        """
+        self.type = "custom"
+        self.formula1 = formula
+
+    def set_input(self, title: str, message: str) -> None:
+        """
+        Set the input prompt message.
+
+        Args:
+            title: The input prompt title.
+            message: The input prompt message.
+        """
+        self.show_input_message = True
+        self.prompt_title = title
+        self.prompt = message
+
+    def set_error(
+        self,
+        style: DataValidationErrorStyle,
+        title: str,
+        message: str,
+    ) -> None:
+        """
+        Set the error alert configuration.
+
+        Args:
+            style: The error style (stop, warning, or information).
+            title: The error alert title.
+            message: The error alert message.
+        """
+        self.show_error_message = True
+        self.error_style = _data_validation_error_style_to_str(style)
+        self.error_title = title
+        self.error = message
+
+
+@dataclass
+class GetDataValidationsResult:
+    data_validations: Optional[List[DataValidation]] = None
     err: str = ""
