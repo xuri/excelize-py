@@ -2321,6 +2321,22 @@ func StreamMergeCell(swIdx int, topLeftCell, bottomRightCell *C.char) *C.char {
 	return C.CString(emptyString)
 }
 
+// SetColOutlineLevel provides a function to set outline level of a single
+// column for the StreamWriter. The value of parameter 'level' is 1-7. Note that
+// you must call the 'SetColOutlineLevel' function before the 'SetRow' function.
+//
+//export StreamSetColOutlineLevel
+func StreamSetColOutlineLevel(swIdx int, col, level int) *C.char {
+	streamWriter, ok := sw.Load(swIdx)
+	if !ok {
+		return C.CString(errStreamWriterPtr)
+	}
+	if err := streamWriter.(*excelize.StreamWriter).SetColOutlineLevel(col, uint8(level)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
 // StreamSetColWidth provides a function to set the width of a single column or
 // multiple columns for the StreamWriter. Note that you must call
 // the 'StreamSetColWidth' function before the 'StreamSetRow' function.

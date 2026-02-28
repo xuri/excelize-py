@@ -194,6 +194,7 @@ class TestExcelize(unittest.TestCase):
 
         self.assertIsNone(sw.insert_page_break("A1"))
         self.assertIsNone(sw.merge_cell("D1", "E2"))
+        self.assertIsNone(sw.set_col_outline_level(4, 2))
         self.assertIsNone(sw.set_col_width(3, 2, 20.0))
         self.assertIsNone(
             sw.set_panes(
@@ -1194,6 +1195,15 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(
             str(context.exception),
             "expected type str for argument 'cell', but got int",
+        )
+        with self.assertRaises(RuntimeError) as context:
+            sw.set_col_outline_level(4, 2)
+        self.assertEqual(str(context.exception), sw_expected)
+        with self.assertRaises(TypeError) as context:
+            sw.set_col_outline_level(4, "2")
+        self.assertEqual(
+            str(context.exception),
+            "expected type int for argument 'level', but got str",
         )
         with self.assertRaises(RuntimeError) as context:
             sw.set_col_width(1, 1, 20)
