@@ -100,7 +100,7 @@ def load_lib() -> Optional[str]:
 
 lib = CDLL(os.path.join(os.path.dirname(__file__), load_lib()))
 ENCODE = "utf-8"
-__version__ = "0.0.8"
+__version__ = "0.0.9"
 uppercase_words = ["id", "rgb", "sq", "xml"]
 
 
