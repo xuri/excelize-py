@@ -23,8 +23,6 @@ struct Interface
     char *String;
     double Float64;
     bool Boolean;
-    int StyleID;
-    char *Formula;
 };
 
 // Options define the options for opening and reading the spreadsheet.
@@ -125,6 +123,24 @@ struct Cell
     int StyleID;
     char *Formula;
     struct Interface Value;
+};
+
+// DataValidation directly maps the settings of the data validation rule.
+struct DataValidation {
+	bool AllowBlank;
+	char **Error;
+	char **ErrorStyle;
+	char **ErrorTitle;
+	char *Operator;
+	char **Prompt;
+	char **PromptTitle;
+	bool ShowDropDown;
+	bool ShowErrorMessage;
+	bool ShowInputMessage;
+	char *Sqref;
+	char *Type;
+	char *Formula1;
+	char *Formula2;
 };
 
 // DocProperties directly maps the document core properties.
@@ -823,13 +839,6 @@ struct Float64ErrorResult
     char *err;
 };
 
-struct BytesErrorResult
-{
-    unsigned char *data;
-    int length;
-    char *err;
-};
-
 struct StringArrayErrorResult
 {
     int ArrLen;
@@ -998,32 +1007,6 @@ struct GetPivotTablesResult
 {
     int PivotTablesLen;
     struct PivotTableOptions *PivotTables;
-    char *Err;
-};
-
-// DataValidation directly maps the data validation settings of a cell range.
-struct DataValidation
-{
-    bool AllowBlank;
-    char **Error;
-    char **ErrorStyle;
-    char **ErrorTitle;
-    char *Formula1;
-    char *Formula2;
-    char *Operator;
-    char **Prompt;
-    char **PromptTitle;
-    bool ShowDropDown;
-    bool ShowErrorMessage;
-    bool ShowInputMessage;
-    char *Sqref;
-    char *Type;
-};
-
-struct GetDataValidationsResult
-{
-    int DataValidationsLen;
-    struct DataValidation *DataValidations;
     char *Err;
 };
 
