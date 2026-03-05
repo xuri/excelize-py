@@ -898,6 +898,13 @@ struct GetCellRichTextResult
     char *Err;
 };
 
+struct GetDataValidationsResult
+{
+    int DvsLen;
+    struct DataValidation *Dvs;
+    char *Err;
+};
+
 struct GetSlicersResult
 {
     int SlicersLen;

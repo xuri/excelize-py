@@ -31,6 +31,38 @@ class argsRule:
         self.opts = opts
 
 
+def prepare_args(args: List, types: List[argsRule]):
+    """
+    Validate arguments against expected types.
+
+    Args:
+        args (List): The arguments to validate.
+        types (List[argsRule]): The expected argument rules.
+
+    Raises:
+        TypeError: If an argument type doesn't match the expected types.
+    """
+    if not types:
+        return
+    opts = types[-1].opts if types else False
+    for i, excepted in enumerate(types):
+        if opts and i >= len(args):
+            return
+        if i >= len(args):
+            continue
+        received = type(args[i])
+        if received not in excepted.types:
+            names = [t.__name__ for t in excepted.types]
+            if len(names) == 1:
+                t = names[0]
+            else:
+                t = ", ".join(names[:-1]) + f" or {names[-1]}"
+            raise TypeError(
+                f"expected type {t} for argument "
+                f"'{excepted.name}', but got {received.__name__}"
+            )
+
+
 class CultureName(IntEnum):
     """
     This section defines the currently supported country code types enumeration
@@ -333,6 +365,208 @@ class CustomProperty:
     value: Union[bool, float, int, str, date, datetime, None] = None
 
 
+# dataValidationTypeMap defined supported data validation types.
+data_validation_type_map = {
+    DataValidationType.DataValidationTypeNone: "none",
+    DataValidationType.DataValidationTypeCustom: "custom",
+    DataValidationType.DataValidationTypeDate: "date",
+    DataValidationType.DataValidationTypeDecimal: "decimal",
+    DataValidationType.DataValidationTypeList: "list",
+    DataValidationType.DataValidationTypeTextLength: "textLength",
+    DataValidationType.DataValidationTypeTime: "time",
+    DataValidationType.DataValidationTypeWhole: "whole",
+}
+# dataValidationOperatorMap defined supported data validation operators.
+data_validation_operator_map = {
+    DataValidationOperator.DataValidationOperatorBetween: "between",
+    DataValidationOperator.DataValidationOperatorEqual: "equal",
+    DataValidationOperator.DataValidationOperatorGreaterThan: "greaterThan",
+    DataValidationOperator.DataValidationOperatorGreaterThanOrEqual: "greaterThanOrEqual",
+    DataValidationOperator.DataValidationOperatorLessThan: "lessThan",
+    DataValidationOperator.DataValidationOperatorLessThanOrEqual: "lessThanOrEqual",
+    DataValidationOperator.DataValidationOperatorNotBetween: "notBetween",
+    DataValidationOperator.DataValidationOperatorNotEqual: "notEqual",
+}
+
+
+@dataclass
+class DataValidation:
+    allow_blank: bool = False
+    error: Optional[str] = None
+    error_style: Optional[str] = None
+    error_title: Optional[str] = None
+    operator: str = ""
+    prompt: Optional[str] = None
+    prompt_title: Optional[str] = None
+    show_drop_down: bool = False
+    show_error_message: bool = False
+    show_input_message: bool = False
+    sqref: str = ""
+    type: str = ""
+    formula1: str = ""
+    formula2: str = ""
+
+    def set_error(self, style: DataValidationErrorStyle, title: str, msg: str) -> None:
+        """
+        Set error notice.
+
+        Args:
+            style (DataValidationErrorStyle): The data validation error style
+            title (str): The error title
+            msg (str): The error message
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+        """
+        prepare_args(
+            [style, title, msg],
+            [
+                argsRule("style", [DataValidationErrorStyle]),
+                argsRule("title", [str]),
+                argsRule("msg", [str]),
+            ],
+        )
+        self.error = msg
+        self.error_title = title
+        str_style = "stop"
+        if style == DataValidationErrorStyle.DataValidationErrorStyleStop:
+            str_style = "stop"
+        elif style == DataValidationErrorStyle.DataValidationErrorStyleWarning:
+            str_style = "warning"
+        elif style == DataValidationErrorStyle.DataValidationErrorStyleInformation:
+            str_style = "information"
+        self.show_error_message = True
+        self.error_style = str_style
+
+    def set_input(self, title: str, msg: str) -> None:
+        """
+        Set the input prompt message.
+
+        Args:
+            title (str): The input title
+            msg (str): The input message
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+        """
+        prepare_args(
+            [title, msg],
+            [argsRule("title", [str]), argsRule("msg", [str])],
+        )
+        self.show_input_message = True
+        self.prompt_title = title
+        self.prompt = msg
+
+    def set_drop_list(self, keys: List[str]) -> None:
+        """
+        Set data validation list. If you type the items into the data validation
+        dialog box (a delimited list), the limit is 255 characters, including
+        the separators. If your data validation list source formula is over the
+        maximum length limit, please set the allowed values in the worksheet
+        cells, and use the `set_sqref_drop_list` function to set the reference
+        for their cells.
+
+        Args:
+            keys (List[str]): The list of values for the drop list
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+        """
+        prepare_args([keys], [argsRule("keys", [list])])
+        formula = ",".join(keys)
+        if 255 < len(formula):
+            raise RuntimeError("data validation must be 0-255 characters")
+        self.type = data_validation_type_map[DataValidationType.DataValidationTypeList]
+        for k, v in {"&": "&amp;", "<": "&lt;", ">": "&gt;"}.items():
+            formula = formula.replace(k, v)
+        if formula.startswith("="):
+            self.formula1 = formula
+            return
+        self.formula1 = '"' + formula.replace('"', '""') + '"'
+
+    def set_range(
+        self,
+        f1: Union[int, float, str],
+        f2: Union[int, float, str],
+        t: DataValidationType,
+        o: DataValidationOperator,
+    ) -> None:
+        """
+        Set data validation range in drop list.
+
+        Args:
+            f1: The first formula value (int, float, or str)
+            f2: The second formula value (int, float, or str)
+            t (DataValidationType): The data validation type
+            o (DataValidationOperator): The data validation operator
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            TypeError with the message.
+        """
+
+        def gen_formula(val):
+            if isinstance(val, int):
+                return str(val)
+            if isinstance(val, float):
+                if abs(val) > 3.4028235e38:
+                    raise RuntimeError("data validation range exceeds limit")
+                return f"{val:.17g}"
+            if isinstance(val, str):
+                return val
+            raise TypeError("parameter is invalid")
+
+        self.formula1 = gen_formula(f1)
+        self.formula2 = gen_formula(f2)
+        self.type = data_validation_type_map[t]
+        self.operator = data_validation_operator_map[o]
+
+    def set_sqref_drop_list(self, sqref: str) -> None:
+        """
+        Set data validation on a range with source reference range of the
+        worksheet by given data validation object and worksheet name. The data
+        validation object can be created by `new_data_validation` function.
+        There are limits to the number of items that will show in a data
+        validation drop down list: The list can show up to show 32768 items from
+        a list on the worksheet. If you need more items than that, you could
+        create a dependent drop down list, broken down by category.
+
+        Args:
+            sqref (str): The source reference range
+
+        Example:
+            For example, set data validation on Sheet1!A7:B8 with validation
+            criteria source Sheet1!E1:E3 settings, create in-cell dropdown by
+            allowing list source:
+
+            ```python
+            try:
+                dv := excelize.new_data_validation(True)
+                dv.sqref = "A7:B8"
+                dv.set_sqref_drop_list("$E$1:$E$3")
+                f.add_data_validation("Sheet1", dv)
+            except (RuntimeError, TypeError) as err:
+                print(err)
+            ```
+        """
+        self.formula1 = sqref
+        self.type = data_validation_type_map[DataValidationType.DataValidationTypeList]
+
+    def set_sqref(self, sqref: str) -> None:
+        """
+        Set data validation range in drop list.
+
+        Args:
+            sqref (str): The cell reference
+        """
+        if not self.sqref:
+            self.sqref = sqref
+            return
+        self.sqref = f"{self.sqref} {sqref}"
+
+
 @dataclass
 class DocProperties:
     category: str = ""
@@ -555,6 +789,12 @@ class RichTextRun:
 @dataclass
 class GetCellRichTextResult:
     runs: Optional[List[RichTextRun]] = None
+    err: str = ""
+
+
+@dataclass
+class GetDataValidationsResult:
+    dvs: Optional[List[DataValidation]] = None
     err: str = ""
 
 

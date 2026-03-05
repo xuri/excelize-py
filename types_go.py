@@ -878,6 +878,14 @@ class _GetCellRichTextResult(Structure):
     ]
 
 
+class _GetDataValidationsResult(Structure):
+    _fields_ = [
+        ("DvsLen", c_int),
+        ("Dvs", POINTER(_DataValidation)),
+        ("Err", c_char_p),
+    ]
+
+
 class _GetSlicersResult(Structure):
     _fields_ = [
         ("SlicersLen", c_int),

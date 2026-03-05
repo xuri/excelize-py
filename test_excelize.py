@@ -194,6 +194,7 @@ class TestExcelize(unittest.TestCase):
         self.assertIsNone(f.add_data_validation("Sheet1", dv))
 
         f.new_sheet("Sheet2")
+        self.assertEqual(f.get_data_validations("Sheet2"), [])
         self.assertIsNone(f.set_sheet_row("Sheet2", "A2", ["B2", 1]))
         self.assertIsNone(f.set_sheet_row("Sheet2", "A3", ["B3", 3]))
         dv = excelize.new_data_validation(True)
@@ -214,6 +215,11 @@ class TestExcelize(unittest.TestCase):
             )
         )
         self.assertIsNone(f.add_data_validation("Sheet2", dv))
+        dvs = f.get_data_validations("Sheet2")
+        self.assertEqual(len(dvs), 1)
+        self.assertEqual(dvs[0].sqref, "A1:B1")
+        self.assertEqual(dvs[0].type, "whole")
+        self.assertEqual(dvs[0].operator, "between")
 
         dv = excelize.new_data_validation(True)
         dv.sqref = "A3:B3"
@@ -288,6 +294,16 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(
             str(context.exception),
             "expected type DataValidation for argument 'dv', but got NoneType",
+        )
+
+        with self.assertRaises(RuntimeError) as context:
+            f.get_data_validations("SheetN")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.get_data_validations(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
         )
         self.assertIsNone(f.save_as(os.path.join("test", "TestDataValidation.xlsx")))
 
@@ -1178,6 +1194,9 @@ class TestExcelize(unittest.TestCase):
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
             f.set_custom_props(excelize.CustomProperty(name="Prop", value=""))
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
+            f.get_data_validations("Sheet1")
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
             f.get_default_font()
