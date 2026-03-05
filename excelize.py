@@ -787,6 +787,41 @@ class StreamWriter:
         if err != "":
             raise RuntimeError(err)
 
+    def set_col_outline_level(self, col: int, level: int) -> None:
+        """
+        Set the outline level of a column for the stream writer.
+        The value of parameter `level` is 1-7. Note that you must call the
+        `set_col_outline_level` function before the `set_row` function.
+
+        Args:
+            col (int): The column number
+            level (int): The outline level
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+
+        Example:
+            For example set outline level of column D to 2:
+
+            ```python
+            try:
+                sw.set_col_outline_level(4, 2)
+            except (RuntimeError, TypeError) as err:
+                print(err)
+            ```
+        """
+        prepare_args(
+            [col, level],
+            [argsRule("col", [int]), argsRule("level", [int])],
+        )
+        lib.StreamSetColOutlineLevel.restype = c_char_p
+        err = lib.StreamSetColOutlineLevel(
+            self.sw_index, c_longlong(col), c_longlong(level)
+        ).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
     def set_col_width(
         self, start_col: int, end_col: int, width: Union[int, float]
     ) -> None:
