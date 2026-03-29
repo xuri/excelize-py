@@ -1181,6 +1181,9 @@ class TestExcelize(unittest.TestCase):
             )
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
+            f.auto_fit_col_width("Sheet1", "D")
+        self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
             f.delete_form_control("Sheet1", "A1")
         self.assertEqual(str(context.exception), expected)
         with self.assertRaises(RuntimeError) as context:
@@ -2890,6 +2893,20 @@ class TestExcelize(unittest.TestCase):
             str(context.exception),
             "expected type str for argument 'sheet', but got int",
         )
+
+        self.assertEqual(f.get_col_width("Sheet1", "B"), 9.140625)
+        self.assertIsNone(f.auto_fit_col_width("Sheet1", "B"))
+        with self.assertRaises(RuntimeError) as context:
+            f.auto_fit_col_width("SheetN", "D")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+        with self.assertRaises(TypeError) as context:
+            f.auto_fit_col_width("Sheet1", 1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'columns', but got int",
+        )
+        self.assertEqual(f.get_col_width("Sheet1", "B"), 14.61)
+
         self.assertIsNone(f.set_sheet_name("Sheet1", "SheetN"))
         with self.assertRaises(RuntimeError) as context:
             f.set_sheet_name(

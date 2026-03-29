@@ -1042,7 +1042,6 @@ class PivotTableOptions:
     field_print_titles: bool = False
     item_print_titles: bool = False
     pivot_table_style_name: str = ""
-    selected_items: Optional[List[str]] = None
 
 
 @dataclass

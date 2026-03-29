@@ -2603,6 +2603,57 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
+    def auto_fit_col_width(self, sheet: str, columns: str) -> None:
+        """
+        Auto fit columns width according to their text content with font format.
+        If the selected range contains hidden columns and those columns have
+        content, this function will unhide the hidden columns. Not that this
+        function calculates the width of the text approximately based on the
+        font format, currently does not support merged cells. the actual width
+        may be different when you open the workbook in Office applications. This
+        process can be relatively slow on large worksheets, so this should
+        normally only be called once per column, at the end of your processing.
+
+        Args:
+            sheet (str): The worksheet name
+            columns (str): The columns range
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+
+        Example:
+            Auto fit column width for column `D` on `Sheet1`:
+
+            ```python
+            try:
+                f.auto_fit_col_width("Sheet1", "D")
+            except (RuntimeError, TypeError) as err:
+                print(err)
+            ```
+
+            Auto fit column width for columns `D` to `F` on `Sheet1`:
+
+            ```python
+            try:
+                f.auto_fit_col_width("Sheet1", "D:F")
+            except (RuntimeError, TypeError) as err:
+                print(err)
+            ```
+        """
+        prepare_args(
+            [sheet, columns],
+            [argsRule("sheet", [str]), argsRule("columns", [str])],
+        )
+        lib.AutoFitColWidth.restype = c_char_p
+        err = lib.AutoFitColWidth(
+            self.file_index,
+            sheet.encode(ENCODE),
+            columns.encode(ENCODE),
+        ).decode(ENCODE)
+        if err != "":
+            raise RuntimeError(err)
+
     def calc_cell_value(self, sheet: str, cell: str, *opts: Options) -> str:
         """
         Get calculated cell value. This feature is currently in working

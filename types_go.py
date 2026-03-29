@@ -614,8 +614,6 @@ class _PivotTableOptions(Structure):
         ("FieldPrintTitles", c_bool),
         ("ItemPrintTitles", c_bool),
         ("PivotTableStyleName", c_char_p),
-        ("SelectedItemsLen", c_int),
-        ("SelectedItems", POINTER(POINTER(c_char))),
     ]
 
 

@@ -851,6 +851,28 @@ func AutoFilter(idx int, sheet, rangeRef *C.char, opts *C.struct_AutoFilterOptio
 	return C.CString(emptyString)
 }
 
+// AutoFitColWidth provides a function to auto fit columns width according to
+// their text content with font format. If the selected range contains hidden
+// columns and those columns have content, this function will unhide the hidden
+// columns. Not that this function calculates the width of the text
+// approximately based on the font format, currently does not support merged
+// cells. the actual width may be different when you open the workbook in Office
+// applications. This process can be relatively slow on large worksheets, so
+// this should normally only be called once per column, at the end of your
+// processing.
+//
+//export AutoFitColWidth
+func AutoFitColWidth(idx int, sheet, columns *C.char) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	if err := f.(*excelize.File).AutoFitColWidth(C.GoString(sheet), C.GoString(columns)); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
 // CalcCellValue provides a function to get calculated cell value. This feature
 // is currently in working processing. Iterative calculation, implicit
 // intersection, explicit intersection, array formula, table formula and some
