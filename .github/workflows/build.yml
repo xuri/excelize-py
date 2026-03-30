@@ -57,7 +57,7 @@ jobs:
         run: go build -buildmode=c-shared -o libexcelize.arm64.darwin.dylib main.go && coverage run -m unittest
 
       - name: Codecov
-        uses: codecov/codecov-action@v5
+        uses: codecov/codecov-action@v6
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
