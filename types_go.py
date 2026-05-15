@@ -434,6 +434,8 @@ class _ChartTitle(Structure):
         ("Border", _LineOptions),
         ("ParagraphLen", c_int),
         ("Paragraph", POINTER(_RichTextRun)),
+        ("Font", POINTER(_Font)),
+        ("Formula", c_char_p),
         ("OffsetX", c_int),
         ("OffsetY", c_int),
         ("Width", c_int),

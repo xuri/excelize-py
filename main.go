@@ -220,7 +220,7 @@ func cValueToGo(cVal reflect.Value, goType reflect.Type) (reflect.Value, error) 
 			if !goBaseTypes[ptrType.Kind()] {
 				// Pointer of the Go struct, for example: *excelize.Options
 				cObjVal := cVal.FieldByName(field.Name)
-				if cObjVal.Elem().CanAddr() {
+				if cObjVal.Kind() == reflect.Ptr && !cObjVal.IsNil() {
 					v, err := cValueToGo(cObjVal.Elem(), ptrType)
 					if err != nil {
 						return result, err

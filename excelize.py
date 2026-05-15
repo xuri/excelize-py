@@ -1031,12 +1031,12 @@ class File:
             data_point
 
         name: Set the name for the series. The name is displayed in the chart
-        legend and in the formula bar. The 'name' property is optional and if it
+        legend and in the formula bar. The `name` property is optional and if it
         isn't supplied it will default to Series 1..n. The name can also be a
         formula such as Sheet1!$A$1
 
         categories: This sets the chart category labels. The category is more or
-        less the same as the X axis. In most chart types the 'categories'
+        less the same as the X axis. In most chart types the `categories`
         property is optional and the chart will just assume a sequential series
         from 1..n.
 
@@ -1044,25 +1044,25 @@ class File:
         mandatory option for every chart object. This option links the chart
         with the worksheet data that it displays.
 
-        sizes: This sets the bubble size in a data series. The 'sizes' property
-        is optional and the default value was same with 'values'.
+        sizes: This sets the bubble size in a data series. The `sizes` property
+        is optional and the default value was same with `values`.
 
-        fill: This set the format for the data series fill. The 'fill' property
+        fill: This set the format for the data series fill. The `fill` property
         is optional
 
-        legend: This set the font of legend text for a data series. The 'legend'
+        legend: This set the font of legend text for a data series. The `legend`
         property is optional.
 
-        line: This sets the line format of the line chart. The 'line' property
+        line: This sets the line format of the line chart. The `line` property
         is optional and if it isn't supplied it will default style. The options
         that can be set are width and color. The range of width is 0.25pt -
         999pt. If the value of width is outside the range, the default width of
         the line is 2pt.
 
         marker: This sets the marker of the line chart and scatter chart. The
-        range of optional field 'size' is 2-72 (default value is 5). The
-        enumeration value of optional field 'symbol' are (default value is
-        'auto'):
+        range of optional field `size` is 2-72 (default value is 5). The
+        enumeration value of optional field `symbol` are (default value is
+        `auto`):
 
             circle
             dash
@@ -1083,17 +1083,18 @@ class File:
         label.
 
         data_point: This sets the format for individual data points in a
-        doughnut, pie or 3D pie chart series. The 'data_point' property is
+        doughnut, pie or 3D pie chart series. The `data_point` property is
         optional.
 
-        Set properties of the chart legend. The options that can be set are:
+        Set properties of the chart legend by `legend` field with `ChartLegend`
+        data type. The options that can be set are:
 
             position
             show_legend_key
             font
 
         position: Set the position of the chart legend. The default legend
-        position is bottom. The available positions are:
+        position is `bottom`. The available positions are:
 
             none
             top
@@ -1110,17 +1111,59 @@ class File:
         formatting. The font family, size, color, bold, italic, underline, and
         strike properties can be set.
 
-        Set properties of the chart title. The properties that can be set are:
+        Set properties of the chart title by 'title' field with 'ChartTitle'
+        data type. The properties that can be set are:
 
-            title
+            fill
+            border
+            paragraph
+            font
+            formula
+            offset_x
+            offset_y
+            width
+            height
+            overlay
 
-        title: Set the name (title) for the chart. The name is displayed above
-        the chart. The name can also be a formula such as Sheet1!$A$1 or a list
-        with a sheet name. The name property is optional. The default is to have
-        no chart title.
+        fill: Set fill color of the chart title. The 'Fill' property is
+        optional.
 
-        Specifies how blank cells are plotted on the chart by 'show_blanks_as'.
-        The default value is gap. The options that can be set are:
+        border: Set border of the chart title, the properties that can be set
+        are the same as the border object that is used for cell formatting. The
+        `border` property is optional.
+
+        paragraph: Set the rich text of the chart title text. The `paragraph`
+        property is optional, and can not be set at the same time with `formula`
+        property.
+
+        font: Set the font properties of the chart title formula text. The
+        `font` property is optional.
+
+        formula: Set the formula of the chart title text. For example:
+        Sheet1!$A$1. The `formula` property is optional, and can not be set at
+        the same time with `paragraph` property.
+
+        offset_x: Set the horizontal offset of the chart title. The `offset_x`
+        property is optional. The default value is 0, and the value of
+        `offset_x` must be an integer from 0 to 100.
+
+        offset_y: Set the vertical offset of the chart title. The `offset_y`
+        property is optional. The default value is 0, and the value of
+        `offset_y` must be an integer from 0 to 100.
+
+        width: Set the width of the chart title. The `width` property is
+        optional. The default value is 0, and the value of `width` must be an
+        integer from 0 to 100.
+
+        height: Set the height of the chart title. The `height` property is
+        optional. The default value is 0, and the value of `height` must be an
+        integer from 0 to 100.
+
+        overlay: Set the chart title shall be overlaid on the chart. The
+        `overlay` property is optional. The default value is false.
+
+        Specifies how blank cells are plotted on the chart by `show_blanks_as`.
+        The default value is `gap`. The options that can be set are:
 
             gap
             span
@@ -1133,13 +1176,13 @@ class File:
         zero: Specifies that blank values shall be treated as zero.
 
         Specifies that each data marker in the series has a different color by
-        'vary_colors'. The default value is True.
+        `vary_colors`. The default value is True.
 
         Set chart offset, scale, aspect ratio setting and print settings by
-        'format', same as function `add_picture`.
+        `format`, same as function `add_picture`.
 
-        Set the position of the chart plot area by 'plot_area'. The properties
-        that can be set are:
+        Set the position of the chart plot area by `plot_area` field with
+        `ChartPlotArea` data type. The properties that can be set are:
 
             second_plot_values
             show_bubble_size
@@ -1153,46 +1196,47 @@ class File:
             num_fmt
 
         second_plot_values: Specifies the values in second plot for the
-        'PieOfPie' and 'BarOfPie' chart.
+        `PieOfPie` and `BarOfPie` chart.
 
         show_bubble_size: Specifies the bubble size shall be shown in a data
-        label. The 'show_bubble_size' property is optional. The default value is
+        label. The `show_bubble_size` property is optional. The default value is
         False.
 
         show_cat_name: Specifies that the category name shall be shown in the
-        data label. The 'show_cat_name' property is optional. The default value
+        data label. The `show_cat_name` property is optional. The default value
         is True.
 
         show_data_table: Used for add data table under chart, depending on the
         chart type, only available for area, bar, column and line series type
-        charts. The 'show_data_table' property is optional. The default value is
+        charts. The `show_data_table` property is optional. The default value is
         False.
 
         show_data_table_keys: Used for add legend key in data table, only works
-        on 'show_data_table' is enabled. The 'show_data_table_keys' property is
+        on `show_data_table` is enabled. The `show_data_table_keys` property is
         optional. The default value is False.
 
         show_leader_lines: Specifies leader lines shall be shown for data
-        labels. The 'show_leader_lines' property is optional. The default value
+        labels. The `show_leader_lines` property is optional. The default value
         is False.
 
         show_percent: Specifies that the percentage shall be shown in a data
-        label. The 'show_percent' property is optional. The default value is
+        label. The `show_percent` property is optional. The default value is
         False.
 
         show_ser_name: Specifies that the series name shall be shown in a data
-        label. The 'show_ser_name' property is optional. The default value is
+        label. The `show_ser_name` property is optional. The default value is
         False.
 
         show_val: Specifies that the value shall be shown in a data label. The
-        'show_val' property is optional. The default value is False.
+        `show_val` property is optional. The default value is False.
 
         num_fmt: Specifies that if linked to source and set custom number format
-        code for data labels. The 'NumFmt' property is optional. The default
-        format code is 'General'.
+        code for data labels. The `num_fmt` property is optional. The default
+        format code is `General`.
 
-        Set the primary horizontal and vertical axis options by 'x_axis' and
-        'y_axis'. The properties of 'x_axis' that can be set are:
+        Set the primary horizontal and vertical axis options by `x_axis` and
+        `y_axis` fields with `ChartAxis` data type. The properties of `x_axis`
+        that can be set are:
 
             none
             major_grid_lines
@@ -1206,7 +1250,7 @@ class File:
             num_fmt
             title
 
-        The properties of 'y_axis' that can be set are:
+        The properties of `y_axis` that can be set are:
 
             none
             major_grid_lines
@@ -1229,7 +1273,7 @@ class File:
         minor_grid_lines: Specifies minor grid lines.
 
         major_unit: Specifies the distance between major ticks. Shall contain a
-        positive floating-point number. The 'major_unit' property is optional.
+        positive floating-point number. The `major_unit` property is optional.
         The default value is auto.
 
         secondary: Specifies the current series vertical axis as the secondary
@@ -1237,17 +1281,17 @@ class File:
         The default value is False.
 
         tick_label_skip: Specifies how many tick labels to skip between label
-        that is drawn. The 'tick_label_skip' property is optional. The default
+        that is drawn. The `tick_label_skip` property is optional. The default
         value is auto.
 
         reverse_order: Specifies that the categories or values on reverse order
-        (orientation of the chart). The 'reverse_order' property is optional. The
+        (orientation of the chart). The `reverse_order` property is optional. The
         default value is False.
 
-        maximum: Specifies that the fixed maximum, 0 is auto. The 'maximum'
+        maximum: Specifies that the fixed maximum, 0 is auto. The `maximum`
         property is optional. The default value is auto.
 
-        minimum: Specifies that the fixed minimum, 0 is auto. The 'minimum'
+        minimum: Specifies that the fixed minimum, 0 is auto. The `minimum`
         property is optional. The default value is auto.
 
         alignment: Specifies that the alignment of the horizontal and vertical
@@ -1256,9 +1300,9 @@ class File:
             text_rotation
             vertical
 
-        The value of 'text_rotation' that can be set from -90 to 90.
+        The value of `text_rotation` that can be set from -90 to 90.
 
-        The value of 'vertical' that can be set are:
+        The value of `vertical` that can be set are:
 
             horz
             vert
@@ -1283,35 +1327,37 @@ class File:
         log_base: Specifies logarithmic scale base number of the vertical axis.
 
         num_fmt: Specifies that if linked to source and set custom number format
-        code for axis. The 'num_fmt' property is optional. The default format
+        code for axis. The `num_fmt` property is optional. The default format
         code is 'General'.
 
-        title: Specifies that the primary horizontal or vertical axis title and
-        resize chart. The 'title' property is optional.
+        title: Specifies that the primary horizontal or vertical axis title by
+        `Title` field with `ChartTitle` data type. The `title` property is
+        optional.
 
-        Set chart size by 'dimension' property. The 'dimension' property is
-        optional. The default width is 480, and height is 260.
+        Set chart size by `dimension` property with `ChartDimension` data type.
+        The `dimension` property is optional. The default width is 480, and
+        height is 260.
 
-        Set chart legend for all data series by 'legend' property. The 'legend'
-        property is optional.
+        Set chart legend for all data series by `legend` property with
+        `ChartLegend` data type. The `legend` property is optional.
 
         Set the bubble size in all data series for the bubble chart or 3D bubble
-        chart by 'bubble_sizes' property. The 'bubble_sizes' property is
+        chart by `bubble_sizes` property. The `bubble_sizes` property is
         optional. The default width is 100, and the value should be great than 0
         and less or equal than 300.
 
         Set the doughnut hole size in all data series for the doughnut chart by
-        'hole_size' property. The 'hole_size' property is optional. The default
+        `hole_size` property. The `hole_size` property is optional. The default
         width is 75, and the value should be great than 0 and less or equal than
         90.
 
-        Set the gap with of the column and bar series chart by 'gap_width'
-        property. The 'gap_width' property is optional. The default width is
+        Set the gap with of the column and bar series chart by `gap_width`
+        property. The `gap_width` property is optional. The default width is
         150, and the value should be great or equal than 0 and less or equal
         than 500.
 
-        Set series overlap of the column and bar series chart by 'overlap'
-        property. The 'overlap' property is optional. The default width is 0,
+        Set series overlap of the column and bar series chart by `overlap`
+        property. The `overlap` property is optional. The default width is 0,
         and the value should be great or equal than -100 and less or equal than
         100.
 
@@ -2020,7 +2066,7 @@ class File:
 
         Example:
             For example, create a pivot table on the range reference
-            Sheet1!G4:M31 with the range reference Sheet1!A1:E31 as the data
+            Sheet1!G4:M30 with the range reference Sheet1!A1:E31 as the data
             source, summarize by sum for revenue:
 
             ```python
@@ -2047,7 +2093,7 @@ class File:
                 f.add_pivot_table(
                     excelize.PivotTableOptions(
                         data_range="Sheet1!A1:E31",
-                        pivot_table_range="Sheet1!G4:M31",
+                        pivot_table_range="Sheet1!G4:M30",
                         rows=[
                             excelize.PivotTableField(data="Month", default_subtotal=True),
                             excelize.PivotTableField(data="Year"),
@@ -2607,9 +2653,9 @@ class File:
         """
         Auto fit columns width according to their text content with font format.
         If the selected range contains hidden columns and those columns have
-        content, this function will unhide the hidden columns. Not that this
+        content, this function will unhide the hidden columns. Note that this
         function calculates the width of the text approximately based on the
-        font format, currently does not support merged cells. the actual width
+        font format, currently does not support merged cells, the actual width
         may be different when you open the workbook in Office applications. This
         process can be relatively slow on large worksheets, so this should
         normally only be called once per column, at the end of your processing.

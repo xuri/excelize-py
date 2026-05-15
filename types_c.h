@@ -466,6 +466,8 @@ struct ChartTitle
     struct LineOptions Border;
     int ParagraphLen;
     struct RichTextRun *Paragraph;
+    struct Font *Font;
+    char *Formula;
     int OffsetX;
     int OffsetY;
     int Width;

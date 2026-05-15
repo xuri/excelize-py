@@ -877,6 +877,8 @@ class ChartTitle:
     fill: Fill = Fill
     border: LineOptions = LineOptions
     paragraph: Optional[List[RichTextRun]] = None
+    font: Optional[Font] = None
+    formula: str = ""
     offset_x: int = 0
     offset_y: int = 0
     width: int = 0

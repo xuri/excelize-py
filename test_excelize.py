@@ -2043,7 +2043,7 @@ class TestExcelize(unittest.TestCase):
             )
         opts = excelize.PivotTableOptions(
             data_range="Sheet1!A1:E31",
-            pivot_table_range="Sheet1!G4:M31",
+            pivot_table_range="Sheet1!G4:M30",
             rows=[
                 excelize.PivotTableField(data="Month", default_subtotal=True),
                 excelize.PivotTableField(data="Year"),
