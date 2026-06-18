@@ -603,6 +603,15 @@ struct Chart
     int *Overlap;
 };
 
+// PivotTableShowValuesAs directly maps the show value as settings of the pivot
+// table.
+struct PivotTableShowValuesAs
+{
+    unsigned char Type;
+    char *BaseField;
+    char *BaseItem;
+};
+
 // PivotTableField directly maps the field settings of the pivot table.
 struct PivotTableField
 {
@@ -617,6 +626,7 @@ struct PivotTableField
     int NumFmt;
     int SelectedItemsLen;
     char **SelectedItems;
+    struct PivotTableShowValuesAs ShowValuesAs;
 };
 
 // PivotTableOptions directly maps the format settings of the pivot table.

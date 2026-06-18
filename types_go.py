@@ -570,6 +570,14 @@ class _Chart(Structure):
     ]
 
 
+class _PivotTableShowValuesAs(Structure):
+    _fields_ = [
+        ("Type", c_uint),
+        ("BaseField", c_char_p),
+        ("BaseItem", c_char_p),
+    ]
+
+
 class _PivotTableField(Structure):
     _fields_ = [
         ("Compact", c_bool),
@@ -583,6 +591,7 @@ class _PivotTableField(Structure):
         ("NumFmt", c_int),
         ("SelectedItemsLen", c_int),
         ("SelectedItems", POINTER(POINTER(c_char))),
+        ("ShowValuesAs", _PivotTableShowValuesAs),
     ]
 
 

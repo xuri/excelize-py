@@ -10,7 +10,7 @@ provided streaming API for generating or reading data from a worksheet with huge
 amounts of data. This library needs Python version 3.9 or later.
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from enum import IntEnum
 from datetime import datetime, date
 from typing import List, Optional, Union
@@ -306,6 +306,29 @@ class PictureInsertType(IntEnum):
     PictureInsertTypePlaceInCell = 1
     PictureInsertTypeIMAGE = 2
     PictureInsertTypeDISPIMG = 3
+
+
+class PivotTableShowValuesAsType(IntEnum):
+    """
+    PivotTableShowValuesAsType is the type of calculation for showing values in
+    a pivot table.
+    """
+
+    PivotTableShowValuesAsNoCalculation = 0
+    PivotTableShowValuesAsPercentOfGrandTotal = 1
+    PivotTableShowValuesAsPercentOfColumnTotal = 2
+    PivotTableShowValuesAsPercentOfRowTotal = 3
+    PivotTableShowValuesAsPercentOf = 4
+    PivotTableShowValuesAsPercentOfParentRowTotal = 5
+    PivotTableShowValuesAsPercentOfParentColumnTotal = 6
+    PivotTableShowValuesAsPercentOfParentTotal = 7
+    PivotTableShowValuesAsDifferenceFrom = 8
+    PivotTableShowValuesAsPercentDifferenceFrom = 9
+    PivotTableShowValuesAsRunningTotalIn = 10
+    PivotTableShowValuesAsPercentRunningTotalIn = 11
+    PivotTableShowValuesAsRankSmallestToLargest = 12
+    PivotTableShowValuesAsRankLargestToSmallest = 13
+    PivotTableShowValuesAsIndex = 14
 
 
 @dataclass
@@ -1005,7 +1028,83 @@ class Chart:
 
 
 @dataclass
+class PivotTableShowValuesAs:
+    type: PivotTableShowValuesAsType = (
+        PivotTableShowValuesAsType.PivotTableShowValuesAsNoCalculation
+    )
+    base_field: str = ""
+    base_item: str = ""
+
+
+@dataclass
 class PivotTableField:
+    """
+    PivotTableField directly maps the field settings of the pivot table.
+
+    Attributes:
+        compact (bool): Specifies if the field is in compact form, this setting
+            is optional, the default setting is False.
+        data (str): Specifies the field data, this setting is optional, the
+            default setting is empty.
+        name (str): Specifies the name of the data field. Maximum 255 characters
+            are allowed in data field name, excess characters will be truncated.
+        outline (bool): Specifies if the field is in outline form, this setting
+            is optional, the default setting is False.
+        show_all (bool): Specifies if the field shows all items, this setting is
+            optional, the default setting is False.
+        insert_blank_row (bool): Specifies if the field inserts a blank row,
+            this setting is optional, the default setting is False.
+        subtotal (str): Specifies the field subtotal, this setting is optional,
+            the default setting is empty.
+        default_subtotal (bool): Specifies if the field uses the default
+            subtotal, this setting is optional, the default setting is False.
+        num_fmt (int): Specifies the number format ID of the data field, this
+            field only accepts built-in number format ID and does not support
+            custom number format expression currently.
+        selected_items (Optional[List[str]]): Specifies the default selected
+            items in a pivot table field. The selected items must be values
+            within the cell range referenced by that field. This setting is
+            optional, the default setting is None.
+        show_values_as (PivotTableShowValuesAs): Specifies the calculation type
+            for showing values in a pivot table values fields. The possible
+            values for the Type field of ShowValuesAs are, some of the
+            calculation types are not supported currently:
+
+            PivotTableShowValuesAsPercentOfGrandTotal
+            PivotTableShowValuesAsPercentOfColumnTotal
+            PivotTableShowValuesAsPercentOfRowTotal
+            PivotTableShowValuesAsPercentOf
+            PivotTableShowValuesAsPercentOfParentRowTotal    (Unsupported)
+            PivotTableShowValuesAsPercentOfParentColumnTotal (Unsupported)
+            PivotTableShowValuesAsPercentOfParentTotal       (Unsupported)
+            PivotTableShowValuesAsDifferenceFrom
+            PivotTableShowValuesAsPercentDifferenceFrom
+            PivotTableShowValuesAsRunningTotalIn
+            PivotTableShowValuesAsPercentRunningTotalIn      (Unsupported)
+            PivotTableShowValuesAsRankSmallestToLargest      (Unsupported)
+            PivotTableShowValuesAsRankLargestToSmallest      (Unsupported)
+            PivotTableShowValuesAsIndex
+
+            Note that the base field and base item settings of show_values_as
+            are only required for some calculation types, the calculation types
+            requires base field settings are:
+
+            PivotTableShowValuesAsPercentOf
+            PivotTableShowValuesAsPercentOfParentTotal
+            PivotTableShowValuesAsDifferenceFrom
+            PivotTableShowValuesAsPercentDifferenceFrom
+            PivotTableShowValuesAsRunningTotalIn
+            PivotTableShowValuesAsPercentRunningTotalIn
+            PivotTableShowValuesAsRankSmallestToLargest
+            PivotTableShowValuesAsRankLargestToSmallest
+
+            The supported calculation types requires base item settings are:
+
+            PivotTableShowValuesAsPercentOf
+            PivotTableShowValuesAsDifferenceFrom
+            PivotTableShowValuesAsPercentDifferenceFrom
+    """
+
     compact: bool = False
     data: str = ""
     name: str = ""
@@ -1016,6 +1115,9 @@ class PivotTableField:
     default_subtotal: bool = False
     num_fmt: int = 0
     selected_items: Optional[List[str]] = None
+    show_values_as: PivotTableShowValuesAs = field(
+        default_factory=PivotTableShowValuesAs
+    )
 
 
 @dataclass
