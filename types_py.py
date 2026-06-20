@@ -1074,15 +1074,15 @@ class PivotTableField:
             PivotTableShowValuesAsPercentOfColumnTotal
             PivotTableShowValuesAsPercentOfRowTotal
             PivotTableShowValuesAsPercentOf
-            PivotTableShowValuesAsPercentOfParentRowTotal    (Unsupported)
-            PivotTableShowValuesAsPercentOfParentColumnTotal (Unsupported)
-            PivotTableShowValuesAsPercentOfParentTotal       (Unsupported)
+            PivotTableShowValuesAsPercentOfParentRowTotal
+            PivotTableShowValuesAsPercentOfParentColumnTotal
+            PivotTableShowValuesAsPercentOfParentTotal
             PivotTableShowValuesAsDifferenceFrom
             PivotTableShowValuesAsPercentDifferenceFrom
             PivotTableShowValuesAsRunningTotalIn
-            PivotTableShowValuesAsPercentRunningTotalIn      (Unsupported)
-            PivotTableShowValuesAsRankSmallestToLargest      (Unsupported)
-            PivotTableShowValuesAsRankLargestToSmallest      (Unsupported)
+            PivotTableShowValuesAsPercentRunningTotalIn
+            PivotTableShowValuesAsRankSmallestToLargest
+            PivotTableShowValuesAsRankLargestToSmallest
             PivotTableShowValuesAsIndex
 
             Note that the base field and base item settings of show_values_as
