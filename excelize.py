@@ -3663,6 +3663,32 @@ class File:
             return res.val
         raise RuntimeError(err)
 
+    def get_cell_type(self, sheet: str, cell: str) -> CellType:
+            """
+            Get the cell's data type by given worksheet name and cell reference in
+            spreadsheet file.
+    
+            Args:
+                sheet (str): The worksheet name
+                cell (str): The cell reference
+    
+            Returns:
+                int:  Return the cell style ID if no error occurred, otherwise raise
+                a RuntimeError with the message.
+            """
+            prepare_args(
+                [sheet, cell],
+                [argsRule("sheet", [str]), argsRule("cell", [str])],
+            )
+            lib.GetCellType.restype = types_go._IntErrorResult
+            res = lib.GetCellType(
+                self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
+            )
+            err = res.err.decode(ENCODE)
+            if not err:
+                return CellType(res.val)
+            raise RuntimeError(err)
+
     def get_cell_value(self, sheet: str, cell: str, *opts: Options) -> str:
         """
         Get formatted value from cell by given worksheet name and cell reference

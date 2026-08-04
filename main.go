@@ -1255,6 +1255,22 @@ func GetCellStyle(idx int, sheet, cell *C.char) C.struct_IntErrorResult {
 	return C.struct_IntErrorResult{val: C.int(idx), err: C.CString(emptyString)}
 }
 
+// GetCellType provides a function to get the cell's data type by given
+// worksheet name and cell reference in spreadsheet file.
+//
+//export GetCellType
+func GetCellType(idx int, sheet, cell *C.char) C.struct_IntErrorResult {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.struct_IntErrorResult{val: C.int(0), err: C.CString(errFilePtr)}
+	}
+	cellType, err := f.(*excelize.File).GetCellType(C.GoString(sheet), C.GoString(cell))
+	if err != nil {
+		return C.struct_IntErrorResult{val: C.int(cellType), err: C.CString(err.Error())}
+	}
+	return C.struct_IntErrorResult{val: C.int(cellType), err: C.CString(emptyString)}
+}
+
 // GetCellValue provides a function to get formatted value from cell by given
 // worksheet name and cell reference in spreadsheet. The return value is
 // converted to the `string` data type. If the cell format can be applied to

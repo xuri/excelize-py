@@ -697,6 +697,23 @@ class TestExcelize(unittest.TestCase):
             f.get_cell_value("SheetN", "A1")
         self.assertEqual(str(context.exception), "sheet SheetN does not exist")
 
+        self.assertEqual(
+            f.get_cell_type("Sheet1", "A2"), excelize.CellType.CellTypeUnset
+        )
+        self.assertEqual(
+            f.get_cell_type("Sheet1", "A3"), excelize.CellType.CellTypeSharedString
+        )
+        self.assertEqual(
+            f.get_cell_type("Sheet1", "A4"), excelize.CellType.CellTypeUnset
+        )
+        self.assertEqual(
+            f.get_cell_type("Sheet1", "A6"), excelize.CellType.CellTypeBool
+        )
+
+        with self.assertRaises(RuntimeError) as context:
+            result = f.get_cell_type("SheetN", "A1")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+
         result = f.search_sheet("Sheet1", "Hello")
         self.assertEqual(result, ["A3", "A12"])
 
