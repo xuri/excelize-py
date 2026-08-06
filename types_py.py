@@ -1163,6 +1163,88 @@ class Shape:
 
 @dataclass
 class SheetPropsOptions:
+    """
+    SheetPropsOptions provides a function to set worksheet properties. There 4
+    kinds of presets "Custom Scaling Options" in the spreadsheet applications,
+    if you need to set those kind of scaling options, please using the
+    `set_sheet_props` and `set_page_layout` functions to approach these 4
+    scaling options:
+
+    1. No Scaling (Print sheets at their actual size):
+
+    ```python
+    f.set_sheet_props("Sheet1", excelize.SheetPropsOptions(fit_to_page=False))
+    ```
+
+    2. Fit Sheet on One Page (Shrink the printout so that it fits on one page):
+
+    ```python
+    f.set_sheet_props("Sheet1", excelize.SheetPropsOptions(fit_to_page=True))
+    ```
+
+    3. Fit All Columns on One Page (Shrink the printout so that it is one page
+    wide):
+
+    ```python
+    f.set_sheet_props("Sheet1", excelize.SheetPropsOptions(fit_to_page=True))
+    f.set_page_layout("Sheet1", excelize.PageLayoutOptions(fit_to_height=0))
+    ```
+
+    4. Fit All Rows on One Page (Shrink the printout so that it is one page
+    high):
+
+    ```python
+    f.set_sheet_props("Sheet1", excelize.SheetPropsOptions(fit_to_page=True))
+    f.set_page_layout("Sheet1", excelize.PageLayoutOptions(fit_to_width=0))
+    ```
+
+    Attributes:
+        code_name (Optional[str]): Specifies a stable name of the sheet, which
+            should not change over time, and does not change from user input.
+            This name should be used by code to reference a particular sheet.
+        enable_format_conditions_calculation (Optional[bool]): Indicating
+            whether the conditional formatting calculations shall be evaluated.
+            If set to false, then the min/max values of color scales or data
+            bars or threshold values in Top N rules shall not be updated.
+            Essentially the conditional formatting "calc" is off.
+        published (Optional[bool]): Indicating whether the worksheet is
+            published.
+        auto_page_breaks (Optional[bool]): Indicating whether the sheet displays
+            Automatic Page Breaks.
+        fit_to_page (Optional[bool]): Indicating whether the Fit to Page print
+            option is enabled.
+        tab_color_indexed (Optional[int]): Represents the indexed color value.
+        tab_color_rgb (Optional[str]): Represents the standard Alpha Red Green
+            Blue color value.
+        tab_color_theme (Optional[int]): Represents the zero-based index into
+            the collection, referencing a particular value expressed in the
+            Theme part.
+        tab_color_tint (Optional[float]): Specifies the tint value applied to
+            the color.
+        outline_summary_below (Optional[bool]): Indicating whether summary rows
+            appear below detail in an outline, when applying an outline.
+        outline_summary_right (Optional[bool]): Indicating whether summary
+            columns appear to the right of detail in an outline, when applying
+            an outline.
+        base_col_width (Optional[int]): Specifies the number of characters of
+            the maximum digit width of the normal style's font. This value does
+            not include margin padding or extra padding for grid lines. It is
+            only the number of characters.
+        default_col_width (Optional[float]): Specifies the default column width
+            measured as the number of characters of the maximum digit width of
+            the normal style's font.
+        default_row_height (Optional[float]): Specifies the default row height
+            measured in point size. Optimization so we don't have to write the
+            height on all rows. This can be written out if most rows have custom
+            height, to achieve the optimization.
+        custom_height (Optional[bool]): Specifies the custom height.
+        zero_height (Optional[bool]): Specifies if rows are hidden.
+        thick_top (Optional[bool]): Specifies if rows have a thick top border by
+            default.
+        thick_bottom (Optional[bool]): Specifies if rows have a thick bottom
+            border by default.
+    """
+
     code_name: Optional[str] = None
     enable_format_conditions_calculation: Optional[bool] = None
     published: Optional[bool] = None
