@@ -767,6 +767,27 @@ class PageLayoutMarginsOptions:
 
 @dataclass
 class PageLayoutOptions:
+    """
+    PageLayoutOptions directly maps the settings of page layout.
+
+    Attributes:
+        size (Optional[int]): Defines the paper size of the worksheet.
+        orientation (Optional[str]): Specified the first printed page number.
+            If no value is specified, then `automatic` is assumed.
+        first_page_number (Optional[int]): Specifies the first page number, this
+            setting is optional, the default setting is None.
+        adjust_to (Optional[int]): Defines the print scaling. This attribute is
+            restricted to value ranging from 10 (10%) to 400 (400%). This setting
+            is overridden when fitToWidth and/or fitToHeight are in use.
+        fit_to_height (Optional[int]): Specified the number of vertical pages to
+            fit on.
+        fit_to_width (Optional[int]): Specified the number of horizontal pages
+            to fit on.
+        black_and_white (Optional[bool]): Specified print black and white.
+        page_order (Optional[str]): Specifies the ordering of multiple pages.
+            Values accepted: `overThenDown` and `downThenOver`
+    """
+
     size: Optional[int] = None
     orientation: Optional[str] = None
     first_page_number: Optional[int] = None
@@ -1204,7 +1225,7 @@ class SheetPropsOptions:
             This name should be used by code to reference a particular sheet.
         enable_format_conditions_calculation (Optional[bool]): Indicating
             whether the conditional formatting calculations shall be evaluated.
-            If set to false, then the min/max values of color scales or data
+            If set to `False`, then the min/max values of color scales or data
             bars or threshold values in Top N rules shall not be updated.
             Essentially the conditional formatting "calc" is off.
         published (Optional[bool]): Indicating whether the worksheet is
@@ -1395,6 +1416,40 @@ class GetTablesResult:
 
 @dataclass
 class ViewOptions:
+    """
+    ViewOptions directly maps the settings of sheet view.
+
+    Attributes:
+        default_grid_color (Optional[bool]): Indicating that the consuming
+            application should use the default grid lines color(system
+            dependent). Overrides any color specified in colorId.
+        right_to_left (Optional[bool]): Indicating whether the sheet is in
+            'right to left' display mode. When in this mode, Column A is on the
+            far right, Column B; is one column left of Column A, and so on.
+            Also, information in cells is displayed in the Right to Left format.
+        show_formulas (Optional[bool]): Indicating whether this sheet should
+            display formulas.
+        show_grid_lines (Optional[bool]): Indicating whether this sheet should
+            display grid lines.
+        show_row_col_headers (Optional[bool]): Indicating whether the sheet
+            should display row and column headings.
+        show_ruler (Optional[bool]): Indicating this sheet should display ruler.
+        show_zeros (Optional[bool]): indicating whether to "show a zero in cells
+            that have zero value". When using a formula to reference another
+            cell which is empty, the referenced value becomes 0 when the flag is
+            True. (Default setting is True.)
+        top_left_cell (Optional[str]): Specifies a location of the top left
+            visible cell Location of the top left visible cell in the bottom
+            right pane (when in Left-to-Right mode).
+        view (Optional[str]): Indicating how sheet is displayed, by default it
+            uses empty string available options: `normal`, `pageLayout` and
+            `pageBreakPreview`
+        zoom_scale (Optional[float]): Specifies a window zoom magnification for
+            current view representing percent values. This attribute is
+            restricted to values ranging from 10 to 400. Horizontal & Vertical
+            scale together.
+    """
+
     default_grid_color: Optional[bool] = None
     right_to_left: Optional[bool] = None
     show_formulas: Optional[bool] = None
