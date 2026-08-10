@@ -3295,6 +3295,66 @@ class File:
         if err != "":
             raise RuntimeError(err)
 
+    def delete_data_validation(self, sheet: str, *sqref: str) -> None:
+        """
+        Delete data validation by given worksheet name and reference sequence.
+        This function is concurrency safe. All data validations in the worksheet
+        will be deleted if not specify reference sequence parameter.
+
+        Args:
+            sheet (str): The worksheet name
+            sqref (str): The reference sequence
+
+        Returns:
+            None: Return None if no error occurred, otherwise raise a
+            RuntimeError with the message.
+
+        Example:
+            Example 1, delete data validation on Sheet1!A1:B2:
+
+            ```python
+            f.delete_data_validation("Sheet1", "A1:B2")
+            ```
+
+            Example 2, delete data validations on Sheet1 with multiple cell
+            ranges A1:B2 and C1:C3 with reference sequence tuple:
+
+            ```python
+            f.delete_data_validation("Sheet1", "A1:B2", "C1:C3")
+            ```
+
+            Example 3, delete data validations on Sheet1 with multiple cell
+            ranges A1:B2 and C1:C3 with blank separated reference sequence
+            string, the result same as example 2:
+
+            ```python
+            f.delete_data_validation("Sheet1", "A1:B2 C1:C3")
+            ```
+
+            Example 4, delete all data validations on Sheet1:
+
+            ```python
+            f.delete_data_validation("Sheet1")
+            ```
+        """
+        prepare_args(
+            [sheet, sqref],
+            [argsRule("sheet", [str]), argsRule("sqref", [tuple], True)],
+        )
+        err, lib.DeleteDataValidation.restype = None, c_char_p
+        array = (c_char_p * len(sqref))()
+        for i, value in enumerate(sqref):
+            if type(value) is not str:
+                raise TypeError(
+                    f"expected type str for argument 'sqref', but got {type(value).__name__}"
+                )
+            array[i] = value.encode(ENCODE)
+        err = lib.DeleteDataValidation(self.file_index, sheet.encode(ENCODE), array, c_longlong(len(sqref))).decode(
+                ENCODE
+            )
+        if err != "":
+            raise RuntimeError(err)
+
     def delete_defined_name(self, defined_name: DefinedName) -> None:
         """
         Delete the defined names of the workbook or worksheet. If not specified
@@ -3667,11 +3727,11 @@ class File:
             """
             Get the cell's data type by given worksheet name and cell reference in
             spreadsheet file.
-    
+
             Args:
                 sheet (str): The worksheet name
                 cell (str): The cell reference
-    
+
             Returns:
                 int:  Return the cell style ID if no error occurred, otherwise raise
                 a RuntimeError with the message.
