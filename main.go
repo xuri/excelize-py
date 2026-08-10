@@ -1009,6 +1009,32 @@ func DeleteComment(idx int, sheet, cell *C.char) *C.char {
 	return C.CString(emptyString)
 }
 
+// DeleteDataValidation delete data validation by given worksheet name and
+// reference sequence. This function is concurrency safe. All data validations
+// in the worksheet will be deleted if not specify reference sequence parameter.
+//
+//export DeleteDataValidation
+func DeleteDataValidation(idx int, sheet *C.char, sqref **C.char, length int) *C.char {
+	f, ok := files.Load(idx)
+	if !ok {
+		return C.CString(errFilePtr)
+	}
+	array := make([]string, length)
+	for i, val := range unsafe.Slice(sqref, length) {
+		array[i] = C.GoString(val)
+	}
+	if length == 0 {
+		if err := f.(*excelize.File).DeleteDataValidation(C.GoString(sheet)); err != nil {
+			return C.CString(err.Error())
+		}
+		return C.CString(emptyString)
+	}
+	if err := f.(*excelize.File).DeleteDataValidation(C.GoString(sheet), array...); err != nil {
+		return C.CString(err.Error())
+	}
+	return C.CString(emptyString)
+}
+
 // DeleteDefinedName provides a function to delete the defined names of the
 // workbook or worksheet. If not specified scope, the default scope is
 // workbook.

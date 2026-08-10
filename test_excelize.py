@@ -307,6 +307,27 @@ class TestExcelize(unittest.TestCase):
         )
         self.assertIsNone(f.save_as(os.path.join("test", "TestDataValidation.xlsx")))
 
+        f = excelize.new_file()
+        self.assertIsNone(f.delete_data_validation("Sheet1", "A1:B2", "D3"))
+
+        with self.assertRaises(RuntimeError) as context:
+            f.delete_data_validation("SheetN")
+        self.assertEqual(str(context.exception), "sheet SheetN does not exist")
+
+        with self.assertRaises(TypeError) as context:
+            f.delete_data_validation(1)
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sheet', but got int",
+        )
+
+        with self.assertRaises(TypeError) as context:
+            f.delete_data_validation("Sheet1", ["A1"])
+        self.assertEqual(
+            str(context.exception),
+            "expected type str for argument 'sqref', but got list",
+        )
+
     def test_default_font(self):
         f = excelize.new_file()
         font_name = "Arial"
@@ -1200,6 +1221,8 @@ class TestExcelize(unittest.TestCase):
         with self.assertRaises(RuntimeError) as context:
             f.auto_fit_col_width("Sheet1", "D")
         self.assertEqual(str(context.exception), expected)
+        with self.assertRaises(RuntimeError) as context:
+            f.delete_data_validation("Sheet1")
         with self.assertRaises(RuntimeError) as context:
             f.delete_form_control("Sheet1", "A1")
         self.assertEqual(str(context.exception), expected)
