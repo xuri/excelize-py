@@ -3349,9 +3349,9 @@ class File:
                     f"expected type str for argument 'sqref', but got {type(value).__name__}"
                 )
             array[i] = value.encode(ENCODE)
-        err = lib.DeleteDataValidation(self.file_index, sheet.encode(ENCODE), array, c_longlong(len(sqref))).decode(
-                ENCODE
-            )
+        err = lib.DeleteDataValidation(
+            self.file_index, sheet.encode(ENCODE), array, c_longlong(len(sqref))
+        ).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
 
@@ -3724,30 +3724,30 @@ class File:
         raise RuntimeError(err)
 
     def get_cell_type(self, sheet: str, cell: str) -> CellType:
-            """
-            Get the cell's data type by given worksheet name and cell reference in
-            spreadsheet file.
+        """
+        Get the cell's data type by given worksheet name and cell reference in
+        spreadsheet file.
 
-            Args:
-                sheet (str): The worksheet name
-                cell (str): The cell reference
+        Args:
+            sheet (str): The worksheet name
+            cell (str): The cell reference
 
-            Returns:
-                int:  Return the cell style ID if no error occurred, otherwise raise
-                a RuntimeError with the message.
-            """
-            prepare_args(
-                [sheet, cell],
-                [argsRule("sheet", [str]), argsRule("cell", [str])],
-            )
-            lib.GetCellType.restype = types_go._IntErrorResult
-            res = lib.GetCellType(
-                self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
-            )
-            err = res.err.decode(ENCODE)
-            if not err:
-                return CellType(res.val)
-            raise RuntimeError(err)
+        Returns:
+            int:  Return the cell style ID if no error occurred, otherwise raise
+            a RuntimeError with the message.
+        """
+        prepare_args(
+            [sheet, cell],
+            [argsRule("sheet", [str]), argsRule("cell", [str])],
+        )
+        lib.GetCellType.restype = types_go._IntErrorResult
+        res = lib.GetCellType(
+            self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
+        )
+        err = res.err.decode(ENCODE)
+        if not err:
+            return CellType(res.val)
+        raise RuntimeError(err)
 
     def get_cell_value(self, sheet: str, cell: str, *opts: Options) -> str:
         """
@@ -6439,6 +6439,480 @@ class File:
         Returns:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
+
+        The `type` option is required and has no default value. Allowable
+        values and their associated parameters are:
+
+        | Type            | Parameters                                                 |
+        |-----------------|------------------------------------------------------------|
+        | `cell`          | `criteria`, `value`, `min_value`, `max_value`              |
+        | `time_period`   | `criteria`                                                 |
+        | `text`          | `criteria`, `value`                                        |
+        | `average`       | `criteria`                                                 |
+        | `duplicate`     | None                                                       |
+        | `unique`        | None                                                       |
+        | `top`           | `criteria`, `value`                                        |
+        | `bottom`        | `criteria`, `value`                                        |
+        | `blanks`        | None                                                       |
+        | `no_blanks`     | None                                                       |
+        | `errors`        | None                                                       |
+        | `no_errors`     | None                                                       |
+        | `2_color_scale` | `min_type`, `max_type`, `min_value`, `max_value`,          |
+        |                 | `min_color`, `max_color`                                   |
+        | `3_color_scale` | `min_type`, `mid_type`, `max_type`, `min_value`,           |
+        |                 | `mid_value`, `max_value`, `min_color`, `mid_color`,        |
+        |                 | `max_color`                                                |
+        | `data_bar`      | `min_type`, `max_type`, `min_value`, `max_value`,          |
+        |                 | `bar_border_color`, `bar_color`, `bar_direction`,          |
+        |                 | `bar_only`, `bar_solid`                                    |
+        | `icon_set`      | `icon_style`, `reverse_icons`, `icons_only`                |
+        | `formula`       | `criteria`                                                 |
+
+        The `criteria` parameter is used to set the criteria by which the cell
+        data will be evaluated. It has no default value. The most common
+        criteria as applied to `type="cell"` are:
+
+        | Text description          | Symbol |
+        |---------------------------|--------|
+        | `between`                 |        |
+        | `not between`             |        |
+        | `equal to`                | `==`   |
+        | `not equal to`            | `!=`   |
+        | `greater than`            | `>`    |
+        | `less than`               | `<`    |
+        | `greater than or equal to`| `>=`   |
+        | `less than or equal to`   | `<=`   |
+
+        You can either use Excel's textual description strings, in the first
+        column above, or the more common symbolic alternatives.
+
+        Additional criteria which are specific to other conditional format types
+        are shown in the relevant sections below.
+
+        `value`: The value is generally used along with the criteria parameter
+        to set the rule by which the cell data will be evaluated:
+
+        ```python
+        f.set_conditional_format(
+            "Sheet1",
+            "D1:D10",
+            [
+                excelize.ConditionalFormatOptions(
+                    type="cell",
+                    criteria=">",
+                    format=format,
+                    value="6",
+                )
+            ],
+        )
+        ```
+
+        The `value` property can also be an cell reference:
+
+        ```python
+        f.set_conditional_format(
+            "Sheet1",
+            "D1:D10",
+            [
+                excelize.ConditionalFormatOptions(
+                    type="cell",
+                    criteria=">",
+                    format=format,
+                    value="$C$1",
+                )
+            ],
+        )
+        ```
+
+        type: format - The format parameter is used to specify the format that
+        will be applied to the cell when the conditional formatting criterion
+        is met. The format is created using the `new_conditional_style` function
+        in the same way as cell formats:
+
+        ```python
+        format = f.new_conditional_style(
+            excelize.Style(
+                font=excelize.Font(color="9A0511"),
+                fill=excelize.Fill(
+                    type="pattern",
+                    color=["FEC7CE"],
+                    pattern=1,
+                ),
+            )
+        )
+        f.set_conditional_format(
+            "Sheet1",
+            "D1:D10",
+            [
+                excelize.ConditionalFormatOptions(
+                    type="cell",
+                    criteria=">",
+                    format=format,
+                    value="6",
+                )
+            ],
+        )
+        ```
+
+        Note: In Excel, a conditional format is superimposed over the existing
+        cell format and not all cell format properties can be modified.
+        Properties that cannot be modified in a conditional format are font
+        name, font size, superscript and subscript, diagonal borders, all
+        alignment properties and all protection properties.
+
+        Excel specifies some default formats to be used with conditional
+        formatting. These can be replicated using the following excelize formats:
+
+        ```python
+        # Rose format for bad conditional.
+        format_bad = f.new_conditional_style(
+            excelize.Style(
+                font=excelize.Font(color="9A0511"),
+                fill=excelize.Fill(
+                    type="pattern",
+                    color=["FEC7CE"],
+                    pattern=1,
+                ),
+            )
+        )
+
+        # Light yellow format for neutral conditional.
+        format_neutral = f.new_conditional_style(
+            excelize.Style(
+                font=excelize.Font(color="9B5713"),
+                fill=excelize.Fill(
+                    type="pattern",
+                    color=["FEEAA0"],
+                    pattern=1,
+                ),
+            )
+        )
+
+        # Light green format for good conditional.
+        format_good = f.new_conditional_style(
+            excelize.Style(
+                font=excelize.Font(color="09600B"),
+                fill=excelize.Fill(
+                    type="pattern",
+                    color=["C7EECF"],
+                    pattern=1,
+                ),
+            )
+        )
+        ```
+
+        type: `min_value` - The 'min_value' parameter is used to set the lower
+        limiting value when the criteria is either `between` or `not between`.
+
+        ```python
+        # Highlight cells rules: between...
+        f.set_conditional_format(
+            "Sheet1",
+            "A1:A10",
+            [
+                excelize.ConditionalFormatOptions(
+                    type="cell",
+                    criteria="between",
+                    format=format,
+                    min_value="6",
+                    max_value="8",
+                )
+            ],
+        )
+        ```
+
+        type: `max_value` - The 'max_value' parameter is used to set the upper
+        limiting value when the criteria is either `between` or `not between`.
+        See the previous example.
+
+        type: `average` - The average type is used to specify Excel's "Average"
+        style conditional format:
+
+        ```python
+        # Top/Bottom rules: Above Average...
+        f.set_conditional_format(
+            "Sheet1",
+            "A1:A10",
+            [
+                excelize.ConditionalFormatOptions(
+                    type="average",
+                    criteria="=",
+                    format=format1,
+                    above_average=True,
+                )
+            ],
+        )
+
+        # Top/Bottom rules: Below Average...
+        f.set_conditional_format(
+            "Sheet1",
+            "B1:B10",
+            [
+                excelize.ConditionalFormatOptions(
+                    type="average",
+                    criteria="=",
+                    format=format2,
+                    above_average=False,
+                )
+            ],
+        )
+        ```
+
+        type: `duplicate` - The `duplicate` type is used to highlight duplicate
+        cells in a range:
+
+        ```python
+        # Highlight cells rules: Duplicate Values...
+        f.set_conditional_format(
+            "Sheet1",
+            "A1:A10",
+            [
+                excelize.ConditionalFormatOptions(
+                    type="duplicate",
+                    criteria="=",
+                    format=format,
+                )
+            ],
+        )
+        ```
+
+        type: `unique` - The `unique` type is used to highlight unique cells in
+        a range:
+
+        ```python
+        # Highlight cells rules: Not Equal To...
+        f.set_conditional_format(
+            "Sheet1",
+            "B1:B10",
+            [
+                excelize.ConditionalFormatOptions(
+                    type="unique",
+                    criteria="=",
+                    format=format,
+                )
+            ],
+        )
+        ```
+
+        type: `top` - The `top` type is used to specify the top n values by
+        number or percentage in a range:
+
+        ```python
+        # Top/Bottom rules: Top 6.
+        f.set_conditional_format(
+            "Sheet1",
+            "H1:H10",
+            [
+                excelize.ConditionalFormatOptions(
+                    type="top",
+                    criteria="=",
+                    format=format,
+                    value="6",
+                )
+            ],
+        )
+        ```
+
+        The `criteria` can be used to indicate that a percentage condition is
+        required:
+
+        ```python
+        f.set_conditional_format(
+            "Sheet1",
+            "A1:A10",
+            [
+                excelize.ConditionalFormatOptions(
+                    type="top",
+                    criteria="=",
+                    format=format,
+                    value="6",
+                    percent=True,
+                )
+            ],
+        )
+        ```
+
+        type: `2_color_scale` - The `2_color_scale` type is used to specify
+        Excel's "2 Color Scale" style conditional format:
+
+        ```python
+        # Color scales: 2 color.
+        f.set_conditional_format(
+            "Sheet1",
+            "A1:A10",
+            [
+                excelize.ConditionalFormatOptions(
+                    type="2_color_scale",
+                    criteria="=",
+                    min_type="min",
+                    max_type="max",
+                    min_color="F8696B",
+                    max_color="63BE7B",
+                )
+            ],
+        )
+        ```
+
+        This conditional type can be modified with `min_type`, `max_type`,
+        `min_value`, `max_value`, `min_color` and `max_color`, see below.
+
+        type: `3_color_scale` - The `3_color_scale` type is used to specify
+        Excel's "3 Color Scale" style conditional format:
+
+        ```python
+        # Color scales: 3 color.
+        f.set_conditional_format(
+            "Sheet1",
+            "A1:A10",
+            [
+                excelize.ConditionalFormatOptions(
+                    type="3_color_scale",
+                    criteria="=",
+                    min_type="min",
+                    mid_type="percentile",
+                    max_type="max",
+                    min_color="F8696B",
+                    mid_color="FFEB84",
+                    max_color="63BE7B",
+                )
+            ],
+        )
+        ```
+
+        This conditional type can be modified with `min_type`, `mid_type`,
+        `max_type`, `min_value`, `mid_value`, `max_value`, `min_color`,
+        `mid_color` and `max_color`, see below.
+
+        type: `data_bar` - The `data_bar` type is used to specify Excel's "Data
+        Bar" style conditional format.
+
+        `min_type` - The `min_type` and `max_type` properties are available when
+        the conditional formatting type is `2_color_scale`, `3_color_scale` or
+        `data_bar`. The `mid_type` is available for `3_color_scale`. The
+        properties are used as follows:
+
+        ```python
+        # Data Bars: Gradient Fill.
+        f.set_conditional_format(
+            "Sheet1",
+            "K1:K10",
+            [
+                excelize.ConditionalFormatOptions(
+                    type="data_bar",
+                    criteria="=",
+                    min_type="min",
+                    max_type="max",
+                    bar_color="638EC6",
+                )
+            ],
+        )
+        ```
+
+        The available min/mid/max types are:
+
+        ```text
+        min         (min_type only)
+        num
+        percent
+        percentile
+        formula
+        max         (max_type only)
+        ```
+
+        `max_type` - Same as `min_type`, see above.
+
+        `min_value` - The `min_value` and `max_value` properties are available
+        when the conditional formatting type is `2_color_scale`, `3_color_scale`
+        or `data_bar`.
+
+        `mid_value` - The `mid_value` is available for `3_color_scale`. Same as
+        `min_value`, see above.
+
+        `max_value` - Same as `min_value`, see above.
+
+        `min_color` - The `min_color` and `max_color` properties are available
+        when the conditional formatting type is `2_color_scale`, `3_color_scale`
+        or `data_bar`.
+
+        `mid_color` - The `mid_color` is available for
+        `3_color_scale`. The properties are used as follows:
+
+        ```python
+        # Color scales: 3 color.
+        f.set_conditional_format(
+            "Sheet1",
+            "B1:B10",
+            [
+                excelize.ConditionalFormatOptions(
+                    type="3_color_scale",
+                    criteria="=",
+                    min_type="min",
+                    mid_type="percentile",
+                    max_type="max",
+                    min_color="F8696B",
+                    mid_color="FFEB84",
+                    max_color="63BE7B",
+                )
+            ],
+        )
+        ```
+
+        `max_color` - Same as `min_color`, see above.
+
+        `bar_color` - Used for `data_bar`. Same as `min_color`, see above.
+
+        `bar_border_color` - Used for sets the color for the border line of a d
+        ata bar. This is only visible in Excel 2010 and later.
+
+        `bar_direction` - Sets the direction for data bars. The available
+        options are:
+
+        ```text
+        context - Data bar direction is set by spreadsheet application based on
+        the context of the data displayed.
+        leftToRight - Data bar direction is from right to left.
+        rightToLeft - Data bar direction is from left to right.
+        ```
+
+        `bar_only` - Used for set displays a bar data but not the data in the
+        cells.
+
+        `bar_solid` - Used for turns on a solid (non-gradient) fill for data
+        bars, this is only visible in Excel 2010 and later.
+
+        `icon_style` - The available options are:
+
+        ```text
+        3Arrows
+        3ArrowsGray
+        3Flags
+        3Signs
+        3Stars
+        3Symbols
+        3Symbols2
+        3TrafficLights1
+        3TrafficLights2
+        3Triangles
+        4Arrows
+        4ArrowsGray
+        4Rating
+        4RedToBlack
+        4TrafficLights
+        5Arrows
+        5ArrowsGray
+        5Boxes
+        5Quarters
+        5Rating
+        ```
+
+        `reverse_icons` - Used for set reversed icons sets.
+
+        `icons_only` - Used for set displayed without the cell value.
+
+        `stop_if_true` - Used to set the "stop if true" feature of a conditional
+        formatting rule when more than one rule is applied to a cell or a range
+        of cells. When this parameter is set then subsequent rules are not
+        evaluated if the current rule is True.
         """
         prepare_args(
             [sheet, range_ref, opts],
