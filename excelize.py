@@ -1160,7 +1160,7 @@ class File:
         integer from 0 to 100.
 
         overlay: Set the chart title shall be overlaid on the chart. The
-        `overlay` property is optional. The default value is false.
+        `overlay` property is optional. The default value is `False`.
 
         Specifies how blank cells are plotted on the chart by `show_blanks_as`.
         The default value is `gap`. The options that can be set are:
@@ -1701,7 +1701,7 @@ class File:
         set for a checkbox form control, Excelize will not assign a value to the
         linked cell when the checkbox is checked. To reflect the checkbox state,
         please use the `set_cell_value` function to manually set the linked
-        cell's value to true.
+        cell's value to `True`.
 
         Args:
             sheet (str): The worksheet name
@@ -4151,7 +4151,7 @@ class File:
     def get_merge_cells(self, sheet: str, *without_values: bool) -> List[MergeCell]:
         """
         Get all merged cells from a specific worksheet. If the `without_values`
-        parameter is set to true, it will not return the cell values of merged
+        parameter is set to `True`, it will not return the cell values of merged
         cells, only the range reference will be returned.
 
         Args:
@@ -5504,8 +5504,8 @@ class File:
         application: The name of the application that created this document.
 
         scale_crop: Indicates the display mode of the document thumbnail. Set
-        this element to `true` to enable scaling of the document thumbnail to
-        the display. Set this element to `false` to enable cropping of the
+        this element to `True` to enable scaling of the document thumbnail to
+        the display. Set this element to `False` to enable cropping of the
         document thumbnail to show only sections that will fit the display.
 
         doc_security: Security level of a document as a numeric value. Document
@@ -5518,8 +5518,8 @@ class File:
         company: The name of a company associated with the document.
 
         links_up_to_date: Indicates whether hyperlinks in a document are
-        up-to-date. Set this element to `true` to indicate that hyperlinks are
-        updated. Set this element to `false` to indicate that hyperlinks are
+        up-to-date. Set this element to `True` to indicate that hyperlinks are
+        updated. Set this element to `False` to indicate that hyperlinks are
         outdated.
 
         hyperlinks_changed: Specifies that one or more hyperlinks in this part
@@ -5546,13 +5546,13 @@ class File:
             try:
                 f.set_app_props(
                     excelize.AppProperties(
-                        application: "Microsoft Excel",
-                        scale_crop: true,
-                        doc_security: 3,
-                        company: "Company Name",
-                        links_up_to_date: true,
-                        hyperlinks_changed: true,
-                        app_version: "16.0000",
+                        application="Microsoft Excel",
+                        scale_crop=True,
+                        doc_security=3,
+                        company="Company Name",
+                        links_up_to_date=True,
+                        hyperlinks_changed=True,
+                        app_version="16.0000",
                     )
                 )
             except (RuntimeError, TypeError) as err:
