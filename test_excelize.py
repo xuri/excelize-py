@@ -3106,3 +3106,35 @@ class TestExcelize(unittest.TestCase):
             str(context.exception),
             "unsupported interface type code: -1",
         )
+
+    def test_free_go_results(self):
+        f = excelize.new_file()
+        self.assertIsNone(f.set_cell_value("Sheet1", "A1", "Hello"))
+        self.assertIsNone(
+            f.set_custom_props(excelize.CustomProperty(name="Prop1", value="Hello"))
+        )
+        self.assertIsNone(
+            f.set_custom_props(excelize.CustomProperty(name="Prop2", value=123))
+        )
+        with patch(
+            "excelize._free_c_pointers", wraps=excelize._free_c_pointers
+        ) as free:
+            # The value and the error string
+            self.assertEqual(f.get_cell_value("Sheet1", "A1"), "Hello")
+            self.assertEqual(sum(len(c.args[0]) for c in free.call_args_list), 2)
+            free.reset_mock()
+            # The properties array, two names, a string value and the error string
+            self.assertEqual(len(f.get_custom_props()), 2)
+            self.assertEqual(sum(len(c.args[0]) for c in free.call_args_list), 5)
+            free.reset_mock()
+            # The rows array, the cells array, a cell value and the error string
+            self.assertEqual(f.get_rows("Sheet1"), [["Hello"]])
+            self.assertEqual(sum(len(c.args[0]) for c in free.call_args_list), 4)
+            free.reset_mock()
+            # A string returned as the function result
+            self.assertIsNone(f.set_cell_value("Sheet1", "A2", "World"))
+            self.assertEqual(sum(len(c.args[0]) for c in free.call_args_list), 1)
+        self.assertEqual(
+            excelize._release_go_result(excelize._GoString(), None, None), b""
+        )
+        self.assertIsNone(f.close())
