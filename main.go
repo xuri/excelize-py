@@ -357,6 +357,7 @@ func goValueToC(goVal, cVal reflect.Value) (reflect.Value, error) {
 				goStructVal := goVal.Field(i)
 				if !goStructVal.IsNil() {
 					cPtr := C.malloc(C.size_t(cField.Type.Elem().Size()))
+					clear(unsafe.Slice((*byte)(cPtr), cField.Type.Elem().Size()))
 					cStructPtr := reflect.NewAt(cField.Type.Elem(), cPtr)
 					v, err := goValueToC(goStructVal.Elem(), cStructPtr)
 					if err != nil {
@@ -408,6 +409,7 @@ func goValueToC(goVal, cVal reflect.Value) (reflect.Value, error) {
 				continue
 			}
 			cArray := C.malloc(C.size_t(goSlice.Len()) * C.size_t(cField.Type.Elem().Size()))
+			clear(unsafe.Slice((*byte)(cArray), uintptr(goSlice.Len())*cField.Type.Elem().Size()))
 			for j := 0; j < goSlice.Len(); j++ {
 				if goBaseTypes[ele.Kind()] {
 					// The Go basic data type array, for example: []string
@@ -420,15 +422,10 @@ func goValueToC(goVal, cVal reflect.Value) (reflect.Value, error) {
 					ele.Set(cBaseVal)
 				} else {
 					// The Go struct array, for example: []excelize.Options
-					cPtr := C.malloc(C.size_t(cField.Type.Elem().Size()))
-					cStructPtr := reflect.NewAt(cField.Type.Elem(), cPtr)
-					v, err := goValueToC(goSlice.Index(j), cStructPtr)
-					if err != nil {
+					elePtr := unsafe.Pointer(uintptr(cArray) + uintptr(j)*cField.Type.Elem().Size())
+					if _, err := goValueToC(goSlice.Index(j), reflect.NewAt(cField.Type.Elem(), elePtr)); err != nil {
 						return result, err
 					}
-					elePtr := unsafe.Pointer(uintptr(cArray) + uintptr(j)*cField.Type.Elem().Size())
-					ele := reflect.NewAt(cField.Type.Elem(), elePtr).Elem()
-					ele.Set(reflect.NewAt(cField.Type.Elem(), unsafe.Pointer(v.Pointer())).Elem())
 				}
 			}
 			c.FieldByName(field.Name).Set(reflect.NewAt(cField.Type.Elem(), cArray))
@@ -1157,6 +1154,13 @@ func DuplicateRowTo(idx int, sheet *C.char, row, row2 int) *C.char {
 	return C.CString(emptyString)
 }
 
+// Free releases the C memory allocated by this library for a returned value.
+//
+//export Free
+func Free(p unsafe.Pointer) {
+	C.free(p)
+}
+
 // GetActiveSheetIndex provides a function to get active sheet index of the
 // spreadsheet. If not found the active sheet will be return integer 0.
 //
@@ -1874,7 +1878,6 @@ func GetSheetMap(idx int) C.struct_GetSheetMapResult {
 	}
 	type GetSheetMapResult struct {
 		Arr []IntStringResult
-		Err string
 	}
 	var result GetSheetMapResult
 	f, ok := files.Load(idx)

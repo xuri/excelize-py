@@ -15,6 +15,7 @@ from datetime import datetime, date, time
 from enum import Enum
 from typing import Tuple, get_args, get_origin, Dict, List, Optional, Union
 from ctypes import (
+    addressof,
     byref,
     c_bool,
     c_char_p,
@@ -24,18 +25,22 @@ from ctypes import (
     c_int32,
     c_longlong,
     c_ubyte,
+    c_void_p,
     cast,
     CDLL,
     create_string_buffer,
     POINTER,
     pointer,
     string_at,
+    Structure,
+    _Pointer,
 )
 import os
 import platform
 import sys
 import struct
 import types_go
+import weakref
 from types_py import *
 
 
@@ -98,7 +103,108 @@ def load_lib() -> Optional[str]:
     sys.exit(1)
 
 
-lib = CDLL(os.path.join(os.path.dirname(__file__), load_lib()))
+class _GoString(c_void_p):
+    """
+    Return type of the exported functions that return a C string allocated by
+    the Go library. Unlike c_char_p, it keeps the pointer, so the string can be
+    copied and then freed.
+    """
+
+
+def _collect_c_pointers(ctypes_instance, ptrs: list) -> None:
+    """
+    Collect the pointers inside a ctypes structure returned by the Go library
+    (strings, pointers and arrays allocated with C.CString or C.malloc),
+    recursively.
+
+    Args:
+        ctypes_instance: The ctypes structure instance.
+        ptrs (list): The list to append the collected addresses to.
+    """
+    names = {name for name, _ in ctypes_instance._fields_}
+    for name, c_type in ctypes_instance._fields_:
+        address = (
+            addressof(ctypes_instance) + getattr(type(ctypes_instance), name).offset
+        )
+        if c_type is c_char_p:
+            value = c_void_p.from_address(address).value
+            if value:
+                ptrs.append(value)
+        elif issubclass(c_type, Structure):
+            _collect_c_pointers(getattr(ctypes_instance, name), ptrs)
+        elif issubclass(c_type, _Pointer):
+            value = c_void_p.from_address(address).value
+            if not value:
+                continue
+            length = (
+                getattr(ctypes_instance, name + "Len") if name + "Len" in names else 1
+            )
+            elem_type = c_type._type_
+            if issubclass(elem_type, Structure):
+                array = cast(value, c_type)
+                for i in range(length):
+                    _collect_c_pointers(array[i], ptrs)
+            elif elem_type is c_char_p or issubclass(elem_type, _Pointer):
+                ptrs.extend(filter(None, (c_void_p * length).from_address(value)))
+            ptrs.append(value)
+
+
+def _free_c_pointers(ptrs: list) -> None:
+    """
+    Free the C memory allocated by the Go library.
+
+    Args:
+        ptrs (list): The addresses to free.
+    """
+    for ptr in ptrs:
+        lib.Free(c_void_p(ptr))
+
+
+def _release_go_result(result, func, arguments):
+    """
+    Free the C memory of a value returned by the Go library. A string result
+    is copied into Python bytes and freed immediately. The C memory referenced
+    by a structure result is freed when the returned structure is garbage
+    collected, so it can still be read until then.
+
+    Args:
+        result: The value returned by the function.
+        func: The called function.
+        arguments: The arguments of the call.
+
+    Returns:
+        The bytes of a string result, otherwise the result itself.
+    """
+    if isinstance(result, _GoString):
+        if not result.value:
+            return b""
+        value = string_at(result.value)
+        _free_c_pointers([result.value])
+        return value
+    if isinstance(result, Structure):
+        ptrs = []
+        _collect_c_pointers(result, ptrs)
+        if ptrs:
+            weakref.finalize(result, _free_c_pointers, ptrs)
+    return result
+
+
+class _GoLibrary(CDLL):
+    """
+    Load the Go library and free the C memory of the values returned by its
+    functions.
+    """
+
+    def __getitem__(self, name_or_ordinal):
+        func = super().__getitem__(name_or_ordinal)
+        if name_or_ordinal != "Free":
+            func.errcheck = _release_go_result
+        return func
+
+
+lib = _GoLibrary(os.path.join(os.path.dirname(__file__), load_lib()))
+lib.Free.argtypes = [c_void_p]
+lib.Free.restype = None
 ENCODE = "utf-8"
 __version__ = "0.1.0"
 uppercase_words = ["id", "rgb", "sq", "xml"]
@@ -558,7 +664,7 @@ class Rows:
         """
         Closes the open worksheet XML file in the system temporary directory.
         """
-        lib.RowsClose.restype = c_char_p
+        lib.RowsClose.restype = _GoString
         err = lib.RowsClose(self.index).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -595,7 +701,7 @@ class Rows:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
-        lib.RowsError.restype = c_char_p
+        lib.RowsError.restype = _GoString
         err = lib.RowsError(self.index).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -670,7 +776,7 @@ class StreamWriter:
             ```
         """
         prepare_args([table], [argsRule("table", [Table])])
-        lib.StreamAddTable.restype = c_char_p
+        lib.StreamAddTable.restype = _GoString
         options = py_value_to_c(table, types_go._Table())
         err = lib.StreamAddTable(self.sw_index, byref(options)).decode(ENCODE)
         if err != "":
@@ -691,7 +797,7 @@ class StreamWriter:
             RuntimeError with the message.
         """
         prepare_args([cell], [argsRule("cell", [str])])
-        lib.StreamInsertPageBreak.restype = c_char_p
+        lib.StreamInsertPageBreak.restype = _GoString
         err = lib.StreamInsertPageBreak(self.sw_index, cell.encode(ENCODE)).decode(
             ENCODE
         )
@@ -718,7 +824,7 @@ class StreamWriter:
                 argsRule("bottom_right_cell", [str]),
             ],
         )
-        lib.StreamMergeCell.restype = c_char_p
+        lib.StreamMergeCell.restype = _GoString
         err = lib.StreamMergeCell(
             self.sw_index,
             top_left_cell.encode(ENCODE),
@@ -755,7 +861,7 @@ class StreamWriter:
             [col, level],
             [argsRule("col", [int]), argsRule("level", [int])],
         )
-        lib.StreamSetColOutlineLevel.restype = c_char_p
+        lib.StreamSetColOutlineLevel.restype = _GoString
         err = lib.StreamSetColOutlineLevel(
             self.sw_index, c_longlong(col), c_longlong(level)
         ).decode(ENCODE)
@@ -797,7 +903,7 @@ class StreamWriter:
                 argsRule("width", [int, float]),
             ],
         )
-        lib.StreamSetColWidth.restype = c_char_p
+        lib.StreamSetColWidth.restype = _GoString
         err = lib.StreamSetColWidth(
             self.sw_index, c_longlong(start_col), c_longlong(end_col), c_double(width)
         ).decode(ENCODE)
@@ -818,7 +924,7 @@ class StreamWriter:
             RuntimeError with the message.
         """
         prepare_args([opts], [argsRule("opts", [Panes])])
-        lib.StreamSetPanes.restype = c_char_p
+        lib.StreamSetPanes.restype = _GoString
         options = py_value_to_c(opts, types_go._Panes())
         err = lib.StreamSetPanes(self.sw_index, byref(options)).decode(ENCODE)
         if err != "":
@@ -847,7 +953,7 @@ class StreamWriter:
             [cell, values],
             [argsRule("cell", [str]), argsRule("values", [list])],
         )
-        lib.StreamSetRow.restype = c_char_p
+        lib.StreamSetRow.restype = _GoString
         vals = (types_go._Interface * len(values))()
         for i, value in enumerate(values):
             vals[i] = py_value_to_c_interface(value)
@@ -868,7 +974,7 @@ class StreamWriter:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
-        lib.StreamFlush.restype = c_char_p
+        lib.StreamFlush.restype = _GoString
         err = lib.StreamFlush(self.sw_index).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -899,7 +1005,7 @@ class File:
             [opts[0]] if opts else [],
             [argsRule("opts", [Options], True)],
         )
-        err, lib.Save.restype = None, c_char_p
+        lib.Save.restype = _GoString
         options = POINTER(types_go._Options)()
         options = (
             byref(py_value_to_c(opts[0], types_go._Options()))
@@ -926,7 +1032,7 @@ class File:
             [filename, opts[0]] if opts else [filename],
             [argsRule("filename", [str]), argsRule("opts", [Options], True)],
         )
-        lib.SaveAs.restype = c_char_p
+        lib.SaveAs.restype = _GoString
         options = (
             byref(py_value_to_c(opts[0], types_go._Options()))
             if opts
@@ -1518,7 +1624,7 @@ class File:
                     print(err)
             ```
         """
-        lib.AddChart.restype = c_char_p
+        lib.AddChart.restype = _GoString
         opts = [chart] + list(combo.values())
         charts = (types_go._Chart * len(opts))()
         for i, opt in enumerate(opts):
@@ -1548,7 +1654,7 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
-        lib.AddChartSheet.restype = c_char_p
+        lib.AddChartSheet.restype = _GoString
         opts = [chart] + list(combo.values())
         charts = (types_go._Chart * len(opts))()
         for i, opt in enumerate(opts):
@@ -1600,7 +1706,7 @@ class File:
             [sheet, opts],
             [argsRule("sheet", [str]), argsRule("opts", [Comment])],
         )
-        lib.AddComment.restype = c_char_p
+        lib.AddComment.restype = _GoString
         options = py_value_to_c(opts, types_go._Comment())
         err = lib.AddComment(
             self.file_index, sheet.encode(ENCODE), byref(options)
@@ -1683,7 +1789,7 @@ class File:
             [sheet, dv],
             [argsRule("sheet", [str]), argsRule("dv", [DataValidation])],
         )
-        lib.AddDataValidation.restype = c_char_p
+        lib.AddDataValidation.restype = _GoString
         options = py_value_to_c(dv, types_go._DataValidation())
         err = lib.AddDataValidation(
             self.file_index, sheet.encode(ENCODE), byref(options)
@@ -1821,7 +1927,7 @@ class File:
             [sheet, opts],
             [argsRule("sheet", [str]), argsRule("opts", [FormControl])],
         )
-        lib.AddFormControl.restype = c_char_p
+        lib.AddFormControl.restype = _GoString
         options = py_value_to_c(opts, types_go._FormControl())
         err = lib.AddFormControl(
             self.file_index, sheet.encode(ENCODE), byref(options)
@@ -1855,7 +1961,7 @@ class File:
                 argsRule("opts", [HeaderFooterImageOptions]),
             ],
         )
-        lib.AddHeaderFooterImage.restype = c_char_p
+        lib.AddHeaderFooterImage.restype = _GoString
         err = lib.AddHeaderFooterImage(
             self.file_index,
             sheet.encode(ENCODE),
@@ -1887,7 +1993,7 @@ class File:
                 argsRule("ignored_errors_type", [IgnoredErrorsType]),
             ],
         )
-        lib.AddIgnoredErrors.restype = c_char_p
+        lib.AddIgnoredErrors.restype = _GoString
         err = lib.AddIgnoredErrors(
             self.file_index,
             sheet.encode(ENCODE),
@@ -1968,7 +2074,7 @@ class File:
                 argsRule("opts", [GraphicOptions, type(None)]),
             ],
         )
-        lib.AddPicture.restype = c_char_p
+        lib.AddPicture.restype = _GoString
         options = (
             byref(py_value_to_c(opts, types_go._GraphicOptions()))
             if opts
@@ -2042,7 +2148,7 @@ class File:
                 argsRule("picture", [Picture]),
             ],
         )
-        lib.AddPictureFromBytes.restype = c_char_p
+        lib.AddPictureFromBytes.restype = _GoString
         err = lib.AddPictureFromBytes(
             self.file_index,
             sheet.encode(ENCODE),
@@ -2128,7 +2234,7 @@ class File:
             [opts],
             [argsRule("opts", [PivotTableOptions, type(None)])],
         )
-        lib.AddPivotTable.restype = c_char_p
+        lib.AddPivotTable.restype = _GoString
         err = lib.AddPivotTable(
             self.file_index,
             byref(py_value_to_c(opts, types_go._PivotTableOptions())),
@@ -2418,7 +2524,7 @@ class File:
             [sheet, opts],
             [argsRule("sheet", [str]), argsRule("opts", [Shape])],
         )
-        lib.AddShape.restype = c_char_p
+        lib.AddShape.restype = _GoString
         options = py_value_to_c(opts, types_go._Shape())
         err = lib.AddShape(
             self.file_index, sheet.encode(ENCODE), byref(options)
@@ -2464,7 +2570,7 @@ class File:
             [sheet, opts],
             [argsRule("sheet", [str]), argsRule("opts", [SlicerOptions])],
         )
-        lib.AddSlicer.restype = c_char_p
+        lib.AddSlicer.restype = _GoString
         options = py_value_to_c(opts, types_go._SlicerOptions())
         err = lib.AddSlicer(
             self.file_index, sheet.encode(ENCODE), byref(options)
@@ -2529,7 +2635,7 @@ class File:
             [sheet, opts],
             [argsRule("sheet", [str]), argsRule("opts", [SparklineOptions])],
         )
-        lib.AddSparkline.restype = c_char_p
+        lib.AddSparkline.restype = _GoString
         options = py_value_to_c(opts, types_go._SparklineOptions())
         err = lib.AddSparkline(
             self.file_index, sheet.encode(ENCODE), byref(options)
@@ -2569,7 +2675,7 @@ class File:
             [sheet, table],
             [argsRule("sheet", [str]), argsRule("table", [Table])],
         )
-        lib.AddTable.restype = c_char_p
+        lib.AddTable.restype = _GoString
         options = py_value_to_c(table, types_go._Table())
         err = lib.AddTable(
             self.file_index, sheet.encode(ENCODE), byref(options)
@@ -2590,7 +2696,7 @@ class File:
             RuntimeError with the message.
         """
         prepare_args([file], [argsRule("file", [bytes])])
-        lib.AddVBAProject.restype = c_char_p
+        lib.AddVBAProject.restype = _GoString
         err = lib.AddVBAProject(
             self.file_index,
             cast(file, POINTER(c_ubyte)),
@@ -2635,7 +2741,7 @@ class File:
                 argsRule("opts", [list]),
             ],
         )
-        lib.AutoFilter.restype = c_char_p
+        lib.AutoFilter.restype = _GoString
         options = (types_go._AutoFilterOptions * len(opts))()
         for i, opt in enumerate(opts):
             options[i] = py_value_to_c(opt, types_go._AutoFilterOptions())
@@ -2691,7 +2797,7 @@ class File:
             [sheet, columns],
             [argsRule("sheet", [str]), argsRule("columns", [str])],
         )
-        lib.AutoFitColWidth.restype = c_char_p
+        lib.AutoFitColWidth.restype = _GoString
         err = lib.AutoFitColWidth(
             self.file_index,
             sheet.encode(ENCODE),
@@ -3204,7 +3310,7 @@ class File:
             Optional[Exception]: Returns None if no error occurred,
             otherwise returns an Exception with the message.
         """
-        err, lib.Close.restype = None, c_char_p
+        lib.Close.restype = _GoString
         err = lib.Close(self.file_index).decode(ENCODE)
         return None if err == "" else Exception(err)
 
@@ -3235,7 +3341,7 @@ class File:
             ```
         """
         prepare_args([src, to], [argsRule("src", [int]), argsRule("to", [int])])
-        err, lib.CopySheet.restype = None, c_char_p
+        lib.CopySheet.restype = _GoString
         err = lib.CopySheet(self.file_index, c_longlong(src), c_longlong(to)).decode(
             ENCODE
         )
@@ -3258,7 +3364,7 @@ class File:
             [sheet, cell],
             [argsRule("sheet", [str]), argsRule("cell", [str])],
         )
-        err, lib.DeleteChart.restype = None, c_char_p
+        lib.DeleteChart.restype = _GoString
         err = lib.DeleteChart(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
         ).decode(ENCODE)
@@ -3288,7 +3394,7 @@ class File:
             [sheet, cell],
             [argsRule("sheet", [str]), argsRule("cell", [str])],
         )
-        err, lib.DeleteComment.restype = None, c_char_p
+        lib.DeleteComment.restype = _GoString
         err = lib.DeleteComment(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
         ).decode(ENCODE)
@@ -3341,7 +3447,7 @@ class File:
             [sheet, sqref],
             [argsRule("sheet", [str]), argsRule("sqref", [tuple], True)],
         )
-        err, lib.DeleteDataValidation.restype = None, c_char_p
+        lib.DeleteDataValidation.restype = _GoString
         array = (c_char_p * len(sqref))()
         for i, value in enumerate(sqref):
             if type(value) is not str:
@@ -3381,7 +3487,7 @@ class File:
             ```
         """
         prepare_args([defined_name], [argsRule("defined_name", [DefinedName])])
-        lib.DeleteDefinedName.restype = c_char_p
+        lib.DeleteDefinedName.restype = _GoString
         options = py_value_to_c(defined_name, types_go._DefinedName())
         err = lib.DeleteDefinedName(self.file_index, byref(options)).decode(ENCODE)
         if err != "":
@@ -3414,7 +3520,7 @@ class File:
             [sheet, cell],
             [argsRule("sheet", [str]), argsRule("cell", [str])],
         )
-        err, lib.DeleteFormControl.restype = None, c_char_p
+        lib.DeleteFormControl.restype = _GoString
         err = lib.DeleteFormControl(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
         ).decode(ENCODE)
@@ -3437,7 +3543,7 @@ class File:
             [sheet, cell],
             [argsRule("sheet", [str]), argsRule("cell", [str])],
         )
-        err, lib.DeletePicture.restype = None, c_char_p
+        lib.DeletePicture.restype = _GoString
         err = lib.DeletePicture(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
         ).decode(ENCODE)
@@ -3460,7 +3566,7 @@ class File:
             RuntimeError with the message.
         """
         prepare_args([sheet], [argsRule("sheet", [str])])
-        err, lib.DeleteSheet.restype = None, c_char_p
+        lib.DeleteSheet.restype = _GoString
         err = lib.DeleteSheet(self.file_index, sheet.encode(ENCODE)).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -3477,7 +3583,7 @@ class File:
             RuntimeError with the message.
         """
         prepare_args([name], [argsRule("name", [str])])
-        err, lib.DeleteSlicer.restype = None, c_char_p
+        lib.DeleteSlicer.restype = _GoString
         err = lib.DeleteSlicer(self.file_index, name.encode(ENCODE)).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -3512,7 +3618,7 @@ class File:
             [sheet, row],
             [argsRule("sheet", [str]), argsRule("row", [int])],
         )
-        err, lib.DuplicateRow.restype = None, c_char_p
+        lib.DuplicateRow.restype = _GoString
         err = lib.DuplicateRow(
             self.file_index, sheet.encode(ENCODE), c_longlong(row)
         ).decode(ENCODE)
@@ -3555,7 +3661,7 @@ class File:
                 argsRule("row2", [int]),
             ],
         )
-        err, lib.DuplicateRowTo.restype = None, c_char_p
+        lib.DuplicateRowTo.restype = _GoString
         err = lib.DuplicateRowTo(
             self.file_index, sheet.encode(ENCODE), c_longlong(row), c_longlong(row2)
         ).decode(ENCODE)
@@ -4749,7 +4855,7 @@ class File:
             RuntimeError with the message.
         """
         prepare_args([sheets], [argsRule("sheets", [list])])
-        lib.GroupSheets.restype = c_char_p
+        lib.GroupSheets.restype = _GoString
         array = (c_char_p * len(sheets))()
         for i, value in enumerate(sheets):
             array[i] = value.encode(ENCODE)
@@ -4794,7 +4900,7 @@ class File:
                 argsRule("n", [int]),
             ],
         )
-        lib.InsertCols.restype = c_char_p
+        lib.InsertCols.restype = _GoString
         err = lib.InsertCols(
             self.file_index,
             sheet.encode(ENCODE),
@@ -4823,7 +4929,7 @@ class File:
             [sheet, cell],
             [argsRule("sheet", [str]), argsRule("cell", [str])],
         )
-        lib.InsertPageBreak.restype = c_char_p
+        lib.InsertPageBreak.restype = _GoString
         err = lib.InsertPageBreak(
             self.file_index,
             sheet.encode(ENCODE),
@@ -4867,7 +4973,7 @@ class File:
                 argsRule("n", [int]),
             ],
         )
-        lib.InsertRows.restype = c_char_p
+        lib.InsertRows.restype = _GoString
         err = lib.InsertRows(
             self.file_index,
             sheet.encode(ENCODE),
@@ -4911,7 +5017,7 @@ class File:
                 argsRule("bottom_right_cell", [str]),
             ],
         )
-        lib.MergeCell.restype = c_char_p
+        lib.MergeCell.restype = _GoString
         err = lib.MergeCell(
             self.file_index,
             sheet.encode(ENCODE),
@@ -4951,7 +5057,7 @@ class File:
             [source, target],
             [argsRule("source", [str]), argsRule("target", [str])],
         )
-        lib.MoveSheet.restype = c_char_p
+        lib.MoveSheet.restype = _GoString
         err = lib.MoveSheet(
             self.file_index,
             source.encode(ENCODE),
@@ -5242,7 +5348,7 @@ class File:
                 argsRule("opts", [SheetProtectionOptions]),
             ],
         )
-        lib.ProtectSheet.restype = c_char_p
+        lib.ProtectSheet.restype = _GoString
         options = py_value_to_c(opts, types_go._SheetProtectionOptions())
         err = lib.ProtectSheet(
             self.file_index, sheet.encode(ENCODE), byref(options)
@@ -5280,7 +5386,7 @@ class File:
             ```
         """
         prepare_args([opts], [argsRule("opts", [WorkbookProtectionOptions])])
-        lib.ProtectWorkbook.restype = c_char_p
+        lib.ProtectWorkbook.restype = _GoString
         options = py_value_to_c(opts, types_go._WorkbookProtectionOptions())
         err = lib.ProtectWorkbook(self.file_index, byref(options)).decode(ENCODE)
         if err != "":
@@ -5316,7 +5422,7 @@ class File:
             [sheet, col],
             [argsRule("sheet", [str]), argsRule("col", [str])],
         )
-        lib.RemoveCol.restype = c_char_p
+        lib.RemoveCol.restype = _GoString
         err = lib.RemoveCol(
             self.file_index, sheet.encode(ENCODE), col.encode(ENCODE)
         ).decode(ENCODE)
@@ -5339,7 +5445,7 @@ class File:
             [sheet, cell],
             [argsRule("sheet", [str]), argsRule("cell", [str])],
         )
-        lib.RemovePageBreak.restype = c_char_p
+        lib.RemovePageBreak.restype = _GoString
         err = lib.RemovePageBreak(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE)
         ).decode(ENCODE)
@@ -5376,7 +5482,7 @@ class File:
             [sheet, row],
             [argsRule("sheet", [str]), argsRule("row", [int])],
         )
-        lib.RemoveRow.restype = c_char_p
+        lib.RemoveRow.restype = _GoString
         err = lib.RemoveRow(
             self.file_index, sheet.encode(ENCODE), c_longlong(row)
         ).decode(ENCODE)
@@ -5492,7 +5598,7 @@ class File:
             RuntimeError with the message.
         """
         prepare_args([index], [argsRule("index", [int])])
-        err, lib.SetActiveSheet.restype = None, c_char_p
+        lib.SetActiveSheet.restype = _GoString
         err = lib.SetActiveSheet(self.file_index, c_longlong(index)).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -5563,7 +5669,7 @@ class File:
             [app_properties],
             [argsRule("app_properties", [AppProperties])],
         )
-        lib.SetAppProps.restype = c_char_p
+        lib.SetAppProps.restype = _GoString
         options = py_value_to_c(app_properties, types_go._AppProperties())
         err = lib.SetAppProps(self.file_index, byref(options)).decode(ENCODE)
         if err != "":
@@ -5583,7 +5689,7 @@ class File:
             RuntimeError with the message.
         """
         prepare_args([opts], [argsRule("opts", [CalcPropsOptions])])
-        lib.SetCalcProps.restype = c_char_p
+        lib.SetCalcProps.restype = _GoString
         options = py_value_to_c(opts, types_go._CalcPropsOptions())
         err = lib.SetCalcProps(self.file_index, byref(options)).decode(ENCODE)
         if err != "":
@@ -5611,7 +5717,7 @@ class File:
                 argsRule("value", [bool]),
             ],
         )
-        err, lib.SetCellBool.restype = None, c_char_p
+        lib.SetCellBool.restype = _GoString
         err = lib.SetCellBool(
             self.file_index, sheet.encode(ENCODE), cell.encode(ENCODE), value
         ).decode(ENCODE)
@@ -5640,7 +5746,7 @@ class File:
                 argsRule("value", [str]),
             ],
         )
-        err, lib.SetCellDefault.restype = None, c_char_p
+        lib.SetCellDefault.restype = _GoString
         err = lib.SetCellDefault(
             self.file_index,
             sheet.encode(ENCODE),
@@ -5696,7 +5802,7 @@ class File:
                 argsRule("bit_size", [int]),
             ],
         )
-        err, lib.SetCellFloat.restype = None, c_char_p
+        lib.SetCellFloat.restype = _GoString
         err = lib.SetCellFloat(
             self.file_index,
             sheet.encode(ENCODE),
@@ -5827,7 +5933,7 @@ class File:
                 argsRule("opts", [FormulaOpts], True),
             ],
         )
-        err, lib.SetCellFormula.restype = None, c_char_p
+        lib.SetCellFormula.restype = _GoString
         options = (
             byref(py_value_to_c(opts[0], types_go._FormulaOpts()))
             if opts
@@ -5916,7 +6022,7 @@ class File:
                 argsRule("opts", [HyperlinkOpts], True),
             ],
         )
-        err, lib.SetCellHyperLink.restype = None, c_char_p
+        lib.SetCellHyperLink.restype = _GoString
         options = (
             byref(py_value_to_c(opts[0], types_go._HyperlinkOpts()))
             if opts
@@ -5955,7 +6061,7 @@ class File:
                 argsRule("value", [int]),
             ],
         )
-        lib.SetCellInt.restype = c_char_p
+        lib.SetCellInt.restype = _GoString
         err = lib.SetCellInt(
             self.file_index,
             sheet.encode(ENCODE),
@@ -6096,7 +6202,7 @@ class File:
                 argsRule("runs", [list]),
             ],
         )
-        lib.SetCellRichText.restype = c_char_p
+        lib.SetCellRichText.restype = _GoString
         vals = (types_go._RichTextRun * len(runs))()
         for i, value in enumerate(runs):
             vals[i] = py_value_to_c(value, types_go._RichTextRun())
@@ -6132,7 +6238,7 @@ class File:
                 argsRule("value", [str]),
             ],
         )
-        lib.SetCellStr.restype = c_char_p
+        lib.SetCellStr.restype = _GoString
         err = lib.SetCellStr(
             self.file_index,
             sheet.encode(ENCODE),
@@ -6176,7 +6282,7 @@ class File:
                 argsRule("style_id", [int]),
             ],
         )
-        lib.SetCellStyle.restype = c_char_p
+        lib.SetCellStyle.restype = _GoString
         err = lib.SetCellStyle(
             self.file_index,
             sheet.encode(ENCODE),
@@ -6225,7 +6331,7 @@ class File:
                 ),
             ],
         )
-        lib.SetCellValue.restype = c_char_p
+        lib.SetCellValue.restype = _GoString
         err = lib.SetCellValue(
             self.file_index,
             sheet.encode(ENCODE),
@@ -6267,7 +6373,7 @@ class File:
                 argsRule("level", [int]),
             ],
         )
-        lib.SetColOutlineLevel.restype = c_char_p
+        lib.SetColOutlineLevel.restype = _GoString
         err = lib.SetColOutlineLevel(
             self.file_index, sheet.encode(ENCODE), col.encode(ENCODE), c_longlong(level)
         ).decode(ENCODE)
@@ -6316,7 +6422,7 @@ class File:
                 argsRule("style_id", [int]),
             ],
         )
-        lib.SetColStyle.restype = c_char_p
+        lib.SetColStyle.restype = _GoString
         err = lib.SetColStyle(
             self.file_index,
             sheet.encode(ENCODE),
@@ -6367,7 +6473,7 @@ class File:
                 argsRule("visible", [bool]),
             ],
         )
-        lib.SetColVisible.restype = c_char_p
+        lib.SetColVisible.restype = _GoString
         err = lib.SetColVisible(
             self.file_index, sheet.encode(ENCODE), columns.encode(ENCODE), visible
         ).decode(ENCODE)
@@ -6409,7 +6515,7 @@ class File:
                 argsRule("width", [int, float]),
             ],
         )
-        lib.SetColWidth.restype = c_char_p
+        lib.SetColWidth.restype = _GoString
         err = lib.SetColWidth(
             self.file_index,
             sheet.encode(ENCODE),
@@ -6922,7 +7028,7 @@ class File:
                 argsRule("opts", [list]),
             ],
         )
-        lib.SetConditionalFormat.restype = c_char_p
+        lib.SetConditionalFormat.restype = _GoString
         vals = (types_go._ConditionalFormatOptions * len(opts))()
         for i, value in enumerate(opts):
             vals[i] = py_value_to_c(value, types_go._ConditionalFormatOptions())
@@ -6953,7 +7059,7 @@ class File:
             RuntimeError with the message.
         """
         prepare_args([prop], [argsRule("prop", [CustomProperty])])
-        lib.SetCustomProps.restype = c_char_p
+        lib.SetCustomProps.restype = _GoString
         options = types_go._CustomProperty()
         setattr(options, "Name", (prop.name or "").encode(ENCODE))
         val = types_go._Interface()
@@ -6980,7 +7086,7 @@ class File:
             RuntimeError with the message.
         """
         prepare_args([font_name], [argsRule("font_name", [str])])
-        lib.SetDefaultFont.restype = c_char_p
+        lib.SetDefaultFont.restype = _GoString
         err = lib.SetDefaultFont(self.file_index, font_name.encode(ENCODE)).decode(
             ENCODE
         )
@@ -7036,7 +7142,7 @@ class File:
             ```
         """
         prepare_args([defined_name], [argsRule("defined_name", [DefinedName])])
-        lib.SetDefinedName.restype = c_char_p
+        lib.SetDefinedName.restype = _GoString
         options = py_value_to_c(defined_name, types_go._DefinedName())
         err = lib.SetDefinedName(self.file_index, byref(options)).decode(ENCODE)
         if err != "":
@@ -7084,7 +7190,7 @@ class File:
             [doc_properties],
             [argsRule("doc_properties", [DocProperties])],
         )
-        lib.SetDocProps.restype = c_char_p
+        lib.SetDocProps.restype = _GoString
         options = py_value_to_c(doc_properties, types_go._DocProperties())
         err = lib.SetDocProps(self.file_index, byref(options)).decode(ENCODE)
         if err != "":
@@ -7131,7 +7237,7 @@ class File:
                 argsRule("opts", [HeaderFooterOptions]),
             ],
         )
-        lib.SetHeaderFooter.restype = c_char_p
+        lib.SetHeaderFooter.restype = _GoString
         options = py_value_to_c(opts, types_go._HeaderFooterOptions())
         err = lib.SetHeaderFooter(
             self.file_index, sheet.encode(ENCODE), byref(options)
@@ -7158,7 +7264,7 @@ class File:
                 argsRule("opts", [PageLayoutOptions]),
             ],
         )
-        lib.SetPageLayout.restype = c_char_p
+        lib.SetPageLayout.restype = _GoString
         options = py_value_to_c(opts, types_go._PageLayoutOptions())
         err = lib.SetPageLayout(
             self.file_index, sheet.encode(ENCODE), byref(options)
@@ -7185,7 +7291,7 @@ class File:
                 argsRule("opts", [PageLayoutMarginsOptions]),
             ],
         )
-        lib.SetPageMargins.restype = c_char_p
+        lib.SetPageMargins.restype = _GoString
         options = py_value_to_c(opts, types_go._PageLayoutMarginsOptions())
         err = lib.SetPageMargins(
             self.file_index, sheet.encode(ENCODE), byref(options)
@@ -7210,7 +7316,7 @@ class File:
             [sheet, opts],
             [argsRule("sheet", [str]), argsRule("opts", [Panes])],
         )
-        lib.SetPanes.restype = c_char_p
+        lib.SetPanes.restype = _GoString
         options = py_value_to_c(opts, types_go._Panes())
         err = lib.SetPanes(
             self.file_index, sheet.encode(ENCODE), byref(options)
@@ -7251,7 +7357,7 @@ class File:
                 argsRule("height", [int, float]),
             ],
         )
-        lib.SetRowHeight.restype = c_char_p
+        lib.SetRowHeight.restype = _GoString
         err = lib.SetRowHeight(
             self.file_index, sheet.encode(ENCODE), c_longlong(row), c_double(height)
         ).decode(ENCODE)
@@ -7290,7 +7396,7 @@ class File:
                 argsRule("level", [int]),
             ],
         )
-        lib.SetRowOutlineLevel.restype = c_char_p
+        lib.SetRowOutlineLevel.restype = _GoString
         err = lib.SetRowOutlineLevel(
             self.file_index, sheet.encode(ENCODE), c_longlong(row), c_longlong(level)
         ).decode(ENCODE)
@@ -7341,7 +7447,7 @@ class File:
                 argsRule("style_id", [int]),
             ],
         )
-        lib.SetRowStyle.restype = c_char_p
+        lib.SetRowStyle.restype = _GoString
         err = lib.SetRowStyle(
             self.file_index,
             sheet.encode(ENCODE),
@@ -7384,7 +7490,7 @@ class File:
                 argsRule("visible", [bool]),
             ],
         )
-        lib.SetRowVisible.restype = c_char_p
+        lib.SetRowVisible.restype = _GoString
         err = lib.SetRowVisible(
             self.file_index,
             sheet.encode(ENCODE),
@@ -7412,7 +7518,7 @@ class File:
             [sheet, picture],
             [argsRule("sheet", [str]), argsRule("picture", [str])],
         )
-        lib.SetSheetBackground.restype = c_char_p
+        lib.SetSheetBackground.restype = _GoString
         err = lib.SetSheetBackground(
             self.file_index,
             sheet.encode(ENCODE),
@@ -7446,7 +7552,7 @@ class File:
                 argsRule("picture", [bytes]),
             ],
         )
-        lib.SetSheetBackgroundFromBytes.restype = c_char_p
+        lib.SetSheetBackgroundFromBytes.restype = _GoString
         err = lib.SetSheetBackgroundFromBytes(
             self.file_index,
             sheet.encode(ENCODE),
@@ -7496,7 +7602,7 @@ class File:
                 argsRule("values", [list]),
             ],
         )
-        lib.SetSheetCol.restype = c_char_p
+        lib.SetSheetCol.restype = _GoString
         vals = (types_go._Interface * len(values))()
         for i, value in enumerate(values):
             vals[i] = py_value_to_c_interface(value)
@@ -7530,7 +7636,7 @@ class File:
             [sheet, range_ref],
             [argsRule("sheet", [str]), argsRule("range_ref", [str])],
         )
-        lib.SetSheetDimension.restype = c_char_p
+        lib.SetSheetDimension.restype = _GoString
         err = lib.SetSheetDimension(
             self.file_index,
             sheet.encode(ENCODE),
@@ -7559,7 +7665,7 @@ class File:
             [source, target],
             [argsRule("source", [str]), argsRule("target", [str])],
         )
-        lib.SetSheetName.restype = c_char_p
+        lib.SetSheetName.restype = _GoString
         err = lib.SetSheetName(
             self.file_index,
             source.encode(ENCODE),
@@ -7584,7 +7690,7 @@ class File:
             [sheet, opts],
             [argsRule("sheet", [str]), argsRule("opts", [SheetPropsOptions])],
         )
-        lib.SetSheetProps.restype = c_char_p
+        lib.SetSheetProps.restype = _GoString
         options = py_value_to_c(opts, types_go._SheetPropsOptions())
         err = lib.SetSheetProps(
             self.file_index, sheet.encode(ENCODE), byref(options)
@@ -7631,7 +7737,7 @@ class File:
                 argsRule("values", [list]),
             ],
         )
-        lib.SetSheetRow.restype = c_char_p
+        lib.SetSheetRow.restype = _GoString
         vals = (types_go._Interface * len(values))()
         for i, value in enumerate(values):
             vals[i] = py_value_to_c_interface(value)
@@ -7667,7 +7773,7 @@ class File:
                 argsRule("opts", [ViewOptions]),
             ],
         )
-        lib.SetSheetView.restype = c_char_p
+        lib.SetSheetView.restype = _GoString
         options = py_value_to_c(opts, types_go._ViewOptions())
         err = lib.SetSheetView(
             self.file_index,
@@ -7709,7 +7815,7 @@ class File:
                 argsRule("very_hidden", [bool], True),
             ],
         )
-        lib.SetSheetVisible.restype = c_char_p
+        lib.SetSheetVisible.restype = _GoString
         vh = False
         if len(very_hidden) > 0:
             vh = very_hidden[0]
@@ -7731,7 +7837,7 @@ class File:
             RuntimeError with the message.
         """
         prepare_args([opts], [argsRule("opts", [WorkbookPropsOptions])])
-        lib.SetWorkbookProps.restype = c_char_p
+        lib.SetWorkbookProps.restype = _GoString
         options = py_value_to_c(opts, types_go._WorkbookPropsOptions())
         err = lib.SetWorkbookProps(self.file_index, byref(options)).decode(ENCODE)
         if err != "":
@@ -7745,7 +7851,7 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
-        lib.UngroupSheets.restype = c_char_p
+        lib.UngroupSheets.restype = _GoString
         err = lib.UngroupSheets(self.file_index).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
@@ -7783,7 +7889,7 @@ class File:
                 argsRule("bottom_right_cell", [str]),
             ],
         )
-        lib.UnmergeCell.restype = c_char_p
+        lib.UnmergeCell.restype = _GoString
         err = lib.UnmergeCell(
             self.file_index,
             sheet.encode(ENCODE),
@@ -7810,7 +7916,7 @@ class File:
             [sheet, password[0]] if password else [sheet],
             [argsRule("sheet", [str]), argsRule("password", [str], True)],
         )
-        lib.UnprotectSheet.restype = c_char_p
+        lib.UnprotectSheet.restype = _GoString
         passwd = password[0] if len(password) > 0 else ""
         err = lib.UnprotectSheet(
             self.file_index,
@@ -7838,7 +7944,7 @@ class File:
             [password[0]] if password else [],
             [argsRule("password", [str], True)],
         )
-        lib.UnprotectWorkbook.restype = c_char_p
+        lib.UnprotectWorkbook.restype = _GoString
         passwd = password[0] if len(password) > 0 else ""
         err = lib.UnprotectWorkbook(
             self.file_index, passwd.encode(ENCODE), len(password) > 0
@@ -7863,7 +7969,7 @@ class File:
             [sheet, range_ref],
             [argsRule("sheet", [str]), argsRule("range_ref", [str])],
         )
-        lib.UnsetConditionalFormat.restype = c_char_p
+        lib.UnsetConditionalFormat.restype = _GoString
         err = lib.UnsetConditionalFormat(
             self.file_index, sheet.encode(ENCODE), range_ref.encode(ENCODE)
         ).decode(ENCODE)
@@ -7884,7 +7990,7 @@ class File:
             None: Return None if no error occurred, otherwise raise a
             RuntimeError with the message.
         """
-        lib.UpdateLinkedValue.restype = c_char_p
+        lib.UpdateLinkedValue.restype = _GoString
         err = lib.UpdateLinkedValue(self.file_index).decode(ENCODE)
         if err != "":
             raise RuntimeError(err)
