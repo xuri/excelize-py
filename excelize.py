@@ -206,7 +206,7 @@ lib = _GoLibrary(os.path.join(os.path.dirname(__file__), load_lib()))
 lib.Free.argtypes = [c_void_p]
 lib.Free.restype = None
 ENCODE = "utf-8"
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 uppercase_words = ["id", "rgb", "sq", "xml"]
 
 
